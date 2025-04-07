@@ -128,7 +128,7 @@ CircadianData <- function(dataset, metadata, experimentInfo = list()) {
   new("CircadianData",
       dataset = dataset,
       metadata = metadata,
-      experimentInfo = experimentInfo) # Use renamed slot
+      experimentInfo = experimentInfo)
 }
 
 
@@ -149,6 +149,20 @@ setMethod("dataset", "CircadianData", function(x) x@dataset)
 #' @rdname CircadianData-accessors
 setGeneric("metadata", function(x) standardGeneric("metadata"))
 setMethod("metadata", "CircadianData", function(x) x@metadata)
+
+#' Set the Metadata Data Frame
+#' @param x A \code{CircadianData} object.
+#' @param value A data.frame to replace the current metadata
+#' @return The modified \code{CircadianData} object.
+#' @export
+#' @rdname CircadianData-accessors
+setGeneric("metadata<-", function(x, value) standardGeneric("metadata<-"))
+setReplaceMethod("metadata", "CircadianData", function(x, value) {
+  if (!inherits(value, "data.frame")) stop("'value' must be a data frame.")
+  x@metadata <- value
+  validObject(x) # Re-validate
+  x
+})
 
 #' Get the Experiment Information List
 #' @param x A \code{CircadianData} object.
@@ -387,7 +401,7 @@ setMethod("show", "CircadianData", function(object) {
   cat(" Metadata columns:", paste(colnames(metadata(object)), collapse=", "), "\n")
 
   # Show snippet of experimentInfo keys
-  ei_keys <- names(experimentInfo(object)) # Use renamed accessor
+  ei_keys <- names(experimentInfo(object))
   if (length(ei_keys) > 0) {
     if (length(ei_keys) > 5) ei_keys_show <- c(head(ei_keys, 5), "...") else ei_keys_show <- ei_keys
     cat(" experimentInfo keys:", paste(ei_keys_show, collapse=", "), "\n")

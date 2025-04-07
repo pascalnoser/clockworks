@@ -61,8 +61,7 @@
 #' }
 #'
 #' @export
-check_dataset <- function(dataset,
-                          metadata) {
+check_dataset <- function(dataset, metadata) {
   # 1. Check if dataset is a data.frame or matrix
   if (!inherits(dataset, c("data.frame", "matrix"))) {
     stop("`dataset` must be a data frame or matrix.", call. = FALSE)

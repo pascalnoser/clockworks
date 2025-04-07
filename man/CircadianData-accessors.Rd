@@ -3,6 +3,7 @@
 \name{dataset}
 \alias{dataset}
 \alias{metadata}
+\alias{metadata<-}
 \alias{experimentInfo}
 \alias{experimentInfo<-}
 \title{Get the Dataset Matrix}
@@ -10,6 +11,8 @@
 dataset(x)
 
 metadata(x)
+
+metadata(x) <- value
 
 experimentInfo(x)
 
@@ -25,6 +28,8 @@ The dataset matrix (features x samples).
 
 The metadata data.frame (samples x attributes).
 
+The modified \code{CircadianData} object.
+
 The experimentInfo list.
 
 The modified \code{CircadianData} object.
@@ -33,6 +38,8 @@ The modified \code{CircadianData} object.
 Get the Dataset Matrix
 
 Get the Metadata Data Frame
+
+Set the Metadata Data Frame
 
 Get the Experiment Information List
 

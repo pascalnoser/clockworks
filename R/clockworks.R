@@ -20,7 +20,12 @@ clockworks <- function(dataset,
   dataset <- check_dataset(dataset, metadata)
 
   # Create a CircadianData object
-  cd <- CircadianData(dataet, metadata)
+  cd <- CircadianData(dataset, metadata)
+
+  # TODO: Should we remove `dataset` and `metadata` after this so they don't
+  # clash with the accessor functions of the CircadianData object?
+  # rm(dataset)
+  # rm(metadata)
 
   # Find out what kind of data we're dealing with. Check the following (and add
   # info to CircadianData object using `experimentInfo()`)

@@ -249,7 +249,6 @@ check_metadata <- function(metadata,
   metadata <- as.data.frame(metadata)
 
   # Add sample IDs as row names
-
   # TODO: Should we remove the colname_sample column after assigning row names?
   # It's redundant here but in case we change sample IDs at some point it would
   # be an easy way to keep track of the original IDs if we just kept it
