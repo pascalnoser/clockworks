@@ -95,7 +95,7 @@ result <- try(check_metadata(
   colname_sample = "sample_id" # This will cause an error
 ))
 if(inherits(result, "try-error")) {
-  message("Error caught (as expected):\n", result)
+  message("Error caught (as expected).")
 }
 
 # Example with non-numeric time
@@ -107,7 +107,7 @@ result <- try(check_metadata(
   colname_sample = "sample_id"
 ))
 if(inherits(result, "try-error")) {
-  message("Error caught (as expected):\n", result)
+  message("Error caught (as expected).")
 }
 
 # Example with duplicated sample IDs
@@ -119,7 +119,7 @@ result <- try(check_metadata(
   colname_sample = "sample_id"
 ))
 if(inherits(result, "try-error")) {
-  message("Error caught (as expected):\n", result)
+  message("Error caught (as expected).")
 }
 
 }

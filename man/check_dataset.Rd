@@ -4,18 +4,14 @@
 \alias{check_dataset}
 \title{Check and Prepare a Dataset for Analysis}
 \usage{
-check_dataset(dataset, metadata, colname_sample)
+check_dataset(dataset, metadata)
 }
 \arguments{
 \item{dataset}{A data frame or matrix representing the dataset to be checked.
 It is expected to contain numeric data.}
 
 \item{metadata}{A data frame containing metadata associated with the samples
-in the dataset. Must include a column specified by \code{colname_sample}}
-
-\item{colname_sample}{A string specifying the name of the column in \code{metadata}
-that contains the sample IDs. These IDs are compared against the column
-names of the \code{dataset}.}
+in the dataset.}
 }
 \value{
 A matrix representation of the input dataset, after performing the checks
@@ -37,7 +33,8 @@ each column is checked.
 warning is issued and row names are assigned. This helps ensure
 that each row represents a feature.
 \item Checks if the column names of \code{dataset} (representing sample IDs) are
-present in the specified \code{colname_sample} column of the \code{metadata} data frame.
+present in the row names of the \code{metadata} data frame and vice versa.
+\item Orders the columns of \code{dataset} to match the row names of \code{metadata}.
 }
 }
 \examples{
@@ -46,35 +43,30 @@ set.seed(123)
 data <- matrix(rnorm(100), nrow = 10)
 colnames(data) <- paste0("sample", 1:10)
 metadata <- data.frame(sample_id = colnames(data), group = rep(c("A", "B"), each = 5))
+rownames(metadata) <- metadata$sample_id
 
 # Check the dataset
-checked_data <- check_dataset(dataset = data,
-                              metadata = metadata,
-                              colname_sample = "sample_id")
+checked_data <- check_dataset(dataset = data, metadata = metadata)
 
 # Example with feature IDs as row names
 rownames(data) <- paste0("gene", 1:10)
-checked_data_with_ids <- check_dataset(dataset = data,
-                                       metadata = metadata,
-                                       colname_sample = "sample_id")
+checked_data_with_ids <- check_dataset(dataset = data, metadata = metadata)
 
 # Example with non-numeric data
 data_non_numeric <- data.frame(col1 = 1:10, col2 = letters[1:10])
 metadata <- data.frame(sample_id = letters[1:10], group = rep(c("A", "B"), each = 5))
-result <- try(check_dataset(dataset = data_non_numeric,
-                            metadata = metadata,
-                            colname_sample = "sample_id"))
+rownames(metadata) <- metadata$sample_id
+result <- try(check_dataset(dataset = data_non_numeric, metadata = metadata))
 if(inherits(result, "try-error")) {
-  message("Error caught (as expected):\n", result)
+  message("Error caught (as expected).")
 }
 
 # Example with missing sample IDs in metadata
 metadata_missing <- data.frame(sample_id = paste0("sample", 1:5), group = rep("A", 5))
-result <- try(check_dataset(dataset = data,
-                            metadata = metadata_missing,
-                            colname_sample = "sample_id"))
+rownames(metadata) <- metadata$sample_id
+result <- try(check_dataset(dataset = data, metadata = metadata_missing))
 if(inherits(result, "try-error")) {
-  message("Error caught (as expected):\n", result)
+  message("Error caught (as expected).")
 }
 
 }

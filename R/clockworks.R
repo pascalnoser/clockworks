@@ -17,13 +17,13 @@ clockworks <- function(dataset,
 
   # Check if dataset is a data frame or matrix and make sure that the columns
   # correspond to the sample IDs in the metadata
-  # dataset <- check_dataset(...)
+  dataset <- check_dataset(dataset, metadata)
 
-  # Create a SummarizedExperiment (or other object) to keep track of everything
-  # ...
+  # Create a CircadianData object
+  cd <- CircadianData(dataet, metadata)
 
   # Find out what kind of data we're dealing with. Check the following (and add
-  # info to SummarizedExperiment object?)
+  # info to CircadianData object using `experimentInfo()`)
   # - Are we dealing with counts (integers) or some sort of normalized values (e.g. logCPM)?
   # - Are there missing values in the data set (?)
   # - Are there samples with missing time points?
@@ -34,6 +34,7 @@ clockworks <- function(dataset,
   # - Do we have replicates?
   # - Additional checks probably added after benchmark
   # - ...
+  # experimentInfo(cd) <- list(period = period, ...)
 
   # If not specified by the user, pick a method based on the results of the previous function
   # -> Implement running the functions:

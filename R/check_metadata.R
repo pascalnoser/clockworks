@@ -130,6 +130,8 @@ check_metadata <- function(metadata,
     )
   }
 
+  # TODO: Add capability of using rownames as sample ID, maybe if the user
+  # specified colname_sample = "row.names" or something like that
   if (!colname_sample %in% cnames) {
     stop(
       paste0(
@@ -239,9 +241,19 @@ check_metadata <- function(metadata,
     )
   }
 
+  # 7. Order columns and add row names for consistency
   # Order metadata columns
   metadata <- metadata[, c(colname_sample, colname_time, colname_subject, colname_group, additional_cols)]
 
   # Make sure it's a data frame and not e.g. a tibble
-  return(as.data.frame(metadata))
+  metadata <- as.data.frame(metadata)
+
+  # Add sample IDs as row names
+
+  # TODO: Should we remove the colname_sample column after assigning row names?
+  # It's redundant here but in case we change sample IDs at some point it would
+  # be an easy way to keep track of the original IDs if we just kept it
+  row.names(metadata) <- metadata[[colname_sample]]
+
+  return(metadata)
 }
