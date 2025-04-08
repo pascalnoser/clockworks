@@ -18,4 +18,12 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports: 
     readr,
-    methods
+    methods,
+    nlme,
+    CircaN,
+    GeneCycle,
+    MetaCycle,
+    edgeR,
+    limorhyde
+Depends: 
+    R (>= 3.5)

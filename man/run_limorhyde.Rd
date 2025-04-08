@@ -4,17 +4,20 @@
 \alias{run_limorhyde}
 \title{Detect rhythmicity with LimoRhyde}
 \usage{
-run_limorhyde(cd)
+run_limorhyde(cd, ...)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
+
+\item{...}{Additional parameters passed to \code{limorhyde::limorhyde()}}
 }
 \value{
-A data frame with the results of a LimoRhyde analysis.
+A data frame with the results of the LimoRhyde analysis.
 }
 \description{
-This functions runs rhythmicity detection using LimoRhyde. It expects a
-\code{CircadianDaata} object as input. The metadata slot of this object must
-contain a data.frame with a column named "Time" that contains time point
-information for a given sample.
+This function runs rhythmicity detection using LimoRhyde. It expects a
+\code{CircadianDaata} object (\code{cd}) as input. The metadata slot of this object
+must contain a data.frame with a column named \code{Time} that contains time point
+information for a given sample. The experimentInfo of \code{cd} slot must contain
+a \code{period} parameter.
 }

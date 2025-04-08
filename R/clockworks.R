@@ -19,7 +19,7 @@ clockworks <- function(dataset,
   dataset <- check_dataset(dataset, metadata)
 
   # Create a CircadianData object
-  cd <- CircadianData(dataset, metadata)
+  cd <- CircadianData(dataset, metadata, experimentInfo = list(period = period))
 
   # Remove `dataset` and `metadata` after this so they don't clash with the
   # accessor functions of the CircadianData object and to free up memory

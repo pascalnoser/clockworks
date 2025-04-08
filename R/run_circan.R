@@ -5,38 +5,49 @@
 #' @param cd A `CircadianData` object.
 #' @param ... Additional parameters passed to `CircaN::circan()`
 #'
-#' @importFrom CircaN circan
+#' @import CircaN
+#' @import nlme
 #'
 #' @returns A data frame with the results of the CircaN analysis.
+#' @examples
+#' data(dataset)
+#' data(meta)
+#' cd <- CircadianData(dataset, meta, experimentInfo = list(period = 24, repeated_measures = TRUE))
+#' results <- suppressWarnings(clockworks:::run_circan(cd))
+#' head(results)
 run_circan <- function(cd, ...) {
   # TODO: Add info about required parameters in experimentInfo slot (group_info,
   # repeated_measures, others?)
-  # TODO: Handle the "..."
 
   # Prevent "object 'vec' not found" error if one curve type can't be fit
   # TODO: Figure out if this is necessary (was in the benchmark) or of there is
   # a better way to do this
-  vec = rep(NA, times = 12)
-  akaike = c(NA, NA)
-  r = NA
+  vec <<- rep(NA, times = 12)
+  akaike <<- c(NA, NA)
+  r <<- NA
 
-  # Prepare meta data
-  df_metadata = data.frame(
-    time = metadata(cd)$Time,
-    sample = metadata(cd)$Sample_ID
-  )
-  if (cd$repeated_measures == TRUE) df_metadata$ind = metadata(cd)$Subject_ID
-
-  # Prepare data (must be a data frame with features as first column)
-  df_data = data.frame(feature = rownames(dataset(cd)), dataset(cd))
+  # Prepare data and metadata
+  df = prep_circan(cd)
+  df_data = df$df_data
+  df_metadata = df$df_metadata
 
   # Run rhythmicity analysis
-  df_results = CircaN::circan(
+  df_results_original = suppressWarnings(CircaN::circan(
     data = df_data,
     meta = df_metadata,
-    mode = "default", # Figure out how this could be controlled by user using "..."
-    min_per = min(cd$per),
-    max_per = max(cd$per)
-  )
+    min_per = min(cd$period),
+    max_per = max(cd$period),
+    ...
+  ))
 
+  # Postprocessing
+  df_results_modified <- postprocess_circan(df_results_original)
+
+
+  # Remove global variables
+  rm(vec)
+  rm(akaike)
+  rm(r)
+
+  return(list(df_results_original = df_results_original, df_results_modified = df_results_modified))
 }

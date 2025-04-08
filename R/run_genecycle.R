@@ -5,9 +5,9 @@
 #' @param cd A `CircadianData` object.
 #' @param ... Additional parameters passed to ...
 #'
-#' @importFrom GeneCycle robust.spectrum ...
+#' @importFrom GeneCycle robust.spectrum
 #'
 #' @returns A data frame with the results of the GeneCycle analysis.
-run_circan <- function(cd, ...) {
+run_genecycle <- function(cd, ...) {
 
 }
