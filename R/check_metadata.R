@@ -243,31 +243,46 @@ check_metadata <- function(metadata,
     )
   }
 
-  # 7. Make sure metadata a data frame and not e.g. a tibble
+  # 7. Make sure metadata is a data frame and not e.g. a tibble
   metadata <- as.data.frame(metadata)
 
   # 8. Add sample IDs as row names
   row.names(metadata) <- metadata[[colname_sample]]
 
   # 9. Add columns with pre-defined names and order
-  # TODO: Change names to e.g. "_Time" and double check it doesn't exist already
-  first_cols <- c("Time")
-  metadata$Time = metadata[[colname_time]]
+  colname_time_fixed = "_time"
+  colname_subject_fixed = "_subject_ID"
+  colname_group_fixed = "_group"
+
+  # Make sure columns don't already exist
+  colnames_overlap = intersect(c(
+    colname_time_fixed,
+    colname_subject_fixed,
+    colname_group_fixed
+  ),
+  cnames)
+  if (length(colnames_overlap) > 0) {
+    stop(
+      paste0("The following column names of the `metadata` data frame are ",
+             "not allowed as they clash with functions used internally by clockworks: ",
+             paste0("'", paste(tst, collapse = "', '"), "'"),
+             "\nPlease rename these columns and rerun `clockworks()`."),
+      call. = FALSE
+    )
+  }
+
+  # Add columns in the right order
+  first_cols <- c(colname_time_fixed)
+  metadata[[colname_time_fixed]] = metadata[[colname_time]]
   if (!is.null(colname_subject)) {
-    metadata$Subject_ID = metadata[[colname_subject]]
-    first_cols <- c(first_cols, "Subject_ID")
+    metadata[[colname_subject_fixed]] = metadata[[colname_subject]]
+    first_cols <- c(first_cols, colname_subject_fixed)
   }
   if (!is.null(colname_group)){
-    metadata$Group = metadata[[colname_group]]
-    first_cols <- c(first_cols, "Group")
+    metadata[[colname_group_fixed]] = metadata[[colname_group]]
+    first_cols <- c(first_cols, colname_group_fixed)
   }
   metadata <- metadata[, c(first_cols, setdiff(colnames(metadata), first_cols))]
-
-  # TODO: Should we remove the colname_sample column after assigning row names
-  # as well as the other columns if they were copied (e.g. if colname_time was
-  # "time" we now have a "time" and a "Time" column). It's redundant here but in
-  # case we change sample IDs at some point it would be an easy way to keep
-  # track of the original IDs if we just kept it
 
   return(metadata)
 }
