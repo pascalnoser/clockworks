@@ -42,8 +42,8 @@ additional columns.
 \description{
 This function performs a series of checks on a metadata data frame to ensure
 it is suitable for downstream analysis. It verifies the presence and type of
-required columns, checks for uniqueness of sample IDs, and issues warnings
-about ignored columns.
+required columns, checks for uniqueness of sample IDs issues warnings
+about ignored columns, and renames columns to ensure consistency.
 }
 \details{
 The function performs the following checks and operations:
@@ -58,8 +58,10 @@ The function performs the following checks and operations:
 \item Issues a warning if there are additional columns in \code{metadata} that
 are not explicitly used by the function, informing the user that these
 columns will be ignored.
-\item Reorders the columns of the metadata data frame.
-\item Converts the metadata to a standard \code{data.frame} and not e.g. a \code{tibble}.
+\item Converts the metadata to a standard \code{data.frame} (e.g. not a tibble)
+\item Adds the sample IDs as row names.
+\item Adds columns with pre-defined names and order to make downstream
+analysis easier.
 }
 }
 \examples{

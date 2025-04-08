@@ -2,8 +2,8 @@
 #'
 #' This function performs a series of checks on a metadata data frame to ensure
 #' it is suitable for downstream analysis. It verifies the presence and type of
-#' required columns, checks for uniqueness of sample IDs, and issues warnings
-#' about ignored columns.
+#' required columns, checks for uniqueness of sample IDs issues warnings
+#' about ignored columns, and renames columns to ensure consistency.
 #'
 #' @param metadata A data frame containing metadata associated with the samples
 #'   in the dataset.
@@ -39,8 +39,10 @@
 #'   \item Issues a warning if there are additional columns in `metadata` that
 #'     are not explicitly used by the function, informing the user that these
 #'     columns will be ignored.
-#'   \item Reorders the columns of the metadata data frame.
-#'   \item Converts the metadata to a standard `data.frame` and not e.g. a `tibble`.
+#'   \item Converts the metadata to a standard `data.frame` (e.g. not a tibble)
+#'   \item Adds the sample IDs as row names.
+#'   \item Adds columns with pre-defined names and order to make downstream
+#'     analysis easier.
 #' }
 #'
 #
@@ -241,18 +243,31 @@ check_metadata <- function(metadata,
     )
   }
 
-  # 7. Order columns and add row names for consistency
-  # Order metadata columns
-  metadata <- metadata[, c(colname_sample, colname_time, colname_subject, colname_group, additional_cols)]
-
-  # Make sure it's a data frame and not e.g. a tibble
+  # 7. Make sure metadata a data frame and not e.g. a tibble
   metadata <- as.data.frame(metadata)
 
-  # Add sample IDs as row names
-  # TODO: Should we remove the colname_sample column after assigning row names?
-  # It's redundant here but in case we change sample IDs at some point it would
-  # be an easy way to keep track of the original IDs if we just kept it
+  # 8. Add sample IDs as row names
   row.names(metadata) <- metadata[[colname_sample]]
+
+  # 9. Add columns with pre-defined names and order
+  # TODO: Change names to e.g. "_Time" and double check it doesn't exist already
+  first_cols <- c("Time")
+  metadata$Time = metadata[[colname_time]]
+  if (!is.null(colname_subject)) {
+    metadata$Subject_ID = metadata[[colname_subject]]
+    first_cols <- c(first_cols, "Subject_ID")
+  }
+  if (!is.null(colname_group)){
+    metadata$Group = metadata[[colname_group]]
+    first_cols <- c(first_cols, "Group")
+  }
+  metadata <- metadata[, c(first_cols, setdiff(colnames(metadata), first_cols))]
+
+  # TODO: Should we remove the colname_sample column after assigning row names
+  # as well as the other columns if they were copied (e.g. if colname_time was
+  # "time" we now have a "time" and a "Time" column). It's redundant here but in
+  # case we change sample IDs at some point it would be an easy way to keep
+  # track of the original IDs if we just kept it
 
   return(metadata)
 }

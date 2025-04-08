@@ -182,7 +182,7 @@ setGeneric("experimentInfo<-", function(x, value) standardGeneric("experimentInf
 setReplaceMethod("experimentInfo", "CircadianData", function(x, value) {
   if (!is.list(value)) stop("'value' must be a list.")
   x@experimentInfo <- value
-  validObject(x) # Re-validate: checks if value is a list
+  validObject(x)
   x
 })
 
@@ -369,6 +369,128 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
           })
 
 
+# --- Methods for element-wise access/modification of experimentInfo ---
+
+#' Access Elements of experimentInfo using `[[`
+#'
+#' Allows retrieving individual elements from the `experimentInfo` list slot
+#' using the double-bracket subset operator.
+#'
+#' @param x A \code{CircadianData} object.
+#' @param i A single character string representing the name of the element
+#'   to retrieve from `experimentInfo`.
+#' @param j Optional, not used for accessing `experimentInfo`.
+#' @param ... Optional arguments, not used.
+#'
+#' @return The value of the element `i` within the `experimentInfo` list.
+#' @export
+#' @rdname CircadianData-subset-expinfo
+#' @aliases [[,CircadianData,character,missing-method
+#' @examples
+#' # Assuming cd_obj is a CircadianData object with experimentInfo(cd_obj)$period <- 24
+#' # period_val <- cd_obj[["period"]]
+setMethod("[[", c("CircadianData", "character", "missing"),
+          function(x, i, j, ...) {
+            # Ensure i is a single element character string
+            if (length(i) != 1) {
+              stop("Index 'i' must be a single character string for accessing experimentInfo.")
+            }
+            # Access the element within the experimentInfo slot
+            return(x@experimentInfo[[i]])
+          }
+)
+
+#' Assign or Add Elements to experimentInfo using `[[<-`
+#'
+#' Allows assigning a value to an existing element or adding a new element
+#' to the `experimentInfo` list slot using the double-bracket subset assignment operator.
+#'
+#' @param x A \code{CircadianData} object.
+#' @param i A single character string representing the name of the element
+#'   in `experimentInfo` to assign to or add.
+#' @param j Optional, not used for assigning to `experimentInfo`.
+#' @param value The value to assign to the element `i`.
+#'
+#' @return The modified \code{CircadianData} object.
+#' @export
+#' @rdname CircadianData-subset-expinfo
+#' @aliases [[<-,CircadianData,character,missing-method
+#' @examples
+#' # Assuming cd_obj is a CircadianData object
+#' # cd_obj[["period"]] <- 24
+#' # cd_obj[["notes"]] <- "Updated notes"
+#' # print(experimentInfo(cd_obj))
+setReplaceMethod("[[", c("CircadianData", "character", "missing"),
+                 function(x, i, j, value) {
+                   # Ensure i is a single element character string
+                   if (length(i) != 1) {
+                     stop("Index 'i' must be a single character string for assigning to experimentInfo.")
+                   }
+                   # Assign the value within the experimentInfo slot list
+                   x@experimentInfo[[i]] <- value
+                   # Re-validate the object (optional, but ensures experimentInfo remains a list)
+                   validObject(x)
+                   # Return the modified object
+                   return(x)
+                 }
+)
+
+
+#' Access Elements of experimentInfo using `$`
+#'
+#' Allows retrieving individual elements from the `experimentInfo` list slot
+#' using the `$` operator.
+#'
+#' @param x A \code{CircadianData} object.
+#' @param name The name (as a symbol or character string) of the element
+#'   to retrieve from `experimentInfo`.
+#'
+#' @return The value of the element `name` within the `experimentInfo` list.
+#' @export
+#' @rdname CircadianData-subset-expinfo
+#' @aliases $,CircadianData-method
+#' @examples
+#' # Assuming cd_obj is a CircadianData object with experimentInfo(cd_obj)$period <- 24
+#' # period_val <- cd_obj$period
+setMethod("$", "CircadianData",
+          function(x, name) {
+            # name is automatically a character string here
+            return(x@experimentInfo[[name]])
+            # Alternative: return(slot(x, "experimentInfo")[[name]])
+          }
+)
+
+
+#' Assign or Add Elements to experimentInfo using `$<-`
+#'
+#' Allows assigning a value to an existing element or adding a new element
+#' to the `experimentInfo` list slot using the `$` assignment operator.
+#'
+#' @param x A \code{CircadianData} object.
+#' @param name The name (as a symbol or character string) of the element
+#'   in `experimentInfo` to assign to or add.
+#' @param value The value to assign to the element `name`.
+#'
+#' @return The modified \code{CircadianData} object.
+#' @export
+#' @rdname CircadianData-subset-expinfo
+#' @aliases $<-,CircadianData-method
+#' @examples
+#' # Assuming cd_obj is a CircadianData object
+#' # cd_obj$period <- 24
+#' # cd_obj$notes <- "Updated notes"
+#' # print(experimentInfo(cd_obj))
+setMethod("$<-", "CircadianData",
+          function(x, name, value) {
+            # name is automatically a character string here
+            x@experimentInfo[[name]] <- value
+            # Re-validate the object
+            validObject(x)
+            # Return the modified object
+            return(x)
+          }
+)
+
 # --- Show Method ---
 
 #' Show Method for CircadianData
@@ -467,12 +589,38 @@ if (FALSE) { # Don't run automatically
   )
   experimentInfo(cd_obj) <- info_list
   print(cd_obj)
-  print(experimentInfo(cd_obj)$period)
-  print(experimentInfo(cd_obj)$replicates_per_tp)
 
-  # Modifying experimentInfo
-  einfo <- experimentInfo(cd_obj)
-  einfo$new_info <- "Some processing notes"
-  experimentInfo(cd_obj) <- einfo
+  # Add/modify elements using `[[<-`
+  cd_obj[["experiment_id"]] <- "EXP_001"
+  cd_obj[["period"]] <- 24
+  cd_obj[["has_replicates"]] <- TRUE
   print(experimentInfo(cd_obj))
+
+  # Access elements using `[[`
+  exp_id <- cd_obj[["experiment_id"]]
+  cat("Experiment ID:", exp_id, "\n")
+  # Access non-existent element (returns NULL, standard list behavior)
+  print(cd_obj[["non_existent"]])
+
+  # Modify existing element using `[[<-`
+  cd_obj[["period"]] <- 23.8
+  print(cd_obj[["period"]])
+
+  # Add/modify elements using `$<-`
+  cd_obj$operator <- "John Doe"
+  cd_obj$has_replicates <- FALSE # Modify existing
+  print(experimentInfo(cd_obj))
+
+  # Access elements using `$`
+  op <- cd_obj$operator
+  cat("Operator:", op, "\n")
+  # Access non-existent element (returns NULL)
+  print(cd_obj$tissue)
+
+  # Verify the main object is updated
+  print(cd_obj)
+
+  # Access all experiment information
+  full_info <- experimentInfo(cd_obj)
+  print(full_info)
 }

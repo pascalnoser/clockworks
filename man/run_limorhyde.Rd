@@ -2,19 +2,19 @@
 % Please edit documentation in R/run_limorhyde.R
 \name{run_limorhyde}
 \alias{run_limorhyde}
-\title{Title}
+\title{Detect rhythmicity with LimoRhyde}
 \usage{
-run_limorhyde(cd, colname_time)
+run_limorhyde(cd)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
-
-\item{colname_time}{A string specifying the name of the column in the meta
-data of \code{cd} that contains the time information.}
 }
 \value{
 A data frame with the results of a LimoRhyde analysis.
 }
 \description{
-Title
+This functions runs rhythmicity detection using LimoRhyde. It expects a
+\code{CircadianDaata} object as input. The metadata slot of this object must
+contain a data.frame with a column named "Time" that contains time point
+information for a given sample.
 }

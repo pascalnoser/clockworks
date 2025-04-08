@@ -4,7 +4,6 @@ clockworks <- function(dataset,
                        colname_sample,
                        colname_group = NULL,
                        colname_subject = NULL,
-                       colname_features = NULL,
                        period = 24) {
   # Check validity of meta data and sort columns
   metadata <- check_metadata(
@@ -22,13 +21,15 @@ clockworks <- function(dataset,
   # Create a CircadianData object
   cd <- CircadianData(dataset, metadata)
 
-  # TODO: Should we remove `dataset` and `metadata` after this so they don't
-  # clash with the accessor functions of the CircadianData object?
-  # rm(dataset)
-  # rm(metadata)
+  # Remove `dataset` and `metadata` after this so they don't clash with the
+  # accessor functions of the CircadianData object and to free up memory
+  rm(dataset)
+  rm(metadata)
 
   # Find out what kind of data we're dealing with. Check the following (and add
   # info to CircadianData object using `experimentInfo()`)
+  # - Is there group information (just check if user defined `colname_group`)
+  # - Do we have repeated measures?
   # - Are we dealing with counts (integers) or some sort of normalized values (e.g. logCPM)?
   # - Are there missing values in the data set (?)
   # - Are there samples with missing time points?
@@ -39,7 +40,7 @@ clockworks <- function(dataset,
   # - Do we have replicates?
   # - Additional checks probably added after benchmark
   # - ...
-  # experimentInfo(cd) <- list(period = period, ...)
+  # experimentInfo(cd) <- list(period = period, group_info = TRUE, repeated_measures = FALSE, ...)
 
   # If not specified by the user, pick a method based on the results of the previous function
   # -> Implement running the functions:
