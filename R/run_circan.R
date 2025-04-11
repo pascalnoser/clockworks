@@ -13,11 +13,13 @@
 #' data(dataset)
 #' data(meta)
 #' cd <- CircadianData(dataset, meta, experimentInfo = list(period = 24, repeated_measures = TRUE))
-#' results <- suppressWarnings(clockworks:::run_circan(cd))
+#' results <- clockworks:::run_circan(cd)
 #' head(results)
 run_circan <- function(cd, ...) {
   # TODO: Add info about required parameters in experimentInfo slot (group_info,
   # repeated_measures, others?)
+
+  # TODO: ADD WAY TO HANDLE DIFFERENT GROUPS
 
   # Prevent "object 'vec' not found" error if one curve type can't be fit
   # TODO: Figure out if this is necessary (was in the benchmark) or of there is
@@ -27,9 +29,9 @@ run_circan <- function(cd, ...) {
   r <<- NA
 
   # Prepare data and metadata
-  df = prep_circan(cd)
-  df_data = df$df_data
-  df_metadata = df$df_metadata
+  ls_prep = prep_circan(cd)
+  df_data = ls_prep$df_data
+  df_metadata = ls_prep$df_metadata
 
   # Run rhythmicity analysis
   df_results_original = suppressWarnings(CircaN::circan(

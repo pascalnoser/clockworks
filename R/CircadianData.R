@@ -491,6 +491,137 @@ setMethod("$<-", "CircadianData",
           }
 )
 
+
+# --- Generic Function Definition ---
+
+#' Order Samples in a CircadianData Object
+#'
+#' Reorders the samples (columns in `dataset`, rows in `metadata`) of a
+#' \code{CircadianData} object based on the values in specified columns
+#' of the metadata.
+#'
+#' @param x A \code{CircadianData} object.
+#' @param by_columns A character vector specifying the column name(s) in
+#'   `metadata(x)` to sort by. Sorting is done sequentially by these columns.
+#' @param decreasing Logical vector indicating the direction of sorting for
+#'   each column specified in `by_columns`. If a single value, it is recycled.
+#'   Defaults to FALSE (ascending order) for all columns.
+#' @param ... Additional arguments (currently unused).
+#'
+#' @return A new \code{CircadianData} object with samples sorted according
+#'   to the specified criteria. The `dataset` columns and `metadata` rows
+#'   remain synchronized.
+#'
+#' @export
+#' @rdname orderSamples
+#' @examples
+#' # Create minimal reproducible data
+#' set.seed(456)
+#' counts <- matrix(rpois(80, lambda = 50), nrow = 10, ncol = 8,
+#'                  dimnames = list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
+#' meta <- data.frame(
+#'   row.names = paste0("Sample", 1:8),
+#'   time = rep(c(12, 0, 6, 18), each = 2), # Unordered times
+#'   subject_id = paste0("S", rep(1:4, 2)), # Unordered subjects
+#'   group = rep(c("A", "B"), 4)
+#' )
+#' cd_obj <- CircadianData(counts, meta, experimentInfo = list(period = 24))
+#'
+#' print("Original Metadata Order:")
+#' print(metadata(cd_obj))
+#'
+#' # Sort samples by time
+#' cd_sorted_time <- orderSamples(cd_obj, "time")
+#' print("Metadata sorted by time:")
+#' print(metadata(cd_sorted_time))
+#' print(colnames(dataset(cd_sorted_time))) # Check dataset colnames match metadata rownames
+#'
+#' # Sort samples first by time (ascending), then by subject_id (descending)
+#' cd_sorted_multi <- orderSamples(cd_obj, c("time", "subject_id"), decreasing = c(FALSE, TRUE))
+#' print("Metadata sorted by time (asc) then subject_id (desc):")
+#' print(metadata(cd_sorted_multi))
+#'
+setGeneric("orderSamples", function(x, by_columns, decreasing = FALSE, ...) standardGeneric("orderSamples"))
+
+# --- Method for CircadianData Class ---
+
+#' @rdname orderSamples
+#' @export
+setMethod("orderSamples", "CircadianData",
+          function(x, by_columns, decreasing = FALSE) {
+
+            # --- Input Validation ---
+            if (!is.character(by_columns) || length(by_columns) == 0) {
+              stop("'by_columns' must be a non-empty character vector of metadata column names.")
+            }
+            if (!is.logical(decreasing)) {
+              stop("'decreasing' must be a logical vector.")
+            }
+
+            mdata <- metadata(x)
+            available_cols <- colnames(mdata)
+
+            # Check if specified columns exist in metadata
+            missing_cols <- setdiff(by_columns, available_cols)
+            if (length(missing_cols) > 0) {
+              stop("The following columns specified in 'by_columns' were not found in metadata: ",
+                   paste(missing_cols, collapse = ", "))
+            }
+
+            # Handle 'decreasing' argument length
+            n_sort_cols <- length(by_columns)
+            if (length(decreasing) == 1 && n_sort_cols > 1) {
+              decreasing <- rep(decreasing, n_sort_cols)
+            } else if (length(decreasing) != n_sort_cols) {
+              stop("Length of 'decreasing' (", length(decreasing),
+                   ") must be 1 or match the length of 'by_columns' (", n_sort_cols, ").")
+            }
+
+            # Handle case with no samples
+            if (ncol(x) == 0) {
+              warning("Object has 0 samples, returning unchanged.")
+              return(x)
+            }
+
+            # --- Get Sorting Order ---
+            # Extract the columns to sort by into a list
+            sort_cols_list <- as.list(mdata[, by_columns, drop = FALSE])
+
+            # Prepare arguments for do.call with order()
+            # Note: The default 'shell" method in order() can only handle the
+            # case where `decreasing` is identical for all columns
+            order_args <- c(sort_cols_list,
+                            list(decreasing = decreasing, method = "radix"))
+
+            if (length(decreasing) > 1) {
+              # Note: We add this check because the default 'shell' method
+              # in order() doesn't support vector 'decreasing'. Radix does.
+              order_args$method <- "radix"
+            }
+
+            # Get the indices that define the new order
+            new_order_indices <- do.call(order, order_args)
+
+            # --- Apply Ordering ---
+            # Reorder dataset columns
+            new_dataset <- dataset(x)[, new_order_indices, drop = FALSE]
+
+            # Reorder metadata rows
+            new_metadata <- mdata[new_order_indices, , drop = FALSE]
+
+            # --- Create and Return New Object ---
+            # experimentInfo remains unchanged
+            new_expInfo <- experimentInfo(x)
+
+            # Use the constructor (or new()) to create the sorted object
+            # This ensures validity checks are run on the result
+            CircadianData(dataset = new_dataset,
+                          metadata = new_metadata,
+                          experimentInfo = new_expInfo)
+          }
+)
+
+
 # --- Show Method ---
 
 #' Show Method for CircadianData

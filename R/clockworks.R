@@ -19,7 +19,7 @@ clockworks <- function(dataset,
   dataset <- check_dataset(dataset, metadata)
 
   # Create a CircadianData object
-  cd <- CircadianData(dataset, metadata, experimentInfo = list(period = period))
+  cd <- CircadianData(dataset, metadata)
 
   # Remove `dataset` and `metadata` after this so they don't clash with the
   # accessor functions of the CircadianData object and to free up memory
@@ -27,7 +27,7 @@ clockworks <- function(dataset,
   rm(metadata)
 
   # Find out what kind of data we're dealing with. Check the following (and add
-  # info to CircadianData object using `experimentInfo()`)
+  # info to experimentInfo slot of CircadianData object)
   # - Is there group information (just check if user defined `colname_group`)
   # - Do we have repeated measures?
   # - Are we dealing with counts (integers) or some sort of normalized values (e.g. logCPM)?
@@ -40,7 +40,8 @@ clockworks <- function(dataset,
   # - Do we have replicates?
   # - Additional checks probably added after benchmark
   # - ...
-  # experimentInfo(cd) <- list(period = period, group_info = TRUE, repeated_measures = FALSE, ...)
+  # Add experiment info to CD object
+  cd <- add_CD_info(cd, period)
 
   # If not specified by the user, pick a method based on the results of the previous function
   # -> Implement running the functions:

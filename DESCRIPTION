@@ -24,6 +24,7 @@ Imports:
     GeneCycle,
     MetaCycle,
     edgeR,
-    limorhyde
+    limorhyde,
+    parallel
 Depends: 
     R (>= 3.5)

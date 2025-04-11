@@ -21,6 +21,6 @@ This function runs rhythmicity detection using CircaN.
 data(dataset)
 data(meta)
 cd <- CircadianData(dataset, meta, experimentInfo = list(period = 24, repeated_measures = TRUE))
-results <- suppressWarnings(clockworks:::run_circan(cd))
+results <- clockworks:::run_circan(cd)
 head(results)
 }

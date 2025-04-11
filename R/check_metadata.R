@@ -157,12 +157,26 @@ check_metadata <- function(metadata,
     )
   }
 
+  if (!is.null(colname_group)) unique_groups <- unique(metadata[[colname_group]])
+
+  if (!is.null(colname_group) && !length(unique_groups) > 1) {
+    message(
+      paste0(
+        "The `colname_group` ('", colname_group, "') column of metadata ",
+        "contains only one group ('", unique_groups, "'). Analysis will ",
+        "proceed with the assumption that there are no groups."
+      ),
+      call. = FALSE
+    )
+  }
+
   if (!is.null(colname_subject) && !colname_subject %in% cnames) {
     stop(
       paste0(
         "Missing column '", colname_subject, "' in `metadata`. ",
-        "If applicable, please make sure that `colname_subject` corresponds to the ",
-        "column containing the subject IDs or leave it as NULL otherwise."
+        "If your data contains repeated measures, please make sure that ",
+        "`colname_subject` corresponds to the column containing the subject IDs ",
+        "or set it to NULL (default) otherwise."
       ),
       call. = FALSE
     )
@@ -179,43 +193,6 @@ check_metadata <- function(metadata,
       call. = FALSE
     )
   }
-
-
-  # OLD VERSION OF THIS CHECK INCLUDING ATTEMPT TO CONVERT TO NUMERIC
-  # if (!is.numeric(metadata[[colname_time]])) {
-  #   # Attempt conversion if the column is character
-  #   if (is.character(metadata[[colname_time]])) {
-  #     converted_time <- suppressWarnings(as.numeric(metadata[[colname_time]]))
-  #
-  #     # Check if conversion introduced NA values
-  #     if (any(is.na(converted_time) & !is.na(metadata[[colname_time]]))) {
-  #       stop(
-  #         paste0(
-  #           "Column '", colname_time, "' in `metadata` cannot be converted ",
-  #           "to numeric without introducing new NA values. ",
-  #           "Please make sure that the column defined as `colname_time` is numeric."
-  #         ),
-  #         call. = FALSE
-  #       )
-  #     } else {
-  #       # Safe conversion
-  #       metadata[[colname_time]] <- converted_time
-  #       warning(
-  #         paste0("Converted column '", colname_time, "' in `metadata` to numeric."),
-  #         call. = FALSE
-  #       )
-  #     }
-  #   } else {
-  #     stop(
-  #       paste0(
-  #         "The column defined as `colname_time` in `metadata` must be ",
-  #         "numeric. Attempt to convert the specified column '", colname_time, "' failed."
-  #       ),
-  #       call. = FALSE
-  #     )
-  #   }
-  # }
-
 
   # 5. Check if the values in colname_sample are unique
   if (any(duplicated(metadata[[colname_sample]]))) {
@@ -265,7 +242,7 @@ check_metadata <- function(metadata,
     stop(
       paste0("The following column names of the `metadata` data frame are ",
              "not allowed as they clash with functions used internally by clockworks: ",
-             paste0("'", paste(tst, collapse = "', '"), "'"),
+             paste0("'", paste(colnames_overlap, collapse = "', '"), "'"),
              "\nPlease rename these columns and rerun `clockworks()`."),
       call. = FALSE
     )
