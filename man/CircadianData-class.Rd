@@ -20,7 +20,7 @@ synchronized during operations like subsetting or renaming. The rows of
 
 \item{\code{metadata}}{A data.frame containing sample annotations (samples x attributes).}
 
-\item{\code{experimentInfo}}{A list to store additional arbitrary information or
+\item{\code{experiment_info}}{A list to store additional arbitrary information or
 parameters related to the experiment (e.g., period, design details).}
 }}
 

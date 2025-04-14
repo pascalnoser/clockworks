@@ -4,11 +4,8 @@
 #'
 #' @param cd A `CircadianData` object.
 #'
-#' @returns A long format data frame
+#' @returns A data frame.
 prep_repeatedcircadian <- function(cd) {
-  # Make sure samples are ordered by time and subject
-
-
   # Get dataset
   df_data <- dataset(cd)
 
@@ -18,37 +15,44 @@ prep_repeatedcircadian <- function(cd) {
 
   # Convert into long format
   data_long <- data.frame(
-    "_feature" = rep(feature_IDs, times = length(sample_IDs)),
-    "_sample" = rep(sample_IDs, each = length(feature_IDs)),
-    "_value" = as.vector(as.matrix(df_data)),
+    ".feature" = rep(feature_IDs, times = length(sample_IDs)),
+    ".sample" = rep(sample_IDs, each = length(feature_IDs)),
+    ".value" = as.vector(as.matrix(df_data)),
     check.names = FALSE  # Don't add "X" before leading _
   )
 
   # Add sample IDs as column to metadata
-  df_meta <- metadata(cd)
-  df_meta[["_sample"]] <- rownames(df_meta)
+  df_meta <- metadata(cd_sorted)
+  df_meta[[".sample"]] <- rownames(df_meta)
 
   # Only keep relevant columns of meta data
-  df_meta = df_meta[, c("_sample", "_subject_ID", "_group", "_time")]
+  if (!is.na(cd$n_groups)) {
+    relevant_cols <- c(".sample", ".subject_ID", ".time", ".group")
+    id_cols <- c(".feature", ".subject_ID", ".group")
+  } else {
+    relevant_cols <- c(".sample", ".subject_ID", ".time")
+    id_cols <- c(".feature", ".subject_ID")
+  }
+  df_meta = df_meta[, relevant_cols]
 
   # Merge
-  df_merged <- merge(data_long, df_meta, by = "_sample")
+  df_merged <- merge(data_long, df_meta, by = ".sample")
 
   # Remove the now redundant sample ID column to prevent warning when reshaping
-  df_merged[["_sample"]] <- NULL
+  df_merged[[".sample"]] <- NULL
 
   # Reshape to wider format
-  df_wide <- reshape(
+  df_reshaped <- reshape(
     df_merged,
-    idvar = c("_feature", "_subject_ID", "_group"),
-    timevar = "_time",
-    v.names = "_value",
+    idvar = id_cols,
+    timevar = ".time",
+    v.names = ".value",
     direction = "wide"
   )
 
   # Clean up column names
-  colnames(df_wide) <- gsub("_value\\.", "T", colnames(df_wide))
+  colnames(df_reshaped) <- gsub(".value\\.", "T", colnames(df_reshaped))
 
 
-  return(df_long_final)
+  return(df_reshaped)
 }

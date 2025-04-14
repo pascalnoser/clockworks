@@ -4,7 +4,7 @@
 \alias{CircadianData}
 \title{Create a CircadianData Object}
 \usage{
-CircadianData(dataset, metadata, experimentInfo = list())
+CircadianData(dataset, metadata, experiment_info = list())
 }
 \arguments{
 \item{dataset}{A numeric matrix with features as rows and samples as columns.
@@ -15,7 +15,7 @@ Features could be genes, proteins, metabolites, etc.}
 Must have row names (sample IDs) that match the column names of \code{dataset}
 exactly (in order and value).}
 
-\item{experimentInfo}{An optional list to store additional experiment-level
+\item{experiment_info}{An optional list to store additional experiment-level
 data or parameters (e.g., experimental period, batch information, notes).}
 }
 \value{
@@ -40,7 +40,7 @@ print(cd_obj)
 
 # Add experiment info
 expInfo <- list(period = 24, notes = "Initial experiment")
-experimentInfo(cd_obj) <- expInfo
-print(experimentInfo(cd_obj))
+experiment_info(cd_obj) <- expInfo
+print(experiment_info(cd_obj))
 
 }

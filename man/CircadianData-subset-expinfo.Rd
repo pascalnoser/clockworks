@@ -5,7 +5,7 @@
 \alias{[[<-,CircadianData,character,missing-method}
 \alias{$,CircadianData-method}
 \alias{$<-,CircadianData-method}
-\title{Access Elements of experimentInfo using \code{[[}}
+\title{Access Elements of experiment_info using \code{[[}}
 \usage{
 \S4method{[[}{CircadianData,character,missing}(x, i, j, ...)
 
@@ -19,50 +19,50 @@
 \item{x}{A \code{CircadianData} object.}
 
 \item{i}{A single character string representing the name of the element
-in \code{experimentInfo} to assign to or add.}
+in \code{experiment_info} to assign to or add.}
 
-\item{j}{Optional, not used for assigning to \code{experimentInfo}.}
+\item{j}{Optional, not used for assigning to \code{experiment_info}.}
 
 \item{...}{Optional arguments, not used.}
 
 \item{value}{The value to assign to the element \code{name}.}
 
 \item{name}{The name (as a symbol or character string) of the element
-in \code{experimentInfo} to assign to or add.}
+in \code{experiment_info} to assign to or add.}
 }
 \value{
-The value of the element \code{i} within the \code{experimentInfo} list.
+The value of the element \code{i} within the \code{experiment_info} list.
 
 The modified \code{CircadianData} object.
 
-The value of the element \code{name} within the \code{experimentInfo} list.
+The value of the element \code{name} within the \code{experiment_info} list.
 
 The modified \code{CircadianData} object.
 }
 \description{
-Allows retrieving individual elements from the \code{experimentInfo} list slot
+Allows retrieving individual elements from the \code{experiment_info} list slot
 using the double-bracket subset operator.
 
 Allows assigning a value to an existing element or adding a new element
-to the \code{experimentInfo} list slot using the double-bracket subset assignment operator.
+to the \code{experiment_info} list slot using the double-bracket subset assignment operator.
 
-Allows retrieving individual elements from the \code{experimentInfo} list slot
+Allows retrieving individual elements from the \code{experiment_info} list slot
 using the \code{$} operator.
 
 Allows assigning a value to an existing element or adding a new element
-to the \code{experimentInfo} list slot using the \code{$} assignment operator.
+to the \code{experiment_info} list slot using the \code{$} assignment operator.
 }
 \examples{
-# Assuming cd_obj is a CircadianData object with experimentInfo(cd_obj)$period <- 24
+# Assuming cd_obj is a CircadianData object with experiment_info(cd_obj)$period <- 24
 # period_val <- cd_obj[["period"]]
 # Assuming cd_obj is a CircadianData object
 # cd_obj[["period"]] <- 24
 # cd_obj[["notes"]] <- "Updated notes"
-# print(experimentInfo(cd_obj))
-# Assuming cd_obj is a CircadianData object with experimentInfo(cd_obj)$period <- 24
+# print(experiment_info(cd_obj))
+# Assuming cd_obj is a CircadianData object with experiment_info(cd_obj)$period <- 24
 # period_val <- cd_obj$period
 # Assuming cd_obj is a CircadianData object
 # cd_obj$period <- 24
 # cd_obj$notes <- "Updated notes"
-# print(experimentInfo(cd_obj))
+# print(experiment_info(cd_obj))
 }

@@ -18,9 +18,16 @@ A data frame with the results of the CircaN analysis.
 This function runs rhythmicity detection using CircaN.
 }
 \examples{
-data(dataset)
-data(meta)
-cd <- CircadianData(dataset, meta, experimentInfo = list(period = 24, repeated_measures = TRUE))
+data(cw_data)
+data(cw_metadata)
+cw_metadata <- clockworks::check_metadata(
+  cw_metadata,
+  colname_sample = "Sample_ID",
+  colname_time = "Time",
+  colname_group = "Group",
+  colname_subject = "Subject_ID"
+)
+cd <- CircadianData(cw_data, cw_metadata, experiment_info = list(period = 24, repeated_measures = TRUE))
 results <- clockworks:::run_circan(cd)
 head(results)
 }

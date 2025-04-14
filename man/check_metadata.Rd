@@ -6,8 +6,8 @@
 \usage{
 check_metadata(
   metadata,
-  colname_time,
   colname_sample,
+  colname_time,
   colname_group = NULL,
   colname_subject = NULL
 )
@@ -16,12 +16,12 @@ check_metadata(
 \item{metadata}{A data frame containing metadata associated with the samples
 in the dataset.}
 
+\item{colname_sample}{A string specifying the name of the column in
+\code{metadata} that contains the sample IDs. These IDs should be unique.}
+
 \item{colname_time}{A string specifying the name of the column in \code{metadata}
 that contains the time information (e.g., collection time). This column
 must be numeric.}
-
-\item{colname_sample}{A string specifying the name of the column in
-\code{metadata} that contains the sample IDs. These IDs should be unique.}
 
 \item{colname_group}{A string (optional) specifying the name of the column in
 \code{metadata} that contains group information (e.g., treatment groups,

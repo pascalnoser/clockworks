@@ -25,6 +25,7 @@ Imports:
     MetaCycle,
     edgeR,
     limorhyde,
-    parallel
+    future.apply,
+    RepeatedCircadian
 Depends: 
     R (>= 3.5)

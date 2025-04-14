@@ -10,7 +10,7 @@ prep_repeatedcircadian(cd)
 \item{cd}{A \code{CircadianData} object.}
 }
 \value{
-A long format data frame
+A data frame.
 }
 \description{
 Merge dataset and metadata of a \code{CircadianData} object.

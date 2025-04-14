@@ -108,8 +108,8 @@
 #'
 #' @export
 check_metadata <- function(metadata,
-                           colname_time,
                            colname_sample,
+                           colname_time,
                            colname_group = NULL,
                            colname_subject = NULL) {
   # 1. Check if metadata is a data.frame
@@ -120,18 +120,7 @@ check_metadata <- function(metadata,
   # Get column names
   cnames <- colnames(metadata)
 
-  # 2. Check if required columns (Time and Sample ID) are present
-  if (!colname_time %in% cnames) {
-    stop(
-      paste0(
-        "Missing column '", colname_time, "' in `metadata`. ",
-        "Please make sure that `colname_time` corresponds to the ",
-        "column containing the time information."
-      ),
-      call. = FALSE
-    )
-  }
-
+  # 2. Check if required columns (Sample ID and Time) are present
   # TODO: Add capability of using rownames as sample ID, maybe if the user
   # specified colname_sample = "row.names" or something like that
   if (!colname_sample %in% cnames) {
@@ -145,7 +134,18 @@ check_metadata <- function(metadata,
     )
   }
 
-  # 3. Check if optional columns (Group and Subject) are present (if they are not NULL)
+  if (!colname_time %in% cnames) {
+    stop(
+      paste0(
+        "Missing column '", colname_time, "' in `metadata`. ",
+        "Please make sure that `colname_time` corresponds to the ",
+        "column containing the time information."
+      ),
+      call. = FALSE
+    )
+  }
+
+  # 3a. Check if optional column for group is present (if not NULL)
   if (!is.null(colname_group) && !colname_group %in% cnames) {
     stop(
       paste0(
@@ -157,6 +157,7 @@ check_metadata <- function(metadata,
     )
   }
 
+  # Print a message/warning if there is only one group in the defined column
   if (!is.null(colname_group)) unique_groups <- unique(metadata[[colname_group]])
 
   if (!is.null(colname_group) && !length(unique_groups) > 1) {
@@ -165,11 +166,11 @@ check_metadata <- function(metadata,
         "The `colname_group` ('", colname_group, "') column of metadata ",
         "contains only one group ('", unique_groups, "'). Analysis will ",
         "proceed with the assumption that there are no groups."
-      ),
-      call. = FALSE
+      )
     )
   }
 
+  # 3b. Check if optional column for subject ID is present (if not NULL)
   if (!is.null(colname_subject) && !colname_subject %in% cnames) {
     stop(
       paste0(
@@ -182,6 +183,20 @@ check_metadata <- function(metadata,
     )
   }
 
+  # Throw an error subject ID column contains only one value because this
+  # suggests a misunderstanding by the user
+  if (!is.null(colname_subject)) unique_subjects <- unique(metadata[[colname_subject]])
+
+  if (!is.null(colname_subject) && !length(unique_subjects) > 1) {
+    stop(
+      paste0(
+        "The `colname_subject` ('", colname_subject, "') column of metadata ",
+        "contains only one unique value ('", unique_groups, "'). Set ",
+        "`colname_subject` to NULL (default) unless you have repeated measures."
+      ),
+      call. = FALSE
+    )
+  }
 
   # 4. Check if colname_time contains numeric values
   if (!is.numeric(metadata[[colname_time]])) {
@@ -227,9 +242,9 @@ check_metadata <- function(metadata,
   row.names(metadata) <- metadata[[colname_sample]]
 
   # 9. Add columns with pre-defined names and order
-  colname_time_fixed = "_time"
-  colname_subject_fixed = "_subject_ID"
-  colname_group_fixed = "_group"
+  colname_time_fixed = ".time"
+  colname_subject_fixed = ".subject_ID"
+  colname_group_fixed = ".group"
 
   # Make sure columns don't already exist
   colnames_overlap = intersect(c(

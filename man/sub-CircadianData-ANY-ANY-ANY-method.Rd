@@ -22,7 +22,7 @@ A new, subsetted \code{CircadianData} object.
 }
 \description{
 Subsets the object by features (rows) and/or samples (columns), ensuring
-that the dataset and metadata remain synchronized. The experimentInfo
+that the dataset and metadata remain synchronized. The experiment_info
 slot is carried over unchanged.
 }
 \examples{
@@ -35,7 +35,7 @@ meta <- data.frame(
   time = rep(seq(0, 8, by = 2), 2)
 )
 cd_obj <- CircadianData(dataset = counts, metadata = meta,
-                        experimentInfo = list(type = "RNA-Seq"))
+                        experiment_info = list(type = "RNA-Seq"))
 
 # Subset features (rows)
 cd_obj_sub1 <- cd_obj[c("Feature1", "Feature5"), ]
@@ -45,7 +45,7 @@ dim(cd_obj_sub1) # 2 10
 cd_obj_sub2 <- cd_obj[ , c("Sample1", "Sample3", "Sample8")]
 dim(cd_obj_sub2) # 10  3
 print(metadata(cd_obj_sub2))
-print(experimentInfo(cd_obj_sub2)) # Carried over
+print(experiment_info(cd_obj_sub2)) # Carried over
 
 # Subset both
 cd_obj_sub3 <- cd_obj[1:3, c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE)]

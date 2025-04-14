@@ -18,15 +18,22 @@ A data frame with the results of the RepeatedCircadian analysis.
 This function runs rhythmicity detection using RepeatedCircadian
 }
 \examples{
-data(dataset)
-data(meta)
-cd <- CircadianData(dataset,
-                    meta,
-                    experimentInfo = list(
+data(cw_data)
+data(cw_metadata)
+cw_metadata <- clockworks:::check_metadata(
+  cw_metadata,
+  colname_sample = "Sample_ID",
+  colname_time = "Time",
+  colname_group = "Group",
+  colname_subject = "Subject_ID"
+)
+cd <- CircadianData(cw_data,
+                    cw_metadata,
+                    experiment_info = list(
                       period = 24,
                       repeated_measures = TRUE,
-                      group_info = TRUE
+                      n_groups = 2
                     ))
-results <- clockworks:::run_repeatedcircadian(cd)
-head(results)
+#results <- clockworks:::run_repeatedcircadian(cd)
+#head(results)
 }

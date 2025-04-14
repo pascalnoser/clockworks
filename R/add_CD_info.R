@@ -13,14 +13,16 @@ add_CD_info <- function(cd, period) {
   cd$period = period
 
   # Add group info
-  if ("_group" %in% meta_cnames && length(unique(metadata(cd)[["_group"]])) > 1) {
-    cd$group_info = TRUE
+  n_groups <- length(unique(metadata(cd)[[".group"]]))
+
+  if (".group" %in% meta_cnames) {
+    cd$n_groups = n_groups
   } else {
-    cd$group_info = FALSE
+    cd$n_groups = NA
   }
 
   # Add repeated measures info
-  if ("_subject_ID" %in% meta_cnames) {
+  if (".subject_ID" %in% meta_cnames) {
     cd$repeated_measures = TRUE
   } else {
     cd$repeated_measures = FALSE

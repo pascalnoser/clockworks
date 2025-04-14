@@ -1,17 +1,17 @@
 clockworks <- function(dataset,
                        metadata,
-                       colname_time,
                        colname_sample,
+                       colname_time,
                        colname_group = NULL,
                        colname_subject = NULL,
                        period = 24) {
   # Check validity of meta data and sort columns
   metadata <- check_metadata(
-    metadata,
-    colname_time,
-    colname_sample,
-    colname_group,
-    colname_subject
+    metadata = metadata,
+    colname_sample = colname_sample,
+    colname_time = colname_time,
+    colname_group = colname_group,
+    colname_subject = colname_subject
   )
 
   # Check if dataset is a data frame or matrix and make sure that the columns
@@ -23,11 +23,13 @@ clockworks <- function(dataset,
 
   # Remove `dataset` and `metadata` after this so they don't clash with the
   # accessor functions of the CircadianData object and to free up memory
+  # TODO: What if the user has a `dataset` or `metadata` object in their
+  # environment?
   rm(dataset)
   rm(metadata)
 
   # Find out what kind of data we're dealing with. Check the following (and add
-  # info to experimentInfo slot of CircadianData object)
+  # info to experiment_info slot of CircadianData object)
   # - Is there group information (just check if user defined `colname_group`)
   # - Do we have repeated measures?
   # - Are we dealing with counts (integers) or some sort of normalized values (e.g. logCPM)?

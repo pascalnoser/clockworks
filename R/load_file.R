@@ -19,7 +19,7 @@
 #' @examples
 #' filename <- system.file(
 #'   "extdata",
-#'   "SynthData_example_metadata.txt.gz",
+#'   "metadata_example.txt.gz",
 #'   package = "clockworks",
 #'   mustWork = TRUE
 #' )

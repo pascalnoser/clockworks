@@ -2,26 +2,41 @@
 % Please edit documentation in R/CircadianData.R
 \name{dataset}
 \alias{dataset}
+\alias{dataset,CircadianData-method}
 \alias{metadata}
+\alias{metadata,CircadianData-method}
 \alias{metadata<-}
-\alias{experimentInfo}
-\alias{experimentInfo<-}
+\alias{metadata<-,CircadianData-method}
+\alias{experiment_info}
+\alias{experiment_info,CircadianData-method}
+\alias{experiment_info<-}
+\alias{experiment_info<-,CircadianData-method}
 \title{Get the Dataset Matrix}
 \usage{
 dataset(x)
 
+\S4method{dataset}{CircadianData}(x)
+
 metadata(x)
+
+\S4method{metadata}{CircadianData}(x)
 
 metadata(x) <- value
 
-experimentInfo(x)
+\S4method{metadata}{CircadianData}(x) <- value
 
-experimentInfo(x) <- value
+experiment_info(x)
+
+\S4method{experiment_info}{CircadianData}(x)
+
+experiment_info(x) <- value
+
+\S4method{experiment_info}{CircadianData}(x) <- value
 }
 \arguments{
 \item{x}{A \code{CircadianData} object.}
 
-\item{value}{A list to replace the current experimentInfo.}
+\item{value}{A list to replace the current experiment_info.}
 }
 \value{
 The dataset matrix (features x samples).
@@ -30,7 +45,7 @@ The metadata data.frame (samples x attributes).
 
 The modified \code{CircadianData} object.
 
-The experimentInfo list.
+The experiment_info list.
 
 The modified \code{CircadianData} object.
 }

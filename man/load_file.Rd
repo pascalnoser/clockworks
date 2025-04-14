@@ -26,7 +26,7 @@ from the file extension and uses the appropriate function among \code{read_csv()
 \examples{
 filename <- system.file(
   "extdata",
-  "SynthData_example_metadata.txt.gz",
+  "metadata_example.txt.gz",
   package = "clockworks",
   mustWork = TRUE
 )
