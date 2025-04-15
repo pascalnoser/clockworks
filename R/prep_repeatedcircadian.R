@@ -5,5 +5,5 @@ prep_repeatedcircadian <- function(cd, grp){
   # Get relevant parameters
   n_features <- nrow(cd_filt)
   tt <- metadata(cd_filt)[[".time"]]
-  subj_id <-
+  subj_id
 }
