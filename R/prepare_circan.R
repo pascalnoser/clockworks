@@ -3,7 +3,7 @@
 #' @param cd
 #'
 #' @returns something
-prep_circan <- function(cd) {
+prepare_circan <- function(cd) {
   # Prepare meta data
   df_metadata <- data.frame(
     sample = rownames(metadata(cd)),

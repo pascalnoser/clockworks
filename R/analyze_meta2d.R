@@ -8,6 +8,6 @@
 #' @importFrom MetaCycle meta2d
 #'
 #' @returns A data frame with the results of the meta2d analysis.
-run_meta2d <- function(cd, ...) {
+analyze_meta2d <- function(cd, ...) {
 
 }

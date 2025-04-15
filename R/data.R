@@ -2,7 +2,8 @@
 #'
 #' This data set is an example for what the `dataset` and `metadata` arguments
 #' for the `clockworks` function could look like. It contains log-CPM values for
-#' 10 rhythmic genes. This synthetic data set contains repeated measures of four
+#' 10 genes. Of these, the first two are rhythmic while the remaining eight are
+#' just noise. This synthetic data set contains repeated measures of four
 #' individuals (S1 - S4) that are split into two groups ("A" and "B"), sampled
 #' over a span of 48 hours at 2 hour intervals.
 #'

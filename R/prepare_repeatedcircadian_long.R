@@ -5,7 +5,7 @@
 #' @param cd A `CircadianData` object.
 #'
 #' @returns A data frame.
-prep_repeatedcircadian_long <- function(cd) {
+prepare_repeatedcircadian_long <- function(cd) {
   # Get dataset
   df_data <- dataset(cd)
 

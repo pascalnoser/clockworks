@@ -8,6 +8,6 @@
 #' @importFrom MetaCycle meta2d
 #'
 #' @returns A data frame with the results of the JTK_CYCLE analysis.
-run_jtkcycle <- function(cd, ...) {
+analyze_jtkcycle <- function(cd, ...) {
 
 }

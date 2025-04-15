@@ -8,6 +8,6 @@
 #' @importFrom GeneCycle robust.spectrum
 #'
 #' @returns A data frame with the results of the GeneCycle analysis.
-run_genecycle <- function(cd, ...) {
+analyze_genecycle <- function(cd, ...) {
 
 }

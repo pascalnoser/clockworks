@@ -18,7 +18,7 @@ meta_full <- check_metadata(
 )
 
 cd_full <- CircadianData(cw_data, meta_full)
-cd_full <- add_CD_info(cd_full, period = 24)
+cd_full <- add_experiment_info(cd_full, period = 24)
 
 # "Minimal" CD object with no groups and no repeated measures
 meta_min <- check_metadata(
@@ -28,7 +28,7 @@ meta_min <- check_metadata(
 )
 
 cd_min <- CircadianData(cw_data, meta_min)
-cd_min <- add_CD_info(cd_min, period = 24)
+cd_min <- add_experiment_info(cd_min, period = 24)
 
 # CD object with groups but no repeated measures
 meta_grp <- check_metadata(
@@ -39,7 +39,7 @@ meta_grp <- check_metadata(
 )
 
 cd_grp <- CircadianData(cw_data, meta_grp)
-cd_grp <- add_CD_info(cd_grp, period = 24)
+cd_grp <- add_experiment_info(cd_grp, period = 24)
 
 # CD object no groups but repeated measures
 meta_rep <- check_metadata(
@@ -50,7 +50,7 @@ meta_rep <- check_metadata(
 )
 
 cd_rep <- CircadianData(cw_data, meta_rep)
-cd_rep <- add_CD_info(cd_rep, period = 24)
+cd_rep <- add_experiment_info(cd_rep, period = 24)
 
 
 # Save objects

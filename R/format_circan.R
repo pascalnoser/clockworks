@@ -1,4 +1,5 @@
-postprocess_circan <- function(res) {
+format_circan <- function(res) {
+  # TODO: Add group and mesor
   df_modified <- data.frame(
     feature = res$feature,
     amplitude_estimate = res$estimate.amp,

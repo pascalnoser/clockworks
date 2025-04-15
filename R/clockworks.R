@@ -1,10 +1,18 @@
 clockworks <- function(dataset,
                        metadata,
+                       method,
                        colname_sample,
                        colname_time,
                        colname_group = NULL,
                        colname_subject = NULL,
-                       period = 24) {
+                       period = 24,
+                       ...) {
+  # Make sure method is valid
+  method <- match.arg(method, choices = c("RepeatedCircadian"))
+
+  # Use function dispatch
+  analyze_fn <- get(tolower(paste0("analyze_", method)), mode = "function")
+
   # Check validity of meta data and sort columns
   metadata <- check_metadata(
     metadata = metadata,
@@ -43,7 +51,7 @@ clockworks <- function(dataset,
   # - Additional checks probably added after benchmark
   # - ...
   # Add experiment info to CD object
-  cd <- add_CD_info(cd, period)
+  cd <- add_experiment_info(cd, period)
 
   # If not specified by the user, pick a method based on the results of the previous function
   # -> Implement running the functions:
@@ -57,6 +65,7 @@ clockworks <- function(dataset,
   #     - RepeatedCircadian
   #     - TimeCycle
   #     - Others?
+  rhythmicity_results <- analyze_fn(cd, ...)
 
   # Modify output such that it is consistent among methods (e.g. name of p-value column etc)?
   # ....

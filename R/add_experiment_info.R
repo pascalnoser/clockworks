@@ -4,8 +4,7 @@
 #' @param period A number defining the period length of the circadian data.
 #'
 #' @returns The `CircadianData` object with added experiment info
-#'
-add_CD_info <- function(cd, period) {
+add_experiment_info <- function(cd, period) {
   # Get meta data column names
   meta_cnames = colnames(metadata(cd))
 

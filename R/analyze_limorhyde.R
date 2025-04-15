@@ -13,7 +13,7 @@
 #' @importFrom edgeR voomLmFit
 #'
 #' @returns A data frame with the results of the LimoRhyde analysis.
-run_limorhyde <- function(cd, ...) {
+analyze_limorhyde <- function(cd, ...) {
   # TODO: Add info about what model will be used and so on to documentation
   # TODO: Add info about required parameters in experimentInfo slot (group_info,
   # repeated_measures, others?)

@@ -164,8 +164,9 @@ check_metadata <- function(metadata,
     message(
       paste0(
         "The `colname_group` ('", colname_group, "') column of metadata ",
-        "contains only one group ('", unique_groups, "'). Analysis will ",
-        "proceed with the assumption that there are no groups."
+        "contains only one group ('", unique_groups, "'). If your data does ",
+        "not consist of several groups, `colname_group` can be set to NULL ",
+        "(default). Analysis will proceed regardless."
       )
     )
   }

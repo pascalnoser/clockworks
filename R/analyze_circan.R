@@ -20,9 +20,9 @@
 #'   colname_subject = "Subject_ID"
 #' )
 #' cd <- CircadianData(cw_data, cw_metadata, experiment_info = list(period = 24, repeated_measures = TRUE))
-#' results <- clockworks:::run_circan(cd)
-#' head(results)
-run_circan <- function(cd, ...) {
+#' results <- clockworks:::analyze_circan(cd)
+#' head(results$res_original)
+analyze_circan <- function(cd, ...) {
   # TODO: Add info about required parameters in experiment_info slot (group_info,
   # repeated_measures, others?)
 
@@ -36,7 +36,7 @@ run_circan <- function(cd, ...) {
   r <<- NA
 
   # Prepare data and metadata
-  ls_prep = prep_circan(cd)
+  ls_prep = prepare_circan(cd)
   df_data = ls_prep$df_data
   df_metadata = ls_prep$df_metadata
 
@@ -50,7 +50,7 @@ run_circan <- function(cd, ...) {
   ))
 
   # Postprocessing
-  df_results_modified <- postprocess_circan(df_results_original)
+  df_results_modified <- format_circan(df_results_original)
 
 
   # Remove global variables
@@ -58,5 +58,5 @@ run_circan <- function(cd, ...) {
   rm(akaike)
   rm(r)
 
-  return(list(df_results_original = df_results_original, df_results_modified = df_results_modified))
+  return(list(res_original = df_results_original, res_formatted = df_results_modified))
 }

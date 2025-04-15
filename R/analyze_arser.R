@@ -8,6 +8,6 @@
 #' @importFrom MetaCycle meta2d
 #'
 #' @returns A data frame with the results of the ARSER analysis.
-run_arser <- function(cd, ...) {
+analyze_arser <- function(cd, ...) {
 
 }
