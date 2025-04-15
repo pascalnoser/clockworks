@@ -34,7 +34,7 @@ run_repeatedcircadian <- function(cd, ...) {
 
   ### ----- ###
   # # Prepare data
-  # df_prep <- prep_repeatedcircadian(cd_sorted)
+  # df_prep <- prep_repeatedcircadian_long(cd_sorted)
   # df_prep[1:8, 1:8]
   #
   # # Now what?
@@ -43,9 +43,12 @@ run_repeatedcircadian <- function(cd, ...) {
   # Get metadata
   df_metadata = metadata(cd_sorted)
 
-  # Add group if there is none
+  # Add temporary group if there are none
   if (!".group" %in% colnames(df_metadata)){
     df_metadata[[".group"]] <- "tmp"
+    metadata(cd_sorted) <- df_metadata
+
+    # Note that group needs to be removed from results in the end
     remove_group <- TRUE
   }
 
@@ -53,8 +56,21 @@ run_repeatedcircadian <- function(cd, ...) {
   groups <- unique(df_metadata[[".group"]])
 
   # Create empty list for results
-  ls_res_synth = list()
+  ls_res = list()
 
+  # Run rhythmicity detection for each group separately
+  for (grp in unique(df_metadata$Group)) {
+    # Prepare inputs
+    ls_prep <- prep_repeatedcircadian(cd_sorted, grp)
+
+    # Run rhythmicity detection for each feature separately
+    ls_res_temp <- future_lapply()
+  }
+
+
+
+
+  ## BENCHMARK VERSION
   # Run rhythmicity detection for each group separately
   for (grp in unique(df_metadata$Group)) {
     # Filter data
