@@ -723,41 +723,92 @@ setMethod("filter_samples", "CircadianData",
 
 #' Show Method for CircadianData
 #'
+#' Provides a comprehensive summary of the CircadianData object, including
+#' dimensions, snippets of feature/sample names, previews of the metadata
+#' and dataset, and the contents of the experiment_info list.
+#'
 #' @param object A \code{CircadianData} object.
 #' @export
 setMethod("show", "CircadianData", function(object) {
-  cat("An object of class 'CircadianData'\n")
-  cat(" Dimensions:", nrow(object), "features,", ncol(object), "samples\n")
+  n_features <- nrow(object)
+  n_samples <- ncol(object)
 
-  # Show snippet of row/col names
+  cat("An object of class 'CircadianData'\n")
+  cat(" Dimensions:", n_features, "features,", n_samples, "samples\n")
+
+  # --- Dimnames Snippets ---
   rn <- rownames(object)
   cn <- colnames(object)
+  # Show snippet of row/col names
   if (is.null(rn)) {
     rn_show <- "[NULL]"
-  } else if (length(rn) > 4)
-    rn_show <- c(head(rn, 2), "...", tail(rn, 1))
+  } else if (length(rn) > 6)
+    rn_show <- c(head(rn, 3), "...", tail(rn, 2))
   else
     rn_show <- rn
   if (is.null(cn)) {
     cn_show <- "[NULL]"
-  } else if (length(cn) > 4)
-    cn_show <- c(head(cn, 2), "...", tail(cn, 1))
+  } else if (length(cn) > 6)
+    cn_show <- c(head(cn, 3), "...", tail(cn, 2))
   else
     cn_show <- cn
-  cat(" Feature names:", paste(rn_show, collapse = " "), "\n")
-  cat(" Sample names:", paste(cn_show, collapse = " "), "\n")
+  cat(sprintf(" %s:", "Feature names"), paste(rn_show, collapse = " "), "\n")
+  cat(sprintf(" %s:", "Sample names"), paste(cn_show, collapse = " "), "\n")
 
-  # Show snippet of metadata
-  cat(" Metadata columns:", paste(colnames(metadata(object)), collapse=", "), "\n")
-
-  # Show snippet of experiment_info keys
-  ei_keys <- names(experiment_info(object))
-  if (length(ei_keys) > 0) {
-    if (length(ei_keys) > 5) ei_keys_show <- c(head(ei_keys, 5), "...") else ei_keys_show <- ei_keys
-    cat(" experiment_info keys:", paste(ei_keys_show, collapse=", "), "\n")
-  } else {
-    cat(" experiment_info: Empty list\n")
+  # --- Metadata Preview ---
+  cat("\nMetadata preview:\n")
+  mdata <- metadata(object)
+  if (n_samples > 0 && ncol(mdata) > 0) {
+    # Show head of metadata
+    print(head(mdata))
+  } else if (n_samples == 0) {
+    cat(" [No samples]\n")
+  } else { # ncol(mdata) == 0
+    cat(" [No metadata columns]\n")
   }
+
+  # --- Dataset Preview ---
+  cat("\nDataset preview:\n")
+  dset <- dataset(object)
+  if (n_features > 0 && n_samples > 0) {
+    # Determine rows/cols to show (e.g., up to 6x6)
+    rows_to_show <- min(n_features, 6)
+    cols_to_show <- min(n_samples, 6)
+    cat(sprintf(" [showing %d features x %d samples]\n", rows_to_show, cols_to_show))
+    # Extract subset
+    dset_preview <- dset[1:rows_to_show, 1:cols_to_show, drop = FALSE]
+    # Print the subsetted matrix
+    print(dset_preview)
+  } else if (n_features == 0) {
+    cat(" [No features]\n")
+  } else { # n_samples == 0
+    cat(" [No samples]\n")
+  }
+
+  # --- Experiment Info ---
+  cat("\nExperiment Info:\n")
+  exp_info <- experiment_info(object)
+  if (length(exp_info) > 0) {
+    for (i in seq_along(exp_info)) {
+      key <- names(exp_info)[i]
+      value <- exp_info[[i]]
+      # Format the value for display (using capture.output for complex values)
+      # For simple values, direct print might be okay, but capture.output is safer
+      value_str <- capture.output(print(value))
+      # Indent multi-line values for clarity
+      if (length(value_str) > 1) {
+        cat(sprintf(" $ %s:\n", key))
+        cat(paste("   ", value_str, collapse = "\n"), "\n")
+      } else {
+        cat(sprintf(" $ %s: %s\n", key, value_str))
+      }
+    }
+  } else {
+    cat(" [Empty list]\n")
+  }
+
+  # Add a final newline for spacing
+  cat("\n")
 })
 
 
