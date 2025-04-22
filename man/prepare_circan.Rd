@@ -2,16 +2,20 @@
 % Please edit documentation in R/prepare_circan.R
 \name{prepare_circan}
 \alias{prepare_circan}
-\title{Title}
+\title{CircaN prep}
 \usage{
-prepare_circan(cd)
+prepare_circan(cd, grp)
 }
 \arguments{
-\item{cd}{}
+\item{cd}{A \code{CircadianData} object}
+
+\item{grp}{A string specifying a value in the ".group" column of the metadata
+slot of \code{cd} which is used for filtering.}
 }
 \value{
-something
+A list with inputs for \code{run_circan()}
 }
 \description{
-Title
+This function is used to create the input required to run rhythmicity
+detection with \code{CircaN}.
 }

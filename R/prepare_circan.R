@@ -1,22 +1,22 @@
-#' Title
+#' CircaN prep
 #'
-#' @param cd
+#' This function is used to create the input required to run rhythmicity
+#' detection with `CircaN`.
 #'
-#' @returns something
-prepare_circan <- function(cd) {
-  # Prepare meta data
-  df_metadata <- data.frame(
-    sample = rownames(metadata(cd)),
-    time = metadata(cd)$Time
-  )
-  if (cd$repeated_measures == TRUE) {
-    df_metadata$ind <- metadata(cd)$Subject_ID
-  } else {
-    df_metadata$ind <- as.factor(1)
-  }
+#' @param cd A `CircadianData` object
+#' @param grp A string specifying a value in the ".group" column of the metadata
+#'   slot of `cd` which is used for filtering.
+#'
+#' @returns A list with inputs for `run_circan()`
+prepare_circan <- function(cd, grp) {
+  # Filter CD object by group
+  cd_filt <- filter_samples(cd, col = ".group", value = grp)
 
   # Prepare data (must be a data frame with features as first column)
-  df_data <- data.frame(feature = rownames(dataset(cd)), dataset(cd))
+  df_data <- data.frame(feature = rownames(dataset(cd_filt)), dataset(cd_filt))
 
-  return(list(df_data = df_data, df_metadata = df_metadata))
+  # Create list with inputs
+  ls_inputs <- list(df_data = df_data, df_metadata = metadata(cd_filt))
+
+  return(ls_inputs)
 }

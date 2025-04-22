@@ -649,7 +649,7 @@ setMethod("order_samples", "CircadianData",
 #' @return A new \code{CircadianData} object containing only the samples
 #'   that satisfy the filter condition.
 #' @export
-#' @rdname filter_samples_by_value
+#' @rdname filter_samples
 #' @examples
 #' # Create minimal reproducible data
 #' set.seed(789)
@@ -664,23 +664,23 @@ setMethod("order_samples", "CircadianData",
 #' cd_obj <- CircadianData(counts, meta, experiment_info = list(period = 24))
 #'
 #' # Filter samples belonging to the "Control" group
-#' cd_control <- filter_samples_by_value(cd_obj, col = "group", value = "Control")
+#' cd_control <- filter_samples(cd_obj, col = "group", value = "Control")
 #' print(metadata(cd_control))
 #'
 #' # Filter samples from subject S1 or S3
-#' cd_s1_s3 <- filter_samples_by_value(cd_obj, col = "subject_id", value = c("S1", "S3"))
+#' cd_s1_s3 <- filter_samples(cd_obj, col = "subject_id", value = c("S1", "S3"))
 #' print(metadata(cd_s1_s3))
 #'
 #' # Filter samples collected at time 0 or 6
-#' cd_t0_t6 <- filter_samples_by_value(cd_obj, col = "time", value = c(0, 6))
+#' cd_t0_t6 <- filter_samples(cd_obj, col = "time", value = c(0, 6))
 #' print(metadata(cd_t0_t6))
 #'
-setGeneric("filter_samples_by_value", function(x, col, value, ...) standardGeneric("filter_samples_by_value"))
+setGeneric("filter_samples", function(x, col, value, ...) standardGeneric("filter_samples"))
 
 # --- Method for CircadianData Class ---
 
-#' @rdname filter_samples_by_value
-setMethod("filter_samples_by_value", "CircadianData",
+#' @rdname filter_samples
+setMethod("filter_samples", "CircadianData",
           function(x, col, value) {
 
             # --- Input Validation ---

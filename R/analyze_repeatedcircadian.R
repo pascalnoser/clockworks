@@ -56,6 +56,7 @@ analyze_repeatedcircadian <- function(cd, ...) {
   # Run rhythmicity detection for each group separately
   groups <- unique(metadata(cd_local)[[".group"]])
   for (grp in groups) {
+    # TODO: Don't loop over groups
     # Prepare inputs
     ls_inputs <- prepare_repeatedcircadian(cd_local, grp)
 

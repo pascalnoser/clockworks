@@ -10,7 +10,7 @@
 #' @returns A list with inputs for `run_repeatedcircadian()`
 prepare_repeatedcircadian <- function(cd, grp) {
   # Filter CD object by group
-  cd_filt <- filter_samples_by_value(cd, col = ".group", value = grp)
+  cd_filt <- filter_samples(cd, col = ".group", value = grp)
 
   # Get relevant parameters
   n_features <- nrow(cd_filt)

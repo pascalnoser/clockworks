@@ -242,7 +242,7 @@ check_metadata <- function(metadata,
   # 8. Add sample IDs as row names
   row.names(metadata) <- metadata[[colname_sample]]
 
-  # 9. Add columns with pre-defined names and order
+  # 9. Add columns with pre-defined names and order and remove other columns
   colname_time_fixed = ".time"
   colname_subject_fixed = ".subject_ID"
   colname_group_fixed = ".group"
@@ -265,17 +265,20 @@ check_metadata <- function(metadata,
   }
 
   # Add columns in the right order
-  first_cols <- c(colname_time_fixed)
+  final_cols <- c(colname_time_fixed)
   metadata[[colname_time_fixed]] = metadata[[colname_time]]
   if (!is.null(colname_subject)) {
     metadata[[colname_subject_fixed]] = metadata[[colname_subject]]
-    first_cols <- c(first_cols, colname_subject_fixed)
+    final_cols <- c(final_cols, colname_subject_fixed)
   }
   if (!is.null(colname_group)){
     metadata[[colname_group_fixed]] = metadata[[colname_group]]
-    first_cols <- c(first_cols, colname_group_fixed)
+    final_cols <- c(final_cols, colname_group_fixed)
   }
-  metadata <- metadata[, c(first_cols, setdiff(colnames(metadata), first_cols))]
+
+  # Only use relevant columns. Set `drop = FALSE` to make sure it stays a data
+  # frame even if there is only one column
+  metadata <- metadata[, final_cols, drop = FALSE]
 
   return(metadata)
 }

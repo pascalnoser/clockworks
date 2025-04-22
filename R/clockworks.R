@@ -8,7 +8,12 @@ clockworks <- function(dataset,
                        period = 24,
                        ...) {
   # Make sure method is valid
-  method <- match.arg(method, choices = c("RepeatedCircadian"))
+  method <- match.arg(method, choices = c("RepeatedCircadian", "CircaN"))
+
+  # Plan session for parallel processing
+  # TODO: Can probably run `parallelly::supportsMulticore()` and if TRUE use
+  # multicore instead of multisession
+  future::plan(multisession, ceiling(parallelly::availableCores()/2))
 
   # Use function dispatch
   analyze_fn <- get(tolower(paste0("analyze_", method)), mode = "function")

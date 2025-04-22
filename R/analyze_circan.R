@@ -19,44 +19,45 @@
 #'   colname_group = "Group",
 #'   colname_subject = "Subject_ID"
 #' )
-#' cd <- CircadianData(cw_data, cw_metadata, experiment_info = list(period = 24, repeated_measures = TRUE))
+#' cd <- CircadianData(
+#'   cw_data,
+#'   cw_metadata,
+#'   experiment_info = list(
+#'     period = 24,
+#'     repeated_measures = TRUE,
+#'     n_groups = 2
+#'   )
+#' )
 #' results <- clockworks:::analyze_circan(cd)
 #' head(results$res_original)
 analyze_circan <- function(cd, ...) {
-  # TODO: Add info about required parameters in experiment_info slot (group_info,
-  # repeated_measures, others?)
+  # TODO: REMOVE IMPORTS AND MOVE TO RUN FUNCTION
 
-  # TODO: ADD WAY TO HANDLE DIFFERENT GROUPS
+  # Check if cd object contains necessary columns and add them if not
+  cd_local <- check_circan(cd)
+  # Remove group column later if added temporarily by check
+  remove_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)
 
-  # Prevent "object 'vec' not found" error if one curve type can't be fit
-  # TODO: Figure out if this is necessary (was in the benchmark) or of there is
-  # a better way to do this
-  vec <<- rep(NA, times = 12)
-  akaike <<- c(NA, NA)
-  r <<- NA
+  # Create empty list for results
+  ls_res_groups = list()
 
-  # Prepare data and metadata
-  ls_prep = prepare_circan(cd)
-  df_data = ls_prep$df_data
-  df_metadata = ls_prep$df_metadata
+  # Run rhythmicity detection for each group separately
+  groups <- unique(metadata(cd_local)[[".group"]])
+  for (grp in groups) {
+    # Prepare inputs
+    ls_inputs <- prepare_circan(cd_local, grp)
 
-  # Run rhythmicity analysis
-  df_results_original = suppressWarnings(CircaN::circan(
-    data = df_data,
-    meta = df_metadata,
-    min_per = min(cd$period),
-    max_per = max(cd$period),
-    ...
-  ))
+    # Run rhythmicity analysis
+    # TODO
+    df_res_grp <- run_circan(ls_inputs, ...)
+
+    # Add to list
+    ls_res_groups[[grp]] <- df_res_grp
+  }
 
   # Postprocessing
-  df_results_modified <- format_circan(df_results_original)
+  # TODO
+  ls_res <- format_circan(ls_res_groups, remove_group)
 
-
-  # Remove global variables
-  rm(vec)
-  rm(akaike)
-  rm(r)
-
-  return(list(res_original = df_results_original, res_formatted = df_results_modified))
+  return(ls_res)
 }
