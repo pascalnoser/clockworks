@@ -13,7 +13,7 @@ clockworks <- function(dataset,
   # Plan session for parallel processing
   # TODO: Can probably run `parallelly::supportsMulticore()` and if TRUE use
   # multicore instead of multisession
-  future::plan(multisession, ceiling(parallelly::availableCores()/2))
+  # future::plan(multisession, ceiling(parallelly::availableCores()/2))
 
   # Use function dispatch
   analyze_fn <- get(tolower(paste0("analyze_", method)), mode = "function")
@@ -82,4 +82,6 @@ clockworks <- function(dataset,
   # - If multiple methods were run, some comparisons of the results
   #   - Upset plots?
   #   - Venn diagrams?
+
+  return(rhythmicity_results)
 }

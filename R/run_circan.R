@@ -7,23 +7,30 @@
 #'
 #' @import CircaN
 #' @import nlme
-#' @importFrom future.apply future_lapply
 #'
 #' @returns A data frame
 run_circan <- function(inputs, ...) {
   # Prevent "object 'vec' not found" error if one curve type can't be fit
   # TODO: Figure out if this is necessary (was in the benchmark) or of there is
-  # a better way to do this
+  # a better way to do this.
+  # TODO: FIGURE OUT WHAT TO DO IF THE USER HAS OBJECTS CALLED `vec`, `akaike`
+  # OR `r` IN THEIR ENVIRONMENT. MAYBE RENAME THEIR VARIABLES, DEFINE THESE
+  # HERE, REMOVE THESE AND RENAME THEIRS BACK
   vec <<- rep(NA, times = 12)
   akaike <<- c(NA, NA)
   r <<- NA
 
-  # R
+  # Run rhythmicity analysis
+  df_res = suppressWarnings(CircaN::circan(
+    data = inputs$df_data,
+    meta = inputs$df_metadata,
+    min_per = inputs$min_per,
+    max_per = inputs$max_per,
+    ...
+  ))
 
-  # Add feautre IDs and group to results df
-  df_res = data.frame(feature = rownames(inputs$data_filt),
-                      group = inputs$group,
-                      df_res_raw)
+  # Add feature IDs and group to results df
+  df_res$group = inputs$group
 
   # Return results
   return(df_res)

@@ -10,5 +10,7 @@
 \item{object}{A \code{CircadianData} object.}
 }
 \description{
-Show Method for CircadianData
+Provides a comprehensive summary of the CircadianData object, including
+dimensions, snippets of feature/sample names, previews of the metadata
+and dataset, and the contents of the experiment_info list.
 }

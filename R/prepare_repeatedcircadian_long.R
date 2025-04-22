@@ -17,12 +17,11 @@ prepare_repeatedcircadian_long <- function(cd) {
   data_long <- data.frame(
     ".feature" = rep(feature_IDs, times = length(sample_IDs)),
     ".sample" = rep(sample_IDs, each = length(feature_IDs)),
-    ".value" = as.vector(as.matrix(df_data)),
-    check.names = FALSE  # Don't add "X" before leading _
+    ".value" = as.vector(as.matrix(df_data))
   )
 
   # Add sample IDs as column to metadata
-  df_meta <- metadata(cd_sorted)
+  df_meta <- metadata(cd)
   df_meta[[".sample"]] <- rownames(df_meta)
 
   # Only keep relevant columns of meta data
