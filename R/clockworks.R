@@ -1,14 +1,15 @@
 clockworks <- function(dataset,
                        metadata,
-                       method,
-                       colname_sample,
                        colname_time,
+                       colname_sample,
                        colname_group = NULL,
                        colname_subject = NULL,
                        period = 24,
+                       method = "auto",
                        ...) {
   # Make sure method is valid
-  method <- match.arg(method, choices = c("RepeatedCircadian", "CircaN"))
+  method <- match.arg(method,
+                      choices = c("auto", "RepeatedCircadian", "CircaN", "JTK_CYCLE"))
 
   # Plan session for parallel processing
   # TODO: Can probably run `parallelly::supportsMulticore()` and if TRUE use
@@ -16,7 +17,8 @@ clockworks <- function(dataset,
   # future::plan(multisession, ceiling(parallelly::availableCores()/2))
 
   # Use function dispatch
-  analyze_fn <- get(tolower(paste0("analyze_", method)), mode = "function")
+  method_str <- gsub("[_-]", "", tolower(method)) # Remove "-" and "_" from method names
+  analyze_fn <- get((paste0("analyze_", method_str)), mode = "function")
 
   # Check validity of meta data and sort columns
   metadata <- check_metadata(

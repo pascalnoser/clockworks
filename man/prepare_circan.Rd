@@ -13,9 +13,9 @@ prepare_circan(cd, grp)
 slot of \code{cd} which is used for filtering.}
 }
 \value{
-A list with inputs for \code{run_circan()}
+A list with inputs for \code{execute_circan()}
 }
 \description{
 This function is used to create the input required to run rhythmicity
-detection with \code{CircaN}.
+detection with CircaN.
 }

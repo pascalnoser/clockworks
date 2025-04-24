@@ -35,7 +35,7 @@ check_circan <- function(cd) {
   metadata(cd_local) <- df_meta_temp
 
   # Make sure samples are ordered by time and subject
-  cd_local <- order_samples(cd_local, c("time", "ind"))
+  cd_local <- order_samples(cd_local, c("time", ".group", "ind"))
 
   return(cd_local)
 }

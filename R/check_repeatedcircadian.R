@@ -1,7 +1,7 @@
 #' RepeatedCircadian CircadianData check
 #'
 #' This function checks whether a `CircadianData` object contains all the meta
-#' data columns necessary to run rhythmicity detection with `RepeatedCircadian`.
+#' data columns necessary to run rhythmicity detection with RepeatedCircadian.
 #'
 #' @param cd A `CircadianData` object
 #'
@@ -43,9 +43,8 @@ check_repeatedcircadian <- function(cd) {
     metadata(cd_local) <- df_meta_temp
   }
 
-
   # Make sure samples are ordered by time and subject
-  cd_local <- order_samples(cd_local, c(".time", ".subject_ID"))
+  cd_local <- order_samples(cd_local, c(".time", ".group", ".subject_ID"))
 
   return(cd_local)
 }

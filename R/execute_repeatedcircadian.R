@@ -9,7 +9,7 @@
 #' @importFrom future.apply future_lapply
 #'
 #' @returns A data frame
-run_repeatedcircadian <- function(inputs, ...) {
+execute_repeatedcircadian <- function(inputs, ...) {
   # Run rhythmicity detection for each feature separately
   ls_res <- future_lapply(1:inputs$n_features, function(feature) {
     yy <- as.numeric(inputs$data_filt[feature, ])

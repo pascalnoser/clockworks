@@ -14,5 +14,5 @@ A \code{CircadianData} object
 }
 \description{
 This function checks whether a \code{CircadianData} object contains all the meta
-data columns necessary to run rhythmicity detection with \code{RepeatedCircadian}.
+data columns necessary to run rhythmicity detection with RepeatedCircadian.
 }

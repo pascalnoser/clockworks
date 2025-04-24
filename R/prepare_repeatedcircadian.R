@@ -1,13 +1,13 @@
 #' RepeatedCircadian prep
 #'
 #' This function is used to create the input required to run rhythmicity
-#' detection with `RepeatedCircadian`.
+#' detection with RepeatedCircadian.
 #'
 #' @param cd A `CircadianData` object
 #' @param grp A string specifying a value in the ".group" column of the metadata
 #'   slot of `cd` which is used for filtering.
 #'
-#' @returns A list with inputs for `run_repeatedcircadian()`
+#' @returns A list with inputs for `execute_repeatedcircadian()`
 prepare_repeatedcircadian <- function(cd, grp) {
   # Filter CD object by group
   cd_filt <- filter_samples(cd, col = ".group", value = grp)
