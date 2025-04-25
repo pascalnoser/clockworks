@@ -43,7 +43,7 @@ format_jtkcycle <- function(ls_res_groups, remove_group) {
     res_formatted$group <- NULL
     res_original <- lapply(res_original, function(df){
       df$group <- NULL
-      return(x)
+      return(df)
     })
   }
 

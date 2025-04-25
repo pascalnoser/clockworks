@@ -203,7 +203,7 @@ check_metadata <- function(metadata,
   # Print a message if all values are unique because this suggests the user
   # simply has replicates rather than repeated measures, in which case
   # `colname_sample` need not be defined.
-  if (!any(duplicated(metadata[[colname_subject]]))) {
+  if (!is.null(colname_subject) && !any(duplicated(metadata[[colname_subject]]))) {
     message(
       paste0(
         "\nAll values in the `colname_subject` column of metadata ('",
