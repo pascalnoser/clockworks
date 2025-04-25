@@ -32,14 +32,20 @@
 # # 2 groups, no replicates, no repeated measures
 # tst_grp <- analyze_fn(cd_grp)
 #
-# # No groups, 4 replicates, no repeated measures
-# tst_replicates <- analyze_fn(cd_replicates)
+# # No groups, 2 replicates, no repeated measures
+# tst_rpl <- analyze_fn(cd_rpl)
 #
 # # 2 Groups, 2 replicates each, no repeated measures
-# tst_grp_repl <- analyze_fn(cd_grp_repl)
+# tst_grp_rpl <- analyze_fn(cd_grp_rpl)
 #
-# # No groups, 4 replicates, repeated measures
-# tst_repeated <- analyze_fn(cd_repeated)
+# # No Groups, no replicates, repeated measures
+# tst_rpt <- analyze_fn(cd_rpt)
+#
+# # 2 Groups, no replicates, repeated measures
+# tst_grp_rpt <- analyze_fn(cd_grp_rpt)
+#
+# # No groups, 2 replicates, repeated measures
+# tst_rpl_rpt <- analyze_fn(cd_rpl_rpt)
 #
 # # 2 Groups, 2 replicates each, repeated measures
 # tst_full <- analyze_fn(cd_full)
