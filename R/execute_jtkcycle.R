@@ -6,7 +6,7 @@
 #'
 #' @importFrom MetaCycle meta2d
 #'
-#' @returns A data frame
+#' @returns A list
 execute_jtkcycle <- function(inputs, ...) {
   # TODO: Figure out what to do about `parallelize` and `nCores`
 

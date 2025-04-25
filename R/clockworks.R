@@ -8,8 +8,16 @@ clockworks <- function(dataset,
                        method = "auto",
                        ...) {
   # Make sure method is valid
-  method <- match.arg(method,
-                      choices = c("auto", "RepeatedCircadian", "CircaN", "JTK_CYCLE"))
+  method <- match.arg(
+    method,
+    choices = c(
+      "auto",
+      "CircaN",
+      "RepeatedCircadian",
+      "JTK_CYCLE",
+      "LS"
+    )
+  )
 
   # Plan session for parallel processing
   # TODO: Can probably run `parallelly::supportsMulticore()` and if TRUE use

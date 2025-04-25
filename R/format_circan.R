@@ -2,10 +2,10 @@
 #'
 #' @param ls_res_groups A list with results from a CircaN rhythmicity
 #'   analysis, split into groups.
-#' @param remove_group If TRUE the "group" column will be removed
+#' @param added_group If TRUE the "group" column will be removed
 #'
 #' @returns A list of data frames containing the original and formatted results
-format_circan <- function(ls_res_groups, remove_group) {
+format_circan <- function(ls_res_groups, added_group) {
   # Turn into one data frame
   res_original <- do.call("rbind", ls_res_groups)
 
@@ -34,7 +34,7 @@ format_circan <- function(ls_res_groups, remove_group) {
   )
 
   # Remove group column if added temporarily by check function at the start
-  if (remove_group == TRUE) {
+  if (added_group == TRUE) {
     res_original$group <- NULL
     res_formatted$group <- NULL
   }

@@ -24,7 +24,7 @@ analyze_ls <- function(cd, ...) {
   # Check if cd object contains necessary columns and add them if not
   cd_local <- check_ls(cd)
   # Remove group column later if added temporarily by check
-  remove_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)
+  added_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)
 
   # Create empty list for results
   ls_res_groups = list()
@@ -36,14 +36,14 @@ analyze_ls <- function(cd, ...) {
     ls_inputs <- prepare_ls(cd_local, grp)
 
     # Run rhythmicity analysis
-    df_res_grp <- execute_ls(ls_inputs, ...)
+    ls_res_grp <- execute_ls(ls_inputs, ...)
 
     # Add to list
-    ls_res_groups[[grp]] <- df_res_grp
+    ls_res_groups[[grp]] <- ls_res_grp
   }
 
   # Postprocessing
-  ls_res <- format_ls(ls_res_groups, remove_group)
+  ls_res <- format_ls(ls_res_groups, added_group)
 
   return(ls_res)
 }

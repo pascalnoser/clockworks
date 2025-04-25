@@ -2,12 +2,12 @@
 #'
 #' @param ls_res_groups A list with results from a JTK_CYCLE rhythmicity
 #'   analysis, split into groups.
-#' @param remove_group If TRUE the "group" column will be removed
+#' @param added_group If TRUE the "group" column will be removed
 #'
 #' @returns A list of data frames containing the original and formatted results
-format_jtkcycle <- function(ls_res_groups, remove_group) {
+format_jtkcycle <- function(ls_res_groups, added_group) {
   # Turn list of lists into one list with one data frame per method
-  method_names <- c("ARS", "JTK", "LS", "meta")
+  method_names <- c("JTK", "meta")
   res_original <- lapply(method_names, function(x) {
     dfs <- lapply(ls_res_groups, `[[`, x)
     df_combined <- do.call(rbind, dfs)
@@ -22,7 +22,7 @@ format_jtkcycle <- function(ls_res_groups, remove_group) {
   res_formatted <- data.frame(
     feature = df_meta$CycID,
     group = df_meta$group,
-    amplitude_estimate = df_meta$JTK_amplitude,  # TODO: Use JTK_amplitude or meta2d_AMP?
+    amplitude_estimate = df_meta$meta2d_AMP,  # TODO: Use JTK_amplitude or meta2d_AMP?
     amplitude_pval = NA,
     amplitude_qval = NA,
     phase_estimate = df_meta$JTK_adjphase,
@@ -39,7 +39,7 @@ format_jtkcycle <- function(ls_res_groups, remove_group) {
   )
 
   # Remove group column if added temporarily by check function at the start
-  if (remove_group == TRUE) {
+  if (added_group == TRUE) {
     res_formatted$group <- NULL
     res_original <- lapply(res_original, function(df){
       df$group <- NULL
