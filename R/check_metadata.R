@@ -14,12 +14,12 @@
 #'   `metadata` that contains the sample IDs. These IDs should be unique.
 #' @param colname_group A string (optional) specifying the name of the column in
 #'   `metadata` that contains group information (e.g., treatment groups,
-#'   conditions). If no group information is available, leave as `NULL`.
-#'   Default: `NULL`.
+#'   conditions). If no group information is available, leave as `NULL`
+#'   (default).
 #' @param colname_subject A string (optional) specifying the name of the column
 #'   in `metadata` that contains subject IDs. This is useful for repeated
 #'   measures designs where each subject has multiple samples taken over time.
-#'   If no subject information is available, leave as `NULL`. Default: `NULL`.
+#'   If no subject information is available, leave as `NULL` (default).
 #'
 #' @return A data frame with the metadata, after performing the checks and
 #'   column ordering. The columns will be ordered with `colname_sample` first,
@@ -33,7 +33,8 @@
 #'   \item Checks if the required columns specified by `colname_time` and
 #'     `colname_sample` are present in the `metadata` data frame.
 #'   \item Checks if the optional columns specified by `colname_group` and
-#'     `colname_subject` are present (if they are not `NULL`).
+#'     `colname_subject` are present (if they are not `NULL`) and contain
+#'     reasonable values.
 #'   \item Checks if the `colname_time` column contains numeric values.
 #'   \item Checks if the values in the `colname_sample` column are unique.
 #'   \item Issues a warning if there are additional columns in `metadata` that
@@ -45,7 +46,7 @@
 #'     analysis easier.
 #' }
 #'
-#
+#'
 #' @examples
 #' # Create dummy metadata
 #' metadata <- data.frame(
@@ -163,10 +164,10 @@ check_metadata <- function(metadata,
   if (!is.null(colname_group) && !length(unique_groups) > 1) {
     message(
       paste0(
-        "The `colname_group` ('", colname_group, "') column of metadata ",
+        "\nThe `colname_group` ('", colname_group, "') column of metadata ",
         "contains only one group ('", unique_groups, "'). If your data does ",
         "not consist of several groups, `colname_group` can be set to NULL ",
-        "(default). Analysis will proceed regardless."
+        "(default). Analysis will proceed assuming one group."
       )
     )
   }
@@ -184,20 +185,38 @@ check_metadata <- function(metadata,
     )
   }
 
-  # Throw an error subject ID column contains only one value because this
+  # Throw an error if subject ID column contains only one value because this
   # suggests a misunderstanding by the user
   if (!is.null(colname_subject)) unique_subjects <- unique(metadata[[colname_subject]])
 
   if (!is.null(colname_subject) && !length(unique_subjects) > 1) {
     stop(
       paste0(
-        "The `colname_subject` ('", colname_subject, "') column of metadata ",
+        "The `colname_subject` column of metadata ('", colname_subject, "')",
         "contains only one unique value ('", unique_groups, "'). Set ",
         "`colname_subject` to NULL (default) unless you have repeated measures."
       ),
       call. = FALSE
     )
   }
+
+  # Print a message if all values are unique because this suggests the user
+  # simply has replicates rather than repeated measures, in which case
+  # `colname_sample` need not be defined.
+  if (!any(duplicated(metadata[[colname_subject]]))) {
+    message(
+      paste0(
+        "\nAll values in the `colname_subject` column of metadata ('",
+        colname_subject, "') are unique. Unless you have repeated measures, ",
+        "`colname_subject` can be set to to NULL (default). Analysis will ",
+        "proceed assuming no repeated measures."
+      )
+    )
+
+    # Set colname_subject to NULL since there are no repeated measures
+    colname_subject <- NULL
+  }
+
 
   # 4. Check if colname_time contains numeric values
   if (!is.numeric(metadata[[colname_time]])) {
@@ -224,15 +243,14 @@ check_metadata <- function(metadata,
     c(colname_time, colname_sample, colname_group, colname_subject)
   )
   if (length(additional_cols) > 0) {
-    warning(
+    message(
       paste0(
-        "The following columns in `metadata` will be ignored: ",
+        "\nThe following columns in `metadata` will be ignored: ",
         paste(additional_cols, collapse = ", "),
         "\nIf you want to use subject information (for repeated measures) or group ",
         "information, make sure to define these as `colname_subject` and ",
         "`colname_group`, respectively."
-      ),
-      call. = FALSE
+      )
     )
   }
 

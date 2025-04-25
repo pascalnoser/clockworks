@@ -14,6 +14,7 @@ format_repeatedcircadian <- function(ls_res_groups, remove_group) {
 
   # Create formatted results data frame
   # TODO: DOUBLE CHECK WHAT THE OUTPUT COLUMNS ARE EXACTLY
+  # TODO: Add relative amplitude (either NA or figure out a way to calculate it)
   res_formatted <- data.frame(
     feature = res_original$feature,
     group = res_original$group,
@@ -27,6 +28,7 @@ format_repeatedcircadian <- function(ls_res_groups, remove_group) {
     period_pval = NA,
     period_qval = NA,
     mesor_estimate = res_original$basal,
+    # relative_amplitude_estimate = ???,
     pval = res_original$pvalue,
     qval = p.adjust(res_original$pvalue, method = "BH"),
     method = "RepeatedCircadian"

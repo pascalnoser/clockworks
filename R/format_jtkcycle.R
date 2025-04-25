@@ -32,7 +32,7 @@ format_jtkcycle <- function(ls_res_groups, remove_group) {
     period_pval = NA,
     period_qval = NA,
     mesor_estimate = df_meta$meta2d_Base,
-    relative_amplitude_estimate = df_meta$meta2d_rAMP,  # TODO: Include this?
+    relative_amplitude_estimate = df_meta$meta2d_rAMP,
     pval = df_meta$JTK_pvalue,
     qval = df_meta$JTK_BH.Q,
     method = "JTK_CYCLE"
@@ -41,8 +41,8 @@ format_jtkcycle <- function(ls_res_groups, remove_group) {
   # Remove group column if added temporarily by check function at the start
   if (remove_group == TRUE) {
     res_formatted$group <- NULL
-    res_original <- lapply(res_original, function(x){
-      x$group <- NULL
+    res_original <- lapply(res_original, function(df){
+      df$group <- NULL
       return(x)
     })
   }

@@ -25,13 +25,13 @@ must be numeric.}
 
 \item{colname_group}{A string (optional) specifying the name of the column in
 \code{metadata} that contains group information (e.g., treatment groups,
-conditions). If no group information is available, leave as \code{NULL}.
-Default: \code{NULL}.}
+conditions). If no group information is available, leave as \code{NULL}
+(default).}
 
 \item{colname_subject}{A string (optional) specifying the name of the column
 in \code{metadata} that contains subject IDs. This is useful for repeated
 measures designs where each subject has multiple samples taken over time.
-If no subject information is available, leave as \code{NULL}. Default: \code{NULL}.}
+If no subject information is available, leave as \code{NULL} (default).}
 }
 \value{
 A data frame with the metadata, after performing the checks and
@@ -52,7 +52,8 @@ The function performs the following checks and operations:
 \item Checks if the required columns specified by \code{colname_time} and
 \code{colname_sample} are present in the \code{metadata} data frame.
 \item Checks if the optional columns specified by \code{colname_group} and
-\code{colname_subject} are present (if they are not \code{NULL}).
+\code{colname_subject} are present (if they are not \code{NULL}) and contain
+reasonable values.
 \item Checks if the \code{colname_time} column contains numeric values.
 \item Checks if the values in the \code{colname_sample} column are unique.
 \item Issues a warning if there are additional columns in \code{metadata} that

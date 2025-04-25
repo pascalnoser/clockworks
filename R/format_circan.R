@@ -13,6 +13,7 @@ format_circan <- function(ls_res_groups, remove_group) {
   rownames(res_original) <- NULL
 
   # Create formatted results data frame
+  # TODO: Add relative amplitude (either NA or figure out a way to calculate it)
   res_formatted <- data.frame(
     feature = res_original$feature,
     group = res_original$group,
@@ -26,6 +27,7 @@ format_circan <- function(ls_res_groups, remove_group) {
     period_pval = res_original$p.value.per,
     period_qval = res_original$BH.q.value.per,
     mesor_estimate = NA,
+    # relative_amplitude_estimate = ???,
     pval = res_original$combined_pval,
     qval = res_original$BH_combined,
     method = "CircaN"

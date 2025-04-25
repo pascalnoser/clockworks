@@ -1,4 +1,6 @@
 # # This short script is used to quickly test the clockworks function
+# rm(list = ls(all = TRUE))
+#
 # data("cw_data")
 # data("cw_metadata")
 #
@@ -10,7 +12,7 @@
 #   colname_group = "Group",
 #   colname_subject = "Subject_ID",
 #   period = 24,
-#   method = "RepeatedCircadian"
+#   method = "JTK_CYCLE"
 # )
 #
 # lapply(res, head)
