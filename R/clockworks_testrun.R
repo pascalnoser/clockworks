@@ -5,7 +5,7 @@
 #
 # rm(list = ls(all = TRUE))
 #
-# method = "LS"
+# method = "ARSER"
 #
 #
 # # Test function with all CD objects ----

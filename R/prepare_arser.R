@@ -6,21 +6,21 @@
 #' @param cd A `CircadianData` object
 #' @param grp A string specifying a value in the ".group" column of the metadata
 #'   slot of `cd` which is used for filtering.
+#' @param added_group Logical, whether the `check_arser()` method added the
+#'   ".group" column
 #'
 #' @returns A list with inputs for `execute_arser()`
 prepare_arser <- function(cd, grp, added_group) {
+  # Check if there are replicates in any group
+  # Note: Check all groups, not just this, to make sure we rename the samples in
+  # all groups so they are consistent
+  replicates <- ifelse(any(unlist(cd$n_replicates) > 1), TRUE, FALSE)
+
   # Filter CD object by group
   cd_filt <- filter_samples(cd, col = ".group", value = grp)
 
-  # Get table of replicates
-  if (added_group == TRUE) {
-    rep_table <- cd_filt$replicates
-  } else {
-    rep_table <- cd_filt$replicates[[grp]]
-  }
-
   # If there are replicates, take median
-  if (any(rep_table > 1)) {
+  if (replicates == TRUE) {
     t_split <- split(metadata(cd_filt), metadata(cd_filt)$.time)
     timepoints <- as.numeric(names(t_split))
 
@@ -36,18 +36,23 @@ prepare_arser <- function(cd, grp, added_group) {
     df_input <- data.frame(feature = rownames(dataset(cd_filt)), ls_meds)
   } else {
     df_input <- data.frame(feature = rownames(dataset(cd_filt)), dataset(cd_filt))
-    timepoins <- metadata(cd_filt)[[".time"]]
+    timepoints <- metadata(cd_filt)[[".time"]]
   }
 
-
-
-  # Create list with inputs for run
+  # Create list with default inputs for run
   ls_inputs <- list(
     inDF = df_input,
+    infile = paste("Group", grp), # Using inDF, but can't be empty
+    filestyle = "csv", # Irrelevant, but needs to be either "csv" or "txt"
     timepoints = timepoints,
     minper = min(cd_filt$period),
     maxper = max(cd_filt$period),
-    group = grp
+    ARSdefaultPer = mean(cd_filt$period), # Must be minper < ARSdefaultPer > maxper
+    cycMethod = "ARS",
+    parallelize = FALSE,
+    nCores = 1,
+    outputFile = FALSE,
+    releaseNote = TRUE
   )
 
   return(ls_inputs)

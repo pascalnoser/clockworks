@@ -1,0 +1,52 @@
+#' Format ARSER Results
+#'
+#' @param ls_res_groups A list with results from a ARSER rhythmicity
+#'   analysis, split into groups.
+#' @param added_group If TRUE the "group" column will be removed
+#'
+#' @returns A list of data frames containing the original and formatted results
+format_arser <- function(ls_res_groups, added_group) {
+  # Turn list of lists into one list with one data frame per method
+  method_names <- c("ARS", "meta")
+  res_original <- lapply(method_names, function(x) {
+    dfs <- lapply(ls_res_groups, `[[`, x)
+    df_combined <- do.call(rbind, dfs)
+    rownames(df_combined) = NULL
+    return(df_combined)
+  })
+
+  names(res_original) <- method_names
+
+  # Create formatted results data frame
+  df_meta <- res_original$meta
+  df_ars <- res_original$ARS
+  res_formatted <- data.frame(
+    feature = df_meta$CycID,
+    group = df_meta$group,
+    amplitude_estimate = df_ars$amplitude,  # TODO: Use ARS_amplitude or meta2d_AMP?
+    amplitude_pval = NA,
+    amplitude_qval = NA,
+    phase_estimate = df_ars$phase, # Identical to ARS_adjphase from df_meta
+    phase_pval = NA,
+    phase_qval = NA,
+    period_estimate = df_ars$period,
+    period_pval = NA,
+    period_qval = NA,
+    mesor_estimate = df_meta$meta2d_Base,  # TODO: Use meta2d_Base or not?
+    relative_amplitude_estimate = df_meta$meta2d_rAMP, # TODO: Add or not?
+    pval = df_meta$ARS_pvalue,
+    qval = df_meta$ARS_BH.Q,
+    method = "ARSER"
+  )
+
+  # Remove group column if added temporarily by check function at the start
+  if (added_group == TRUE) {
+    res_formatted$group <- NULL
+    res_original <- lapply(res_original, function(df){
+      df$group <- NULL
+      return(df)
+    })
+  }
+
+  return(list(res_original = res_original, res_formatted = res_formatted))
+}

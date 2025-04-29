@@ -13,7 +13,7 @@ execute_jtkcycle(inputs, ...)
 \item{...}{Additional parameters passed to \code{MetaCycle::meta2d()}}
 }
 \value{
-A data frame
+A list
 }
 \description{
 Run JTK_CYCLE rhythmicity detection

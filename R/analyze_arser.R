@@ -17,7 +17,7 @@
 #'   colname_subject = "Subject_ID"
 #' )
 #' cd <- CircadianData(cw_data, cw_metadata)
-#' cd <- add_experiment_info(cd, period = 24)
+#' cd <- clockworks:::add_experiment_info(cd, period = 24)
 #' results <- clockworks:::analyze_arser(cd)
 #' head(results)
 analyze_arser <- function(cd, ...) {
@@ -36,8 +36,7 @@ analyze_arser <- function(cd, ...) {
     ls_inputs <- prepare_arser(cd_local, grp, added_group)
 
     # Run rhythmicity analysis
-    ls_res_grp <- execute_arser(ls_inputs)
-    # ls_res_grp <- execute_arser(ls_inputs, ...)
+    ls_res_grp <- execute_arser(ls_inputs, grp, ...)
 
     # Add to list
     ls_res_groups[[grp]] <- ls_res_grp

@@ -13,8 +13,7 @@ execute_ls(inputs, ...)
 \item{...}{Additional parameters passed to \code{MetaCycle::meta2d()}}
 }
 \value{
-A list with results from Lomb-Scargle and the adjusted results from
-MetaCycle
+A list
 }
 \description{
 Run Lomb-Scargle rhythmicity detection

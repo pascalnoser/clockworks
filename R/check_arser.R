@@ -28,10 +28,24 @@ check_arser <- function(cd) {
     cd_local <- order_samples(cd_local, c(".time", ".group"))
   }
 
-  # TODO: If there are replicates, print message warning the user that ARSER is
-  # not designed for handling replicates and that we will take the median at
-  # each time point. This also requires renaming the samples!
-  # ...
+  # If there are replicates, print message warning the user that ARSER is
+  # not designed for handling replicates, that we will take the median at
+  # each time point and rename the samples.
+  # Calculation of medians will be handled by `prepare_arser()`
+  if (any(unlist(cd_local$n_replicates) > 1)) {
+    message(
+      "The 'ARSER' method was selected for analysis; however, clockworks ",
+      "detected replicates at one or more time points within at least one ",
+      "group (if applicable). Since ARSER does not support replicate handling, ",
+      "clockworks will aggregate replicates by computing the median at each ",
+      "time point. These median values will be used in the analysis and ",
+      "labeled as 'CT_<timepoint>'. If you prefer an alternative approach ",
+      "(e.g. concatenating replicates), please preprocess the data manually ",
+      "and rerun clockworks. Alternatively, consider using a different method ",
+      "that supports replicates."
+    )
+    # TODO: Print data frame showing time, number of replicates and group
+  }
 
   return(cd_local)
 }

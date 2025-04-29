@@ -4,13 +4,13 @@
 \alias{format_repeatedcircadian}
 \title{Format RepeatedCircadian Results}
 \usage{
-format_repeatedcircadian(ls_res_groups, remove_group)
+format_repeatedcircadian(ls_res_groups, added_group)
 }
 \arguments{
 \item{ls_res_groups}{A list with results from a RepeatedCircadian rhythmicity
 analysis, split into groups.}
 
-\item{remove_group}{If TRUE the "group" column will be removed}
+\item{added_group}{If TRUE the "group" column will be removed}
 }
 \value{
 A list of data frames containing the original and formatted results

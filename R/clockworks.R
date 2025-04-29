@@ -22,6 +22,8 @@ clockworks <- function(dataset,
   # Plan session for parallel processing
   # TODO: Can probably run `parallelly::supportsMulticore()` and if TRUE use
   # multicore instead of multisession
+  # TODO: Figure out if there is a way to check if the user has run `plan(...)`
+  # already so we can skip it
   # future::plan(multisession, ceiling(parallelly::availableCores()/2))
 
   # Use function dispatch
