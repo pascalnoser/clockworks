@@ -22,11 +22,8 @@ check_ls <- function(cd) {
   metadata(cd_local) <- df_meta_temp
 
   # Make sure samples are ordered by time and group (and subject ID if relevant)
-  if (cd_local$repeated_measures == TRUE) {
-    cd_local <- order_samples(cd_local, c(".time", ".group", ".subject_ID"))
-  } else {
-    cd_local <- order_samples(cd_local, c(".time", ".group"))
-  }
+  sort_cols <- intersect(c(".time", ".group", ".subject_ID"), colnames(df_meta_temp))
+  cd_local <- order_samples(cd_local, sort_cols)
 
   return(cd_local)
 }

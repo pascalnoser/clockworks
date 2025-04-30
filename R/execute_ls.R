@@ -26,8 +26,10 @@ execute_ls <- function(inputs, ...) {
     ...
   )
 
-  # Add feature IDs and group to results df (if not there already)
-  ls_res <- lapply(ls_res, function(x) cbind(x, group = inputs$group))
+  # Add feature IDs and group to results
+  ls_res <- lapply(ls_res, function(x) {
+    if (is.data.frame(x)) cbind(x, group = grp)
+  })
 
   # Return results
   return(ls_res)

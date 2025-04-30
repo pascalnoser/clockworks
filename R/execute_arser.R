@@ -11,8 +11,7 @@
 execute_arser <- function(inputs, grp, ...) {
   # TODO: Figure out what to do about `parallelize` and `nCores`
 
-  # Add arguments in `...` to `inputs`, giving precedence to `...` in case of
-  # overlap
+  # Combine and overwrite inputs with `...`
   dots <- list(...)
   inputs <- modifyList(inputs, dots)
 
@@ -34,8 +33,10 @@ execute_arser <- function(inputs, grp, ...) {
   # Run rhythmicity analysis
   ls_res <- do.call(MetaCycle::meta2d, inputs)
 
-  # Add feature IDs and group to results df (if not there already)
-  ls_res <- lapply(ls_res, function(x) cbind(x, group = grp))
+  # Add feature IDs and group to results
+  ls_res <- lapply(ls_res, function(x) {
+    if (is.data.frame(x)) cbind(x, group = grp)
+  })
 
   # Return results
   return(ls_res)

@@ -1,12 +1,12 @@
-#' JTK_CYCLE CircadianData check
+#' meta2d CircadianData check
 #'
 #' This function checks whether a `CircadianData` object contains all the meta
-#' data columns necessary to run rhythmicity detection with JTK_CYCLE.
+#' data columns necessary to run rhythmicity detection with meta2d.
 #'
 #' @param cd A `CircadianData` object
 #'
 #' @returns A `CircadianData` object
-check_jtkcycle <- function(cd) {
+check_meta2d <- function(cd) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 

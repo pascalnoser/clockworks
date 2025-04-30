@@ -1,9 +1,9 @@
 #' Detect rhythmicity with ARSER
 #'
-#' This function runs rhythmicity detection ARSER
+#' This function runs rhythmicity detection with ARSER
 #'
 #' @param cd A `CircadianData` object.
-#' @param ... Additional parameters passed to `<method_function>`
+#' @param ... Additional parameters passed to `MetaCycle::meta2d()`
 #'
 #' @returns A data frame with the results of the ARSER analysis.
 #' @examples
@@ -22,7 +22,7 @@
 #' head(results)
 analyze_arser <- function(cd, ...) {
   # Check if cd object contains necessary columns and add them if not
-  cd_local <- check_arser(cd)
+  cd_local <- check_arser(cd_full)
   # Remove group column later if added temporarily by check
   added_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)
 

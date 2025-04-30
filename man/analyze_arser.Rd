@@ -9,13 +9,13 @@ analyze_arser(cd, ...)
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
-\item{...}{Additional parameters passed to \verb{<method_function>}}
+\item{...}{Additional parameters passed to \code{MetaCycle::meta2d()}}
 }
 \value{
 A data frame with the results of the ARSER analysis.
 }
 \description{
-This function runs rhythmicity detection ARSER
+This function runs rhythmicity detection with ARSER
 }
 \examples{
 data(cw_data)
