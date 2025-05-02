@@ -714,27 +714,10 @@ setMethod("filter_samples", "CircadianData",
             # Leverage the existing synchronized subsetting method
             filtered_obj <- x[, keep_logical, drop = FALSE]
 
-            # --- Updated number of groups ---
-            if (col == ".group" && "n_groups" %in% names(experiment_info(x))) {
-              filtered_obj$n_groups <- length(unique(metadata(filtered_obj)[[".group"]]))
-            }
-
-            # --- Update replicate table ---
-            # If filtering group, update replicates in experiment info
-            if (col == ".group" && "n_replicates" %in% names(experiment_info(x))) {
-              # Get replicate table
-              reps_orig <- x$n_replicates
-
-              # Filter
-              grps_filtered <- unique(metadata(filtered_obj)[[".group"]])
-              reps_filtered <- reps_orig[grps_filtered]
-
-              # If only 1 group remaining, extract table from list
-              if (length(reps_filtered) == 1) reps_filtered <- reps_filtered[[1]]
-
-              # Add to filtered object
-              filtered_obj$n_replicates <- reps_filtered
-            }
+            # --- Update experiment info ---
+            # Update e.g. number of groups and replicates. Don't accidentally
+            # change sampling interval
+            filtered_obj <- add_experiment_info(filtered_obj, estimate_delta_t = FALSE)
 
             return(filtered_obj)
           }

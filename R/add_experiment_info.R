@@ -2,9 +2,11 @@
 #'
 #' @param cd A `CircadianData` object.
 #' @param period A number defining the period length of the circadian data.
+#' @param estimate_delta_t If TRUE, sampling interval will be estimated from
+#'   meta data.
 #'
 #' @returns The `CircadianData` object with added experiment info
-add_experiment_info <- function(cd, period) {
+add_experiment_info <- function(cd, period = NULL, estimate_delta_t = TRUE) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
@@ -12,7 +14,7 @@ add_experiment_info <- function(cd, period) {
   meta_cnames <- colnames(metadata(cd_local))
 
   # Add period ----
-  cd_local$period <- period
+  if (!is.null(period)) cd_local$period <- period
 
 
   # Add group info ----

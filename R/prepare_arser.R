@@ -21,7 +21,7 @@ prepare_arser <- function(cd, grp, added_group) {
 
   # If there are replicates, take median
   if (replicates == TRUE) {
-    t_split <- split(metadata(cd_filt), metadata(cd_filt)$.time)
+    t_split <- split(metadata(cd_filt), metadata(cd_filt)[[".time"]])
     timepoints <- as.numeric(names(t_split))
 
     names(t_split) <- paste0("CT_", timepoints)

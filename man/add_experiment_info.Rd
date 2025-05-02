@@ -4,12 +4,15 @@
 \alias{add_experiment_info}
 \title{Add experiment information to CircadianData object}
 \usage{
-add_experiment_info(cd, period)
+add_experiment_info(cd, period = NULL, estimate_delta_t = TRUE)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
 \item{period}{A number defining the period length of the circadian data.}
+
+\item{estimate_delta_t}{If TRUE, sampling interval will be estimated from
+meta data.}
 }
 \value{
 The \code{CircadianData} object with added experiment info
