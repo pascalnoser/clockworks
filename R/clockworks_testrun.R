@@ -5,7 +5,7 @@
 #
 # rm(list = ls(all = TRUE))
 #
-# method = "ARSER"
+# method = "RAIN"
 #
 #
 # # Test function with all CD objects ----
@@ -13,28 +13,28 @@
 # analyze_fn <- get((paste0("analyze_", method_str)), mode = "function")
 #
 # # No groups, no replicates, no repeated measures
-# tst_min <- analyze_fn(cd_min)
+# tst_min <- analyze_fn(cd_min, method_args = list())
 #
 # # 2 groups, no replicates, no repeated measures
-# tst_grp <- analyze_fn(cd_grp)
+# tst_grp <- analyze_fn(cd_grp, method_args = list())
 #
 # # No groups, 2 replicates, no repeated measures
-# tst_rpl <- analyze_fn(cd_rpl)
+# tst_rpl <- analyze_fn(cd_rpl, method_args = list())
 #
 # # 2 Groups, 2 replicates each, no repeated measures
-# tst_grp_rpl <- analyze_fn(cd_grp_rpl)
+# tst_grp_rpl <- analyze_fn(cd_grp_rpl, method_args = list())
 #
 # # No Groups, no replicates, repeated measures
-# tst_rpt <- analyze_fn(cd_rpt)
+# tst_rpt <- analyze_fn(cd_rpt, method_args = list())
 #
 # # 2 Groups, no replicates, repeated measures
-# tst_grp_rpt <- analyze_fn(cd_grp_rpt)
+# tst_grp_rpt <- analyze_fn(cd_grp_rpt, method_args = list())
 #
 # # No groups, 2 replicates, repeated measures
-# tst_rpl_rpt <- analyze_fn(cd_rpl_rpt)
+# tst_rpl_rpt <- analyze_fn(cd_rpl_rpt, method_args = list())
 #
 # # 2 Groups, 2 replicates each, repeated measures
-# tst_full <- analyze_fn(cd_full)
+# tst_full <- analyze_fn(cd_full, method_args = list())
 #
 #
 # # Test `clockworks()` ----

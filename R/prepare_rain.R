@@ -17,7 +17,7 @@ prepare_rain <- function(cd, grp) {
     x = t(dataset(cd_filt)),
     deltat = cd_filt$delta_t,
     period = mean(cd_filt$period),
-    measure.sequence = cd_filt$n_replicates,
+    measure.sequence = cd_filt$n_replicates[[grp]],
     method = ifelse(cd_filt$repeated_measures == TRUE, "longitudinal", "independent")
   )
 

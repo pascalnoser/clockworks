@@ -16,7 +16,9 @@ clockworks <- function(dataset,
       "CircaN",
       "RepeatedCircadian",
       "JTK_CYCLE",
-      "LS"
+      "LS",
+      "meta2d",
+      "RAIN"
     )
   )
 
