@@ -20,7 +20,7 @@
 #' cd <- clockworks:::add_experiment_info(cd, period = 24)
 #' results <- clockworks:::analyze_rain(cd)
 #' head(results)
-analyze_rain <- function(cd, ...) {
+analyze_rain <- function(cd, method_args) {
   # Check if cd object contains necessary columns and add them if not
   cd_local <- check_rain(cd)
   # Remove group column later if added temporarily by check
@@ -36,7 +36,7 @@ analyze_rain <- function(cd, ...) {
     ls_inputs <- prepare_rain(cd_local, grp)
 
     # Run rhythmicity analysis
-    df_res_grp <- execute_rain(ls_inputs, ...)
+    df_res_grp <- execute_rain(ls_inputs, grp, method_args)
 
     # Add to list
     ls_res_groups[[grp]] <- df_res_grp

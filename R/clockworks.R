@@ -6,6 +6,7 @@ clockworks <- function(dataset,
                        colname_subject = NULL,
                        period = 24,
                        method = "auto",
+                       method_args = list(),
                        ...) {
   # Make sure method is valid
   method <- match.arg(
@@ -82,7 +83,8 @@ clockworks <- function(dataset,
   #     - RepeatedCircadian
   #     - TimeCycle
   #     - Others?
-  rhythmicity_results <- analyze_fn(cd, ...)
+  # TODO: Probably remove `...` in favour of `method_args`
+  rhythmicity_results <- analyze_fn(cd, method_args, ...)
 
   # Modify output such that it is consistent among methods (e.g. name of p-value column etc)?
   # ....
