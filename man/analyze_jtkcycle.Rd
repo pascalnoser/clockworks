@@ -4,7 +4,7 @@
 \alias{analyze_jtkcycle}
 \title{Detect rhythmicity with JTK_CYCLE}
 \usage{
-analyze_jtkcycle(cd, ...)
+analyze_jtkcycle(cd, method_args, ...)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}

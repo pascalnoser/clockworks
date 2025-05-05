@@ -26,11 +26,11 @@ prepare_repeatedcircadian_long <- function(cd) {
 
   # Only keep relevant columns of meta data
   if (!is.na(cd$n_groups)) {
-    relevant_cols <- c(".sample", ".subject_ID", ".time", ".group")
-    id_cols <- c(".feature", ".subject_ID", ".group")
+    relevant_cols <- c(".sample", "subject_ID", "time", "group")
+    id_cols <- c(".feature", "subject_ID", "group")
   } else {
-    relevant_cols <- c(".sample", ".subject_ID", ".time")
-    id_cols <- c(".feature", ".subject_ID")
+    relevant_cols <- c(".sample", "subject_ID", "time")
+    id_cols <- c(".feature", "subject_ID")
   }
   df_meta = df_meta[, relevant_cols]
 
@@ -44,7 +44,7 @@ prepare_repeatedcircadian_long <- function(cd) {
   df_reshaped <- reshape(
     df_merged,
     idvar = id_cols,
-    timevar = ".time",
+    timevar = "time",
     v.names = ".value",
     direction = "wide"
   )

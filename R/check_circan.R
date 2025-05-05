@@ -19,23 +19,23 @@ check_circan <- function(cd) {
   if (cd_local$repeated_measures == FALSE) {
     df_meta_temp$ind <- paste0("S", 1:nrow(df_meta_temp))
   } else {
-    df_meta_temp$ind <- df_meta_temp[[".subject_ID"]]
+    df_meta_temp$ind <- df_meta_temp[["subject_ID"]]
   }
 
   # Add required "time" and "sample" columns
-  df_meta_temp$time <- df_meta_temp[[".time"]]
+  df_meta_temp$time <- df_meta_temp[["time"]]
   df_meta_temp$sample <- rownames(df_meta_temp)
 
   # Add temporary group if there is no group column
   if (is.na(cd_local$n_groups)){
-    df_meta_temp[[".group"]] <- "tmp"
+    df_meta_temp[["group"]] <- "tmp"
   }
 
   # Add meta data back to CD object
   metadata(cd_local) <- df_meta_temp
 
   # Make sure samples are ordered by time and subject
-  cd_local <- order_samples(cd_local, c("time", ".group", "ind"))
+  cd_local <- order_samples(cd_local, c("time", "group", "ind"))
 
   return(cd_local)
 }

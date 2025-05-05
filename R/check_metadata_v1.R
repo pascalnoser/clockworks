@@ -58,7 +58,7 @@
 #' )
 #'
 #' # Check the metadata
-#' checked_metadata <- check_metadata(
+#' checked_metadata <- check_metadata_v1(
 #'   metadata = metadata,
 #'   colname_time = "time",
 #'   colname_sample = "sample_id",
@@ -67,52 +67,53 @@
 #' )
 #'
 #' # Example with no group or subject information
-#' checked_metadata_no_group <- check_metadata(
+#' checked_metadata_no_group <- check_metadata_v1(
 #'   metadata = metadata,
 #'   colname_time = "time",
 #'   colname_sample = "sample_id"
 #' )
 #'
 #' # Example with missing columns
-#' result <- try(check_metadata(
+#' result <- try(check_metadata_v1(
 #'   metadata = metadata[, c("time", "group", "subject")],
 #'   colname_time = "time",
 #'   colname_sample = "sample_id" # This will cause an error
 #' ))
-#' if (inherits(result, "try-error")) {
+#' if(inherits(result, "try-error")) {
 #'   message("Error caught (as expected).")
 #' }
 #'
 #' # Example with non-numeric time
 #' metadata_non_numeric_time <- metadata
 #' metadata_non_numeric_time$time <- letters[1:10]
-#' result <- try(check_metadata(
+#' result <- try(check_metadata_v1(
 #'   metadata = metadata_non_numeric_time,
 #'   colname_time = "time",
 #'   colname_sample = "sample_id"
 #' ))
-#' if (inherits(result, "try-error")) {
+#' if(inherits(result, "try-error")) {
 #'   message("Error caught (as expected).")
 #' }
 #'
 #' # Example with duplicated sample IDs
 #' metadata_duplicated_ids <- metadata
 #' metadata_duplicated_ids$sample_id[1] <- metadata_duplicated_ids$sample_id[2]
-#' result <- try(check_metadata(
+#' result <- try(check_metadata_v1(
 #'   metadata = metadata_duplicated_ids,
 #'   colname_time = "time",
 #'   colname_sample = "sample_id"
 #' ))
-#' if (inherits(result, "try-error")) {
+#' if(inherits(result, "try-error")) {
 #'   message("Error caught (as expected).")
 #' }
 #'
 #' @export
-check_metadata <- function(metadata,
-                           colname_sample,
-                           colname_time,
-                           colname_group = NULL,
-                           colname_subject = NULL) {
+check_metadata_v1 <- function(metadata,
+                              colname_sample,
+                              colname_time,
+                              colname_group = NULL,
+                              colname_subject = NULL) {
+
   # 1. Check if metadata is a data.frame
   if (!inherits(metadata, "data.frame")) {
     stop("'metadata' must be a data.frame.", call. = FALSE)
@@ -260,22 +261,43 @@ check_metadata <- function(metadata,
   # 8. Add sample IDs as row names
   row.names(metadata) <- metadata[[colname_sample]]
 
-  # 9. Add columns with pre-defined names and order, and remove other columns
-  # Start with the required time column
-  rename_map <- c("time" = colname_time)
+  # 9. Add columns with pre-defined names and order and remove other columns
+  colname_time_fixed = "time"
+  colname_subject_fixed = "subject_ID"
+  colname_group_fixed = "group"
 
-  # Conditionally add optional columns
-  if (!is.null(colname_group)) {
-    rename_map["group"] <- colname_group
+  # Make sure columns don't already exist
+  colnames_overlap = intersect(c(
+    colname_time_fixed,
+    colname_subject_fixed,
+    colname_group_fixed
+  ),
+  cnames)
+  if (length(colnames_overlap) > 0) {
+    stop(
+      paste0("The following column names of the `metadata` data frame are ",
+             "not allowed as they clash with functions used internally by clockworks: ",
+             paste0("'", paste(colnames_overlap, collapse = "', '"), "'"),
+             "\nPlease rename these columns and rerun `clockworks()`."),
+      call. = FALSE
+    )
   }
+
+  # Add columns in the right order
+  final_cols <- c(colname_time_fixed)
+  metadata[[colname_time_fixed]] = metadata[[colname_time]]
   if (!is.null(colname_subject)) {
-    rename_map["subject_ID"] <- colname_subject
+    metadata[[colname_subject_fixed]] = metadata[[colname_subject]]
+    final_cols <- c(final_cols, colname_subject_fixed)
+  }
+  if (!is.null(colname_group)){
+    metadata[[colname_group_fixed]] = metadata[[colname_group]]
+    final_cols <- c(final_cols, colname_group_fixed)
   }
 
   # Only use relevant columns. Set `drop = FALSE` to make sure it stays a data
   # frame even if there is only one column
-  metadata_final <- metadata[, rename_map, drop = FALSE]
-  colnames(metadata_final) <- names(rename_map)
+  metadata <- metadata[, final_cols, drop = FALSE]
 
-  return(metadata_final)
+  return(metadata)
 }

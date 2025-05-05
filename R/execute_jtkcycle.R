@@ -7,7 +7,7 @@
 #' @importFrom MetaCycle meta2d
 #'
 #' @returns A list
-execute_jtkcycle <- function(inputs, ...) {
+execute_jtkcycle <- function(inputs) {
   # TODO: Figure out what to do about `parallelize` and `nCores`
 
   # Run rhythmicity analysis
@@ -22,8 +22,7 @@ execute_jtkcycle <- function(inputs, ...) {
     parallelize = FALSE,
     nCores = 1,
     outputFile = FALSE,
-    releaseNote = TRUE, # Probably set to FALSE?
-    ...
+    releaseNote = TRUE # Probably set to FALSE?
   )
 
   # Add feature IDs and group to results

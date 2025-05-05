@@ -9,11 +9,11 @@ prepare_arser(cd, grp, added_group)
 \arguments{
 \item{cd}{A \code{CircadianData} object}
 
-\item{grp}{A string specifying a value in the ".group" column of the metadata
+\item{grp}{A string specifying a value in the "group" column of the metadata
 slot of \code{cd} which is used for filtering.}
 
 \item{added_group}{Logical, whether the \code{check_arser()} method added the
-".group" column}
+"group" column}
 }
 \value{
 A list with inputs for \code{execute_arser()}

@@ -26,6 +26,7 @@ Imports:
     edgeR,
     limorhyde,
     future.apply,
-    RepeatedCircadian
+    RepeatedCircadian,
+    rain
 Depends: 
     R (>= 3.5)

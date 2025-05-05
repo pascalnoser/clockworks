@@ -32,7 +32,7 @@ analyze_circan <- function(cd, ...) {
   # Run rhythmicity detection for each group separately
   # TODO: Use long format prepare function from repeatedcircadian and then use
   # `split()` to split by group and feauture to parallelise
-  groups <- unique(metadata(cd_local)[[".group"]])
+  groups <- unique(metadata(cd_local)[["group"]])
   for (grp in groups) {
     # Prepare inputs
     ls_inputs <- prepare_circan(cd_local, grp)

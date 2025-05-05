@@ -30,7 +30,7 @@ analyze_rain <- function(cd, method_args) {
   ls_res_groups = list()
 
   # Run rhythmicity detection for each group separately
-  groups <- unique(metadata(cd_local)[[".group"]])
+  groups <- unique(metadata(cd_local)[["group"]])
   for (grp in groups) {
     # Prepare inputs
     ls_inputs <- prepare_rain(cd_local, grp)

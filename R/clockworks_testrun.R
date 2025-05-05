@@ -5,7 +5,7 @@
 #
 # rm(list = ls(all = TRUE))
 #
-# method = "RAIN"
+# method = "JTK_CYCLE"
 #
 #
 # # Test function with all CD objects ----

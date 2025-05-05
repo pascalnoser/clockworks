@@ -4,13 +4,13 @@
 #' detection with RAIN.
 #'
 #' @param cd A `CircadianData` object
-#' @param grp A string specifying a value in the ".group" column of the metadata
+#' @param grp A string specifying a value in the "group" column of the metadata
 #'   slot of `cd` which is used for filtering.
 #'
 #' @returns A list with inputs for `execute_rain()`
 prepare_rain <- function(cd, grp) {
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, col = ".group", value = grp)
+  cd_filt <- filter_samples(cd, col = "group", value = grp)
 
   # Create list with inputs for execute method
   ls_inputs <- list(

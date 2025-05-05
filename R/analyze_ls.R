@@ -30,7 +30,7 @@ analyze_ls <- function(cd, ...) {
   ls_res_groups = list()
 
   # Run rhythmicity detection for each group separately
-  groups <- unique(metadata(cd_local)[[".group"]])
+  groups <- unique(metadata(cd_local)[["group"]])
   for (grp in groups) {
     # Prepare inputs
     ls_inputs <- prepare_ls(cd_local, grp)

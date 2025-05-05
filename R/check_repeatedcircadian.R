@@ -27,7 +27,7 @@ check_repeatedcircadian <- function(cd) {
 
     # Add column
     df_meta_temp <- metadata(cd_local)
-    df_meta_temp[[".subject_ID"]] <- paste0("S", 1:nrow(df_meta_temp))
+    df_meta_temp[["subject_ID"]] <- paste0("S", 1:nrow(df_meta_temp))
 
     # Add back to CD object
     metadata(cd_local) <- df_meta_temp
@@ -37,14 +37,14 @@ check_repeatedcircadian <- function(cd) {
   if (is.na(cd_local$n_groups)){
     # Add column
     df_meta_temp <- metadata(cd_local)
-    df_meta_temp[[".group"]] <- "tmp"
+    df_meta_temp[["group"]] <- "tmp"
 
     # Add back to CD object
     metadata(cd_local) <- df_meta_temp
   }
 
   # Make sure samples are ordered by time and subject
-  cd_local <- order_samples(cd_local, c(".time", ".group", ".subject_ID"))
+  cd_local <- order_samples(cd_local, c("time", "group", "subject_ID"))
 
   return(cd_local)
 }

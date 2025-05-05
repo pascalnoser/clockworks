@@ -86,7 +86,8 @@ clockworks <- function(dataset,
   #     - TimeCycle
   #     - Others?
   # TODO: Probably remove `...` in favour of `method_args`
-  rhythmicity_results <- analyze_fn(cd, method_args, ...)
+  # rhythmicity_results <- analyze_fn(cd, method_args, ...)
+  rhythmicity_results <- analyze_fn(cd, ...)
 
   # Modify output such that it is consistent among methods (e.g. name of p-value column etc)?
   # ....

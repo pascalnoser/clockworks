@@ -4,13 +4,13 @@
 #' detection with CircaN.
 #'
 #' @param cd A `CircadianData` object
-#' @param grp A string specifying a value in the ".group" column of the metadata
+#' @param grp A string specifying a value in the "group" column of the metadata
 #'   slot of `cd` which is used for filtering.
 #'
 #' @returns A list with inputs for `execute_circan()`
 prepare_circan <- function(cd, grp) {
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, col = ".group", value = grp)
+  cd_filt <- filter_samples(cd, col = "group", value = grp)
 
   # Prepare data (must be a data frame with features as first column)
   df_data <- data.frame(feature = rownames(dataset(cd_filt)), dataset(cd_filt))

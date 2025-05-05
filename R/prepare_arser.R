@@ -4,10 +4,10 @@
 #' detection with ARSER.
 #'
 #' @param cd A `CircadianData` object
-#' @param grp A string specifying a value in the ".group" column of the metadata
+#' @param grp A string specifying a value in the "group" column of the metadata
 #'   slot of `cd` which is used for filtering.
 #' @param added_group Logical, whether the `check_arser()` method added the
-#'   ".group" column
+#'   "group" column
 #'
 #' @returns A list with inputs for `execute_arser()`
 prepare_arser <- function(cd, grp, added_group) {
@@ -17,11 +17,11 @@ prepare_arser <- function(cd, grp, added_group) {
   replicates <- ifelse(any(unlist(cd$n_replicates) > 1), TRUE, FALSE)
 
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, col = ".group", value = grp)
+  cd_filt <- filter_samples(cd, col = "group", value = grp)
 
   # If there are replicates, take median
   if (replicates == TRUE) {
-    t_split <- split(metadata(cd_filt), metadata(cd_filt)[[".time"]])
+    t_split <- split(metadata(cd_filt), metadata(cd_filt)[["time"]])
     timepoints <- as.numeric(names(t_split))
 
     names(t_split) <- paste0("CT_", timepoints)
@@ -36,7 +36,7 @@ prepare_arser <- function(cd, grp, added_group) {
     df_input <- data.frame(feature = rownames(dataset(cd_filt)), ls_meds)
   } else {
     df_input <- data.frame(feature = rownames(dataset(cd_filt)), dataset(cd_filt))
-    timepoints <- metadata(cd_filt)[[".time"]]
+    timepoints <- metadata(cd_filt)[["time"]]
   }
 
   # Create list with default inputs for run

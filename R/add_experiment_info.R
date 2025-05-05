@@ -19,10 +19,10 @@ add_experiment_info <- function(cd, period = NULL, estimate_delta_t = TRUE) {
 
   # Add group info ----
   # TODO: Remove "n_groups" and replace with "groups"?
-  groups <- unique(metadata(cd_local)[[".group"]])
+  groups <- unique(metadata(cd_local)[["group"]])
   n_groups <- length(groups)
 
-  if (".group" %in% meta_cnames) {
+  if ("group" %in% meta_cnames) {
     cd_local$n_groups <- n_groups
     # cd_local$groups <- groups
   } else {
@@ -32,7 +32,7 @@ add_experiment_info <- function(cd, period = NULL, estimate_delta_t = TRUE) {
 
 
   # Add repeated measures info ----
-  if (".subject_ID" %in% meta_cnames) {
+  if ("subject_ID" %in% meta_cnames) {
     cd_local$repeated_measures <- TRUE
   } else {
     cd_local$repeated_measures <- FALSE
@@ -41,25 +41,25 @@ add_experiment_info <- function(cd, period = NULL, estimate_delta_t = TRUE) {
 
   # Add replicate info ----
   # Make sure to show all time points in every group
-  t_unique <- sort(unique(metadata(cd_local)[[".time"]]))
+  t_unique <- sort(unique(metadata(cd_local)[["time"]]))
 
   if (all(is.na(cd_local$n_groups))) {
-    cd_local$n_replicates <- table(factor(metadata(cd_local)[[".time"]], levels = t_unique))
+    cd_local$n_replicates <- table(factor(metadata(cd_local)[["time"]], levels = t_unique))
   } else {
-    grp_split <- split(metadata(cd_local), metadata(cd_local)[[".group"]])
+    grp_split <- split(metadata(cd_local), metadata(cd_local)[["group"]])
     cd_local$n_replicates <- lapply(grp_split, function(x) {
-      table(factor(x[[".time"]], levels = t_unique))
+      table(factor(x[["time"]], levels = t_unique))
     })
   }
 
 
   # Add sampling interval ----
   # Sort by group and time
-  sort_cols <- intersect(c(".group", ".time"), colnames(metadata(cd_local)))
+  sort_cols <- intersect(c("group", "time"), colnames(metadata(cd_local)))
   cd_sorted <- order_samples(cd_local, by_columns = sort_cols)
 
   # Extract time differences
-  delta_ts <- diff(sort(unique(metadata(cd_sorted)[[".time"]])))
+  delta_ts <- diff(sort(unique(metadata(cd_sorted)[["time"]])))
   delta_freqs <- sort(table(delta_ts), decreasing = TRUE)
   delta_t_unique <- as.numeric(names(delta_freqs))
 

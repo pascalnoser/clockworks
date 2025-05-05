@@ -9,7 +9,7 @@ prepare_ls(cd, grp)
 \arguments{
 \item{cd}{A \code{CircadianData} object}
 
-\item{grp}{A string specifying a value in the ".group" column of the metadata
+\item{grp}{A string specifying a value in the "group" column of the metadata
 slot of \code{cd} which is used for filtering.}
 }
 \value{
