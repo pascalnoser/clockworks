@@ -18,7 +18,8 @@ clockworks <- function(dataset,
       "JTK_CYCLE",
       "LS",
       "meta2d",
-      "RAIN"
+      "RAIN",
+      "TimeCycle"
     )
   )
 

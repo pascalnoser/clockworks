@@ -27,6 +27,7 @@ Imports:
     limorhyde,
     future.apply,
     RepeatedCircadian,
-    rain
+    rain,
+    TimeCycle
 Depends: 
     R (>= 3.5)

@@ -43,7 +43,7 @@ add_experiment_info <- function(cd, period = NULL, estimate_delta_t = TRUE) {
   # Make sure to show all time points in every group
   t_unique <- sort(unique(metadata(cd_local)[["time"]]))
 
-  if (all(is.na(cd_local$n_groups))) {
+  if (is.na(cd_local$n_groups)) {
     cd_local$n_replicates <- table(factor(metadata(cd_local)[["time"]], levels = t_unique))
   } else {
     grp_split <- split(metadata(cd_local), metadata(cd_local)[["group"]])
@@ -54,36 +54,64 @@ add_experiment_info <- function(cd, period = NULL, estimate_delta_t = TRUE) {
 
 
   # Add sampling interval ----
-  # Sort by group and time
-  sort_cols <- intersect(c("group", "time"), colnames(metadata(cd_local)))
-  cd_sorted <- order_samples(cd_local, by_columns = sort_cols)
+  if (estimate_delta_t) {
+    # Sort by group and time
+    sort_cols <- intersect(c("group", "time"), colnames(metadata(cd_local)))
+    cd_sorted <- order_samples(cd_local, by_columns = sort_cols)
 
-  # Extract time differences
-  delta_ts <- diff(sort(unique(metadata(cd_sorted)[["time"]])))
-  delta_freqs <- sort(table(delta_ts), decreasing = TRUE)
-  delta_t_unique <- as.numeric(names(delta_freqs))
+    # Extract time differences
+    delta_ts <- diff(sort(unique(metadata(cd_sorted)[["time"]])))
+    delta_freqs <- sort(table(delta_ts), decreasing = TRUE)
+    delta_t_unique <- as.numeric(names(delta_freqs))
 
-  # Add to CD object
-  if (length(delta_t_unique) == 1) {
-    cd_local$delta_t <- delta_t_unique[1]
-  } else {
-    # Get most common delta_t
-    most_common <- delta_t_unique[1]
-    other_deltas <- delta_t_unique[-1]
-
-    # If less common delta_t's are multiples of most common, we likely have a
-    # constant delta_t but missing values
-    if (all(other_deltas %% most_common == 0)) {
-      cd_local$delta_t <- most_common
+    # Add to CD object
+    if (length(delta_t_unique) == 1) {
+      cd_local$delta_t <- delta_t_unique[1]
     } else {
-      cd_local$delta_t <- NA
-      message(
-        "WARNING: Unable to determine a regular sampling interval. Proceeding ",
-        "with the analysis under the assumption of irregular sampling."
-      )
+      # Get most common delta_t
+      most_common <- delta_t_unique[1]
+      other_deltas <- delta_t_unique[-1]
+
+      # If less common delta_t's are multiples of most common, we likely have a
+      # constant delta_t but missing values
+      if (all(other_deltas %% most_common == 0)) {
+        cd_local$delta_t <- most_common
+      } else {
+        cd_local$delta_t <- NA
+        message(
+          "WARNING: Unable to determine a regular sampling interval. Proceeding ",
+          "with the analysis under the assumption of irregular sampling."
+        )
+      }
     }
   }
 
+
+  # Add number of cycles ----
+  dt <- cd_local$delta_t
+
+  # No groups
+  if (is.na(cd_local$n_groups) && !(is.na(dt) || is.null(dt))) {
+    t_min <- min(metadata(cd_local)[["time"]])
+    t_max <- max(metadata(cd_local)[["time"]])
+    cd_local$n_cycles <- ((t_max + dt) - t_min) / mean(cd_local$period)
+  }
+
+  # Group-wise
+  if (!is.na(cd_local$n_groups) && !(is.na(dt) || is.null(dt))) {
+    grp_split <- split(metadata(cd_local), metadata(cd_local)[["group"]])
+
+    cd_local$n_cycles <- lapply(grp_split, function(x) {
+      t_min <- min(x[["time"]])
+      t_max <- max(x[["time"]])
+      ((t_max + dt) - t_min) / mean(cd_local$period)
+    })
+  }
+
+  # Sampling interval NA or NULL
+  if (is.na(dt) || is.null(dt)) {
+    cd_local$n_cycles <- NA
+  }
 
 
   return(cd_local)

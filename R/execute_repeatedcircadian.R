@@ -28,8 +28,8 @@ execute_repeatedcircadian <- function(inputs, ...) {
 
   # Add feautre IDs and group to results df
   df_res = data.frame(feature = rownames(inputs$data_filt),
-                      group = inputs$group,
-                      df_res_raw)
+                      df_res_raw,
+                      group = inputs$group)
 
   # Return results
   return(df_res)
