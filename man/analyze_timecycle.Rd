@@ -4,7 +4,7 @@
 \alias{analyze_timecycle}
 \title{Detect rhythmicity with TimeCycle}
 \usage{
-analyze_timecycle(cd, method_args)
+analyze_timecycle(cd, method_args = list())
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}

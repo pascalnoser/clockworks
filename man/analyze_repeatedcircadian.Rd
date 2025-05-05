@@ -4,12 +4,12 @@
 \alias{analyze_repeatedcircadian}
 \title{Detect rhythmicity with RepeatedCircadian}
 \usage{
-analyze_repeatedcircadian(cd, ...)
+analyze_repeatedcircadian(cd, method_args = list())
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
-\item{...}{Additional parameters passed to
+\item{method_args}{Additional parameters passed to
 \code{RepeatedCircadian::rpt_rhythmicity()}}
 }
 \value{

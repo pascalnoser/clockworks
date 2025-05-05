@@ -5,7 +5,7 @@
 #
 # rm(list = ls(all = TRUE))
 #
-# method = "TimeCycle"
+# method = "meta2d"
 #
 #
 # # Test function with all CD objects ----

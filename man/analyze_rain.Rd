@@ -4,7 +4,7 @@
 \alias{analyze_rain}
 \title{Detect rhythmicity with RAIN}
 \usage{
-analyze_rain(cd, method_args)
+analyze_rain(cd, method_args = list())
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}

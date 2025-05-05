@@ -4,12 +4,12 @@
 \alias{analyze_jtkcycle}
 \title{Detect rhythmicity with JTK_CYCLE}
 \usage{
-analyze_jtkcycle(cd)
+analyze_jtkcycle(cd, method_args = list())
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
-\item{...}{Additional parameters passed to \verb{<method_function>}}
+\item{method_args}{Additional parameters passed to \verb{<method_function>}}
 }
 \value{
 A data frame with the results of the JTK_CYCLE analysis.

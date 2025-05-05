@@ -3,7 +3,7 @@
 #' This function runs rhythmicity detection using RepeatedCircadian
 #'
 #' @param cd A `CircadianData` object.
-#' @param ... Additional parameters passed to
+#' @param method_args Additional parameters passed to
 #'   `RepeatedCircadian::rpt_rhythmicity()`
 #'
 #'
@@ -23,7 +23,7 @@
 #' cd <- clockworks:::add_experiment_info(cd, period = 24)
 #' results <- clockworks:::analyze_repeatedcircadian(cd)
 #' head(results$res_original)
-analyze_repeatedcircadian <- function(cd, ...) {
+analyze_repeatedcircadian <- function(cd, method_args = list()) {
   # TODO: DOUBLE CHECK WHAT THE OUTPUT COLUMNS ARE EXACTLY
   # TODO: DOUBLE CHECK WHAT THE OUTPUT COLUMNS ARE EXACTLY
   # TODO: DOUBLE CHECK WHAT THE OUTPUT COLUMNS ARE EXACTLY
@@ -56,7 +56,7 @@ analyze_repeatedcircadian <- function(cd, ...) {
     ls_inputs <- prepare_repeatedcircadian(cd_local, grp)
 
     # Run rhythmicity analysis
-    df_res_grp <- execute_repeatedcircadian(ls_inputs, ...)
+    df_res_grp <- execute_repeatedcircadian(ls_inputs, grp, method_args)
 
     # Add to list
     ls_res_groups[[grp]] <- df_res_grp

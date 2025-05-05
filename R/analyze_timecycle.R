@@ -21,7 +21,7 @@
 #' cd <- clockworks:::add_experiment_info(cd, period = 24)
 #' results <- clockworks:::analyze_timecycle(cd)
 #' head(results)
-analyze_timecycle <- function(cd, method_args) {
+analyze_timecycle <- function(cd, method_args = list()) {
   # Check if cd object contains necessary columns and add them if not
   cd_local <- check_timecycle(cd)
   # Remove group column later if added temporarily by check

@@ -4,12 +4,12 @@
 \alias{analyze_ls}
 \title{Detect rhythmicity with Lomb-Scargle}
 \usage{
-analyze_ls(cd, ...)
+analyze_ls(cd, method_args = list())
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
-\item{...}{Additional parameters passed to \verb{<method_function>}}
+\item{method_args}{Additional parameters passed to \verb{<method_function>}}
 }
 \value{
 A data frame with the results of the Lomb-Scargle analysis.

@@ -9,6 +9,8 @@
 #'
 #' @returns A list with inputs for `execute_timecycle()`
 prepare_timecycle <- function(cd, grp) {
+  # TODO: Figure out what to doe with `cores` argument of TimeCycle
+
   # Filter CD object by group
   cd_filt <- filter_samples(cd, col = "group", value = grp)
 
@@ -19,7 +21,7 @@ prepare_timecycle <- function(cd, grp) {
 
   # Change maxLag if time-series is under 48 hours in length (under 2 cycles) or
   # if sampling interval is higher than 2 hours
-  if (!is.na(cd_filt$delta_t)) {
+  if (is.na(cd_filt$delta_t)) {
     # Leave at default if delta_t is NA
     maxLag <- 5
   } else {
@@ -35,8 +37,9 @@ prepare_timecycle <- function(cd, grp) {
   ls_inputs <- list(
     data = dataset(cd_filt),
     repLabel = repLabel,
-    period = mean(cd_filt$period)
-    # cores = ??? # TODO: Figure out what do to with this
+    period = mean(cd_filt$period),
+    maxLag = maxLag,
+    cores = 1 # TODO: Figure out what do to with this
   )
 
   return(ls_inputs)

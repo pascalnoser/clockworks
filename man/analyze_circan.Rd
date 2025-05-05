@@ -4,12 +4,12 @@
 \alias{analyze_circan}
 \title{Detect rhythmicity with CircaN}
 \usage{
-analyze_circan(cd, ...)
+analyze_circan(cd, method_args = list())
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
-\item{...}{Additional parameters passed to \code{CircaN::circan()}}
+\item{method_args}{Additional parameters passed to \code{CircaN::circan()}}
 }
 \value{
 A data frame with the results of the CircaN analysis.

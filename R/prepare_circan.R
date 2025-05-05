@@ -17,9 +17,8 @@ prepare_circan <- function(cd, grp) {
 
   # Create list with inputs
   ls_inputs <- list(
-    df_data = df_data,
-    df_metadata = metadata(cd_filt),
-    group = grp,
+    data = df_data,
+    meta = metadata(cd_filt),
     min_per = min(cd$period),
     max_per = max(cd$period)
   )

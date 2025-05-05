@@ -3,7 +3,7 @@
 #' This function runs rhythmicity detection with meta2d
 #'
 #' @param cd A `CircadianData` object.
-#' @param ... Additional parameters passed to `MetaCycle::meta2d()`
+#' @param method_args Additional parameters passed to `MetaCycle::meta2d()`
 #'
 #' @returns A data frame with the results of the meta2d analysis.
 #' @examples
@@ -20,7 +20,7 @@
 #' cd <- clockworks:::add_experiment_info(cd, period = 24)
 #' results <- clockworks:::analyze_meta2d(cd)
 #' head(results)
-analyze_meta2d <- function(cd, ...) {
+analyze_meta2d <- function(cd, method_args = list()) {
   # Check if cd object contains necessary columns and add them if not
   cd_local <- check_meta2d(cd)
   # Remove group column later if added temporarily by check
@@ -36,7 +36,7 @@ analyze_meta2d <- function(cd, ...) {
     ls_inputs <- prepare_meta2d(cd_local, grp)
 
     # Run rhythmicity analysis
-    ls_res_grp <- execute_meta2d(ls_inputs, grp, ...)
+    ls_res_grp <- execute_meta2d(ls_inputs, grp, method_args)
 
     # Add to list
     ls_res_groups[[grp]] <- ls_res_grp

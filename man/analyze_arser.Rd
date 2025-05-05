@@ -4,12 +4,12 @@
 \alias{analyze_arser}
 \title{Detect rhythmicity with ARSER}
 \usage{
-analyze_arser(cd, ...)
+analyze_arser(cd, method_args = list())
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
-\item{...}{Additional parameters passed to \code{MetaCycle::meta2d()}}
+\item{method_args}{Additional parameters passed to \code{MetaCycle::meta2d()}}
 }
 \value{
 A data frame with the results of the ARSER analysis.

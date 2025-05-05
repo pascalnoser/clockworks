@@ -74,6 +74,12 @@ clockworks <- function(dataset,
   # Add experiment info to CD object
   cd <- add_experiment_info(cd, period)
 
+
+  # Print CD object so the user sees what clockworks uses as input for the
+  # functions as a kind of sanity check, e.g. for the number of replicats or the
+  # meta data cols and so on.
+  print(cd)
+
   # If not specified by the user, pick a method based on the results of the previous function
   # -> Implement running the functions:
   #     - MetaCycle (ARSER, JTK_CYCLE, LS, meta2d); Probably don't include meta3d?

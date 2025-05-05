@@ -4,12 +4,12 @@
 \alias{analyze_meta2d}
 \title{Detect rhythmicity with meta2d}
 \usage{
-analyze_meta2d(cd, ...)
+analyze_meta2d(cd, method_args = list())
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
-\item{...}{Additional parameters passed to \code{MetaCycle::meta2d()}}
+\item{method_args}{Additional parameters passed to \code{MetaCycle::meta2d()}}
 }
 \value{
 A data frame with the results of the meta2d analysis.
