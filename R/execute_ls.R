@@ -8,7 +8,7 @@
 #' @importFrom MetaCycle meta2d
 #'
 #' @returns A list
-execute_ls <- function(inputs, grp, method_args) {
+execute_ls <- function(inputs, grp, method_args = list()) {
   # Combine and overwrite inputs with method_args
   inputs <- modifyList(inputs, method_args)
 

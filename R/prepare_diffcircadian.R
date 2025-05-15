@@ -1,11 +1,11 @@
-#' Prepare data for analysis with RepeatedCircadian
+#' Prepare data for analysis with diffCircadian
 #'
 #' Merge dataset and metadata of a `CircadianData` object.
 #'
 #' @param cd A `CircadianData` object.
 #'
 #' @returns A data frame.
-prepare_repeatedcircadian_long <- function(cd) {
+prepare_diffcircadian <- function(cd) {
   # Get dataset
   df_data <- dataset(cd)
 
@@ -23,15 +23,12 @@ prepare_repeatedcircadian_long <- function(cd) {
   # Add sample IDs as column to metadata
   df_meta <- metadata(cd)
   df_meta[["sample"]] <- rownames(df_meta)
+  df_meta[["time_replicate"]] <- paste0("T", df_meta$time, "_R", df_meta$replicate)
 
   # Only keep relevant columns of meta data
-  if (!is.na(cd$n_groups)) {
-    relevant_cols <- c("sample", "subject_ID", "time", "group")
-    id_cols <- c("feature", "subject_ID", "group")
-  } else {
-    relevant_cols <- c("sample", "subject_ID", "time")
-    id_cols <- c("feature", "subject_ID")
-  }
+  relevant_cols <- c("sample", "time_replicate", "group")
+  id_cols <- c("feature", "group")
+
   df_meta = df_meta[, relevant_cols]
 
   # Merge
@@ -44,14 +41,21 @@ prepare_repeatedcircadian_long <- function(cd) {
   df_reshaped <- reshape(
     df_merged,
     idvar = id_cols,
-    timevar = "time",
+    timevar = "time_replicate",
     v.names = "value",
     direction = "wide"
   )
 
   # Clean up column names
-  colnames(df_reshaped) <- gsub("value\\.", "T", colnames(df_reshaped))
+  colnames(df_reshaped) <- gsub("value\\.", "", colnames(df_reshaped))
 
+  # Create named list to return
+  ls_inputs <- list(
+    dat = df_reshaped,
+    period = mean(cd$period),
+    method = "LR",
+    FN = TRUE
+  )
 
-  return(df_reshaped)
+  return(ls_inputs)
 }

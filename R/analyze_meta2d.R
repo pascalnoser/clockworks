@@ -23,6 +23,7 @@
 analyze_meta2d <- function(cd, method_args = list()) {
   # Check if cd object contains necessary columns and add them if not
   cd_local <- check_meta2d(cd)
+
   # Remove group column later if added temporarily by check
   added_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)
 

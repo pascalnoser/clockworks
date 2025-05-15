@@ -9,7 +9,7 @@
 #' @import nlme
 #'
 #' @returns A data frame
-execute_circan <- function(inputs, grp, method_args) {
+execute_circan <- function(inputs, grp, method_args = list()) {
   # Prevent "object 'vec' not found" error if one curve type can't be fit
   # TODO: Figure out if this is necessary (was in the benchmark) or of there is
   # a better way to do this.

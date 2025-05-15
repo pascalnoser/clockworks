@@ -19,11 +19,13 @@
 #' )
 #' cd <- CircadianData(cw_data, cw_metadata)
 #' cd <- clockworks:::add_experiment_info(cd, period = 24)
-#' results <- clockworks:::analyze_timecycle(cd)
+#' # Set 'cores = 1' because CRAN limits available cores to 2
+#' results <- clockworks:::analyze_timecycle(cd, method_args = list(cores = 1))
 #' head(results)
 analyze_timecycle <- function(cd, method_args = list()) {
   # Check if cd object contains necessary columns and add them if not
   cd_local <- check_timecycle(cd)
+
   # Remove group column later if added temporarily by check
   added_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)
 

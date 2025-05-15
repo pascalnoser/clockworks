@@ -38,8 +38,8 @@ prepare_timecycle <- function(cd, grp) {
     data = dataset(cd_filt),
     repLabel = repLabel,
     period = mean(cd_filt$period),
-    maxLag = maxLag,
-    cores = 1 # TODO: Figure out what do to with this
+    maxLag = maxLag
+    # cores = 1 # TODO: Figure out what do to with this
   )
 
   return(ls_inputs)

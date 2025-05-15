@@ -28,6 +28,7 @@ Imports:
     future.apply,
     RepeatedCircadian,
     rain,
-    TimeCycle
+    TimeCycle,
+    future
 Depends: 
     R (>= 3.5)

@@ -7,7 +7,7 @@
 #' @import rain
 #'
 #' @returns A data frame
-execute_rain <- function(inputs, grp, method_args) {
+execute_rain <- function(inputs, grp, method_args = list()) {
   # Combine and overwrite inputs with method_args
   inputs <- modifyList(inputs, method_args)
 

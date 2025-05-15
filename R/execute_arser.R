@@ -8,7 +8,7 @@
 #' @importFrom MetaCycle meta2d
 #'
 #' @returns A list
-execute_arser <- function(inputs, grp, method_args) {
+execute_arser <- function(inputs, grp, method_args = list()) {
   # TODO: Figure out what to do about `parallelize` and `nCores`
 
   # Combine and overwrite inputs with method_args

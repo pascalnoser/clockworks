@@ -30,6 +30,7 @@ cw_metadata <- clockworks::check_metadata(
 )
 cd <- CircadianData(cw_data, cw_metadata)
 cd <- clockworks:::add_experiment_info(cd, period = 24)
-results <- clockworks:::analyze_timecycle(cd)
+# Set 'cores = 1' because CRAN limits available cores to 2
+results <- clockworks:::analyze_timecycle(cd, method_args = list(cores = 1))
 head(results)
 }

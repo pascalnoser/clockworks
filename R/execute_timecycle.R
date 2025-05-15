@@ -8,15 +8,15 @@
 #' @importFrom TimeCycle TimeCycle
 #'
 #' @returns A data frame
-execute_timecycle <- function(inputs, grp, method_args) {
+execute_timecycle <- function(inputs, grp, method_args = list()) {
   # Combine and overwrite inputs with method_args
   inputs <- modifyList(inputs, method_args)
 
-  if (inputs$maxLag == 5 && !"maxLag" %in% method_args) {
+  if (inputs$maxLag == 3 && !"maxLag" %in% method_args) {
     message(
-      "Running TimeCycle with 'maxLag = 5' instead of 3 (default) because ",
-      "sampling interval is greater than 2 or the number of cycles is less ",
-      "than 2. If you want to change this, set 'method_args = list(maxLag = 3)'"
+      "Running TimeCycle with 'maxLag = 3' instead of 5 (default) because ",
+      "sampling interval is greater than 2, or the number of cycles is less ",
+      "than 2. If you want to change this, set 'maxLag' in 'method_args'."
     )
   }
 

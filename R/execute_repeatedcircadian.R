@@ -10,7 +10,7 @@
 #' @importFrom future.apply future_lapply
 #'
 #' @returns A data frame
-execute_repeatedcircadian <- function(inputs, grp, method_args) {
+execute_repeatedcircadian <- function(inputs, grp, method_args = list()) {
   # Get data set
   dat <- inputs$dat
   inputs$dat <- NULL

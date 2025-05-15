@@ -5,7 +5,7 @@
 #
 # rm(list = ls(all = TRUE))
 #
-# method = "meta2d"
+# method = "diffCircadian"
 #
 #
 # # Test function with all CD objects ----

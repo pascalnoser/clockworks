@@ -7,8 +7,6 @@
 #'
 #' @returns A `CircadianData` object
 check_timecycle <- function(cd) {
-  # TODO: Give a warning if sampling scheme is "worse" than every 2-h for 48-h?
-
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
@@ -27,7 +25,7 @@ check_timecycle <- function(cd) {
   colnames(cd_local) <- new_ids
 
   # Make sure samples are ordered by time and group (and subject ID if relevant)
-  sort_cols <- intersect(c("time", "group", "subject_ID"), colnames(df_meta_temp))
+  sort_cols <- intersect(c("time", "group", "subject_ID"), colnames(metadata(cd_local)))
   cd_local <- order_samples(cd_local, sort_cols)
 
   return(cd_local)
