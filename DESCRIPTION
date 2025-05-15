@@ -29,6 +29,7 @@ Imports:
     RepeatedCircadian,
     rain,
     TimeCycle,
-    future
+    future,
+    limma
 Depends: 
     R (>= 3.5)

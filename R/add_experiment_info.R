@@ -2,11 +2,15 @@
 #'
 #' @param cd A `CircadianData` object.
 #' @param period A number defining the period length of the circadian data.
+#' @param type Type of data in `dataset` slot of `CircadianData` object. Must be
+#'   one of "count" (for data following a negative bionmial distribution) or
+#'   "norm" for data roughly following a normal distribution (e.g. log-CPM
+#'   values).
 #' @param estimate_delta_t If TRUE, sampling interval will be estimated from
 #'   meta data.
 #'
 #' @returns The `CircadianData` object with added experiment info
-add_experiment_info <- function(cd, period = NULL, estimate_delta_t = TRUE) {
+add_experiment_info <- function(cd, period = NULL, type = NULL, estimate_delta_t = TRUE) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
@@ -16,6 +20,9 @@ add_experiment_info <- function(cd, period = NULL, estimate_delta_t = TRUE) {
   # Add period ----
   if (!is.null(period)) cd_local$period <- period
 
+  # Add data type ----
+  # TODO: ADD CHECK SOMEWHERE THAT type IS A VALID VALUE. Maybe `match.arg()`?
+  if (!is.null(period)) cd_local$type <- type
 
   # Add group info ----
   # TODO: Remove "n_groups" and replace with "groups"?

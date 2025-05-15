@@ -1,53 +1,58 @@
 #' Detect rhythmicity with LimoRhyde
 #'
-#' This function runs rhythmicity detection using LimoRhyde. It expects a
-#' `CircadianDaata` object (`cd`) as input. The metadata slot of this object
-#' must contain a data.frame with a column named `Time` that contains time point
-#' information for a given sample. The experimentInfo of `cd` slot must contain
-#' a `period` parameter.
+#' This function runs rhythmicity detection with LimoRhyde
 #'
 #' @param cd A `CircadianData` object.
-#' @param ... Additional parameters passed to `limorhyde::limorhyde()`
+#' @param method_args Additional parameters passed to `<method_function>`
 #'
-#' @importFrom limorhyde limorhyde
-#' @importFrom edgeR voomLmFit
-#'
-#' @returns A data frame with the results of the LimoRhyde analysis.
-analyze_limorhyde <- function(cd, ...) {
-  # TODO: Add info about what model will be used and so on to documentation
-  # TODO: Add info about required parameters in experimentInfo slot (group_info,
-  # repeated_measures, others?)
-  # TODO: Handle the "..."
+#' @returns A list with the original and formatted results of the LimoRhyde analysis.
+#' @examples
+#' data(cw_data)
+#' data(cw_metadata)
+#' cw_metadata <- clockworks::check_metadata(
+#'   cw_metadata,
+#'   colname_sample = "Sample_ID",
+#'   colname_time = "Time",
+#'   colname_group = "Group",
+#'   colname_subject = "Subject_ID"
+#' )
+#' cd <- CircadianData(cw_data, cw_metadata)
+#' cd <- clockworks:::add_experiment_info(cd, period = 24)
+#' results <- clockworks:::analyze_limorhyde(cd)
+#' head(results)
+analyze_limorhyde <- function(cd, method_args = list()) {
+  # Check if cd object contains necessary columns and add them if not
+  cd_local <- check_limorhyde(cd)
 
-  # Calculate time_cos and time_sin based on the Time column
-  limo <- limorhyde::limorhyde(
-    time = metadata(cd)$Time,
-    colnamePrefix = "time_",
-    period = cd$period
-  )
+  # # Remove group column later if added temporarily by check
+  # added_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)
 
-  # Add to metadata
-  metadata(cd) <- cbind(metadata(cd), limo)
+  # Prepare inputs
+  ls_inputs <- prepare_limorhyde(cd_local)
 
-  # Define model
-  if (cd$group_info == TRUE) {
-    str_model <- "~ 0 + Group + Group:(time_sin + time_cos)"
-  } else {
-    str_model <- "~ time_cos + time_sin"
+  # Run rhythmicity analysis
+  df_res <- execute_limorhyde(ls_inputs, cd_local$type, method_args)
+
+  #########
+
+  # Create empty list for results
+  ls_res_groups = list()
+
+  # Run rhythmicity detection for each group separately
+  groups <- unique(metadata(cd_local)[["group"]])
+  for (grp in groups) {
+    # Prepare inputs
+    ls_inputs <- prepare_limorhyde(cd_local, grp)
+
+    # Run rhythmicity analysis
+    df_res_grp <- execute_limorhyde(ls_inputs, grp, method_args)
+
+    # Add to list
+    ls_res_groups[[grp]] <- df_res_grp
   }
-  design <- model.matrix(as.formula(str_model), data = metadata(cd))
 
-  # Replace ':' by '.' to not throw an error when defining contrasts later
-  colnames(design) <- gsub(":", ".", colnames(design))
+  # Postprocessing
+  ls_res <- format_limorhyde(ls_res_groups, added_group)
 
-  # Fit model. Use fitting method depending on if we need to block for subject
-  # ID (repeated measures) and on whether we have count data or log-expression
-  # values
-  # ...
-
-  # Extract interactions with time_sin and time_cos
-  # ...
-
-  # Return results
-  # ...
+  return(ls_res)
 }

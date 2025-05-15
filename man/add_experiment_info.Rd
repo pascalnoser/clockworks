@@ -4,12 +4,17 @@
 \alias{add_experiment_info}
 \title{Add experiment information to CircadianData object}
 \usage{
-add_experiment_info(cd, period = NULL, estimate_delta_t = TRUE)
+add_experiment_info(cd, period = NULL, type = NULL, estimate_delta_t = TRUE)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
 \item{period}{A number defining the period length of the circadian data.}
+
+\item{type}{Type of data in \code{dataset} slot of \code{CircadianData} object. Must be
+one of "count" (for data following a negative bionmial distribution) or
+"norm" for data roughly following a normal distribution (e.g. log-CPM
+values).}
 
 \item{estimate_delta_t}{If TRUE, sampling interval will be estimated from
 meta data.}
