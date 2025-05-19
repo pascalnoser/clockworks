@@ -31,7 +31,8 @@ analyze_limorhyde <- function(cd, method_args = list()) {
   ls_inputs <- prepare_limorhyde(cd_local)
 
   # Run rhythmicity analysis
-  df_res <- execute_limorhyde(ls_inputs, cd_local$type, method_args)
+  groups <- unique(metadata(cd_local)[["group"]])
+  df_res <- execute_limorhyde(ls_inputs, groups, method_args)
 
   #########
 
