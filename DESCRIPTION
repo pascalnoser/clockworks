@@ -30,6 +30,7 @@ Imports:
     rain,
     TimeCycle,
     future,
-    limma
+    limma,
+    diffCircadian
 Depends: 
     R (>= 3.5)

@@ -18,7 +18,7 @@
 #'   colname_subject = "Subject_ID"
 #' )
 #' cd <- CircadianData(cw_data, cw_metadata)
-#' cd <- clockworks:::add_experiment_info(cd, period = 24)
+#' cd <- clockworks:::add_experiment_info(cd, period = 24, data_type = "norm")
 #' # Set 'cores = 1' because CRAN limits available cores to 2
 #' results <- clockworks:::analyze_timecycle(cd, method_args = list(cores = 1))
 #' head(results)
@@ -36,10 +36,10 @@ analyze_timecycle <- function(cd, method_args = list()) {
   groups <- unique(metadata(cd_local)[["group"]])
   for (grp in groups) {
     # Prepare inputs
-    ls_inputs <- prepare_timecycle(cd_local, grp)
+    inputs <- prepare_timecycle(cd_local, grp)
 
     # Run rhythmicity analysis
-    df_res_grp <- execute_timecycle(ls_inputs, grp, method_args)
+    df_res_grp <- execute_timecycle(inputs, grp, method_args)
 
     # Add to list
     ls_res_groups[[grp]] <- df_res_grp

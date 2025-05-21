@@ -17,43 +17,22 @@
 #'   colname_subject = "Subject_ID"
 #' )
 #' cd <- CircadianData(cw_data, cw_metadata)
-#' cd <- clockworks:::add_experiment_info(cd, period = 24)
+#' cd <- clockworks:::add_experiment_info(cd, period = 24, data_type = "norm")
 #' results <- clockworks:::analyze_limorhyde(cd)
 #' head(results)
 analyze_limorhyde <- function(cd, method_args = list()) {
   # Check if cd object contains necessary columns and add them if not
   cd_local <- check_limorhyde(cd)
 
-  # # Remove group column later if added temporarily by check
-  # added_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)
-
   # Prepare inputs
-  ls_inputs <- prepare_limorhyde(cd_local)
+  inputs <- prepare_limorhyde(cd_local)
 
   # Run rhythmicity analysis
   groups <- unique(metadata(cd_local)[["group"]])
-  df_res <- execute_limorhyde(ls_inputs, groups, method_args)
-
-  #########
-
-  # Create empty list for results
-  ls_res_groups = list()
-
-  # Run rhythmicity detection for each group separately
-  groups <- unique(metadata(cd_local)[["group"]])
-  for (grp in groups) {
-    # Prepare inputs
-    ls_inputs <- prepare_limorhyde(cd_local, grp)
-
-    # Run rhythmicity analysis
-    df_res_grp <- execute_limorhyde(ls_inputs, grp, method_args)
-
-    # Add to list
-    ls_res_groups[[grp]] <- df_res_grp
-  }
+  df_res <- execute_limorhyde(inputs, groups, method_args)
 
   # Postprocessing
-  ls_res <- format_limorhyde(ls_res_groups, added_group)
+  ls_res <- format_limorhyde(df_res, mean(cd_local$period))
 
   return(ls_res)
 }

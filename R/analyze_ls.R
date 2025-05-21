@@ -17,7 +17,7 @@
 #'   colname_subject = "Subject_ID"
 #' )
 #' cd <- CircadianData(cw_data, cw_metadata)
-#' cd <- clockworks:::add_experiment_info(cd, period = 24)
+#' cd <- clockworks:::add_experiment_info(cd, period = 24, data_type = "norm")
 #' results <- clockworks:::analyze_ls(cd)
 #' head(results)
 analyze_ls <- function(cd, method_args = list()) {
@@ -34,10 +34,10 @@ analyze_ls <- function(cd, method_args = list()) {
   groups <- unique(metadata(cd_local)[["group"]])
   for (grp in groups) {
     # Prepare inputs
-    ls_inputs <- prepare_ls(cd_local, grp)
+    inputs <- prepare_ls(cd_local, grp)
 
     # Run rhythmicity analysis
-    ls_res_grp <- execute_ls(ls_inputs, grp, method_args)
+    ls_res_grp <- execute_ls(inputs, grp, method_args)
 
     # Add to list
     ls_res_groups[[grp]] <- ls_res_grp

@@ -18,7 +18,7 @@ prepare_jtkcycle <- function(cd, grp) {
   df_input <- data.frame(feature = rownames(dataset(cd_filt)), dataset(cd_filt))
 
   # Create list with inputs for run
-  ls_inputs <- list(
+  inputs <- list(
     inDF = df_input,
     infile = paste("Group", grp), # Using inDF, but can't be empty
     filestyle = "csv", # Irrelevant, but needs to be either "csv" or "txt"
@@ -32,5 +32,5 @@ prepare_jtkcycle <- function(cd, grp) {
     releaseNote = TRUE # Probably set to FALSE?
   )
 
-  return(ls_inputs)
+  return(inputs)
 }

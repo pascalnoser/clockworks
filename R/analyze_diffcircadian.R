@@ -17,7 +17,7 @@
 #'   colname_subject = "Subject_ID"
 #' )
 #' cd <- CircadianData(cw_data, cw_metadata)
-#' cd <- clockworks:::add_experiment_info(cd, period = 24)
+#' cd <- clockworks:::add_experiment_info(cd, period = 24, data_type = "norm")
 #' results <- clockworks:::analyze_diffcircadian(cd)
 #' head(results)
 analyze_diffcircadian <- function(cd, method_args = list()) {
@@ -28,10 +28,10 @@ analyze_diffcircadian <- function(cd, method_args = list()) {
   added_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)
 
   # Get reshaped values and metadata
-  ls_inputs <- prepare_diffcircadian(cd_local)
+  inputs <- prepare_diffcircadian(cd_local)
 
   # Run rhythmicity analysis
-  df_res <- execute_diffcircadian(ls_inputs, method_args)
+  df_res <- execute_diffcircadian(inputs, method_args)
 
   # Postprocessing
   ls_res <- format_diffcircadian(df_res, mean(cd$period), added_group)

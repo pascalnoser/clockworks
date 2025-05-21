@@ -12,7 +12,7 @@ analysis.}
 
 \item{period}{Period entered by the user.}
 
-\item{remove_group}{If TRUE the "group" column will be removed.}
+\item{added_group}{If TRUE the "group" column will be removed.}
 }
 \value{
 A list of data frames containing the original and formatted results

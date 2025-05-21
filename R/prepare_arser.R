@@ -40,7 +40,7 @@ prepare_arser <- function(cd, grp, added_group) {
   }
 
   # Create list with default inputs for run
-  ls_inputs <- list(
+  inputs <- list(
     inDF = df_input,
     infile = paste("Group", grp), # Using inDF, but can't be empty
     filestyle = "csv", # Irrelevant, but needs to be either "csv" or "txt"
@@ -55,5 +55,5 @@ prepare_arser <- function(cd, grp, added_group) {
     releaseNote = TRUE
   )
 
-  return(ls_inputs)
+  return(inputs)
 }

@@ -13,7 +13,7 @@ prepare_rain <- function(cd, grp) {
   cd_filt <- filter_samples(cd, col = "group", value = grp)
 
   # Create list with inputs for execute method
-  ls_inputs <- list(
+  inputs <- list(
     x = t(dataset(cd_filt)),
     deltat = cd_filt$delta_t,
     period = mean(cd_filt$period),
@@ -21,5 +21,5 @@ prepare_rain <- function(cd, grp) {
     method = ifelse(cd_filt$repeated_measures == TRUE, "longitudinal", "independent")
   )
 
-  return(ls_inputs)
+  return(inputs)
 }

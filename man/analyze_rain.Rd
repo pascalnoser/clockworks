@@ -9,7 +9,7 @@ analyze_rain(cd, method_args = list())
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
-\item{...}{Additional parameters passed to \verb{<method_function>}}
+\item{method_args}{Additional parameters passed to \verb{<method_function>}}
 }
 \value{
 A list with the original and formatted results of the RAIN analysis.
@@ -28,7 +28,7 @@ cw_metadata <- clockworks::check_metadata(
   colname_subject = "Subject_ID"
 )
 cd <- CircadianData(cw_data, cw_metadata)
-cd <- clockworks:::add_experiment_info(cd, period = 24)
+cd <- clockworks:::add_experiment_info(cd, period = 24, data_type = "norm")
 results <- clockworks:::analyze_rain(cd)
 head(results)
 }

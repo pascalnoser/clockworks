@@ -50,12 +50,12 @@ prepare_diffcircadian <- function(cd) {
   colnames(df_reshaped) <- gsub("value\\.", "", colnames(df_reshaped))
 
   # Create named list to return
-  ls_inputs <- list(
+  inputs <- list(
     dat = df_reshaped,
     period = mean(cd$period),
     method = "LR",
     FN = TRUE
   )
 
-  return(ls_inputs)
+  return(inputs)
 }

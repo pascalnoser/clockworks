@@ -2,7 +2,7 @@
 #'
 #' @param ls_res_groups A list with results from a TimeCycle rhythmicity
 #'   analysis, split into groups.
-#' @param remove_group If TRUE the "group" column will be removed
+#' @param added_group If TRUE the "group" column will be removed
 #'
 #' @returns A list of data frames containing the original and formatted results
 format_timecycle <- function(ls_res_groups, added_group) {

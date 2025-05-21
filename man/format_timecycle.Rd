@@ -10,7 +10,7 @@ format_timecycle(ls_res_groups, added_group)
 \item{ls_res_groups}{A list with results from a TimeCycle rhythmicity
 analysis, split into groups.}
 
-\item{remove_group}{If TRUE the "group" column will be removed}
+\item{added_group}{If TRUE the "group" column will be removed}
 }
 \value{
 A list of data frames containing the original and formatted results

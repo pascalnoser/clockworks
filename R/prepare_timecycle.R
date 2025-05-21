@@ -34,7 +34,7 @@ prepare_timecycle <- function(cd, grp) {
   }
 
   # Create list with inputs for run
-  ls_inputs <- list(
+  inputs <- list(
     data = dataset(cd_filt),
     repLabel = repLabel,
     period = mean(cd_filt$period),
@@ -42,5 +42,5 @@ prepare_timecycle <- function(cd, grp) {
     # cores = 1 # TODO: Figure out what do to with this
   )
 
-  return(ls_inputs)
+  return(inputs)
 }

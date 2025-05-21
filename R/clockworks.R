@@ -5,6 +5,7 @@ clockworks <- function(dataset,
                        colname_group = NULL,
                        colname_subject = NULL,
                        period = 24,
+                       data_type = "norm",
                        method = "auto",
                        method_args = list(),
                        ...) {
@@ -19,8 +20,16 @@ clockworks <- function(dataset,
       "LS",
       "meta2d",
       "RAIN",
-      "TimeCycle"
+      "TimeCycle",
+      "diffCircadian",
+      "LimoRhyde"
     )
+  )
+
+  # Make sure data type is valid
+  data_type <- match.arg(
+    data_type,
+    choices = c("count", "norm")
   )
 
   # Plan session for parallel processing
@@ -72,7 +81,7 @@ clockworks <- function(dataset,
   # - Additional checks probably added after benchmark
   # - ...
   # Add experiment info to CD object
-  cd <- add_experiment_info(cd, period)
+  cd <- add_experiment_info(cd, period, data_type)
 
 
   # Print CD object so the user sees what clockworks uses as input for the

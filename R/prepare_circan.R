@@ -16,12 +16,12 @@ prepare_circan <- function(cd, grp) {
   df_data <- data.frame(feature = rownames(dataset(cd_filt)), dataset(cd_filt))
 
   # Create list with inputs
-  ls_inputs <- list(
+  inputs <- list(
     data = df_data,
     meta = metadata(cd_filt),
     min_per = min(cd$period),
     max_per = max(cd$period)
   )
 
-  return(ls_inputs)
+  return(inputs)
 }

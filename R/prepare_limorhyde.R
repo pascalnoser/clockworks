@@ -14,6 +14,10 @@ prepare_limorhyde <- function(cd) {
 
   # Define model ----
   if (!is.na(cd_local$n_groups)) {
+    # Note: Add "0" to model to prevent the first group from being the
+    # reference. In this case this is preferable because we are not interested
+    # in differences between groups and this makes it easier to extract the
+    # mesor estimate for each group.
     str_model <- "~ 0 + group + group:(time_sin + time_cos)"
   } else {
     str_model <- "~ time_cos + time_sin"
@@ -24,20 +28,19 @@ prepare_limorhyde <- function(cd) {
   colnames(design) = gsub(":", ".", colnames(design))
 
 
-
   # Define function ----
-  if (cd_local$type == "count") {
+  if (cd_local$data_type == "count") {
     # Use voomLmFit for count data
-    ls_inputs <- list(
+    inputs <- list(
       func = "voomLmFit",
       counts = dataset(cd_local),
       design = design,
       sample.weights = TRUE  # TODO: Figure out if this should be TRUE or FALSE
     )
 
-  } else if (cd_local$type == "norm") {
+  } else if (cd_local$data_type == "norm") {
     # Use limma trend for normalised data
-    ls_inputs <- list(
+    inputs <- list(
       func = "lmFit",
       object = dataset(cd_local),
       design = design
@@ -47,15 +50,15 @@ prepare_limorhyde <- function(cd) {
 
   # Add blocking variable ----
   if (cd_local$repeated_measures == TRUE) {
-    ls_inputs$block <- metadata(cd_local)[["subject_ID"]]
+    inputs$block <- metadata(cd_local)[["subject_ID"]]
 
     # Add 'correlation' if using lmFit()
-    if (cd_local$type == "norm") {
-      corr_input <- ls_inputs
+    if (cd_local$data_type == "norm") {
+      corr_input <- inputs
       corr_input$func <- NULL
-      ls_inputs$correlation <- do.call(limma::duplicateCorrelation, corr_input)$consensus.correlation
+      inputs$correlation <- do.call(limma::duplicateCorrelation, corr_input)$consensus.correlation
     }
   }
 
-  return(ls_inputs)
+  return(inputs)
 }

@@ -3,7 +3,7 @@
 #' @param res_original A data frame with results from a diffCircadian rhythmicity
 #'   analysis.
 #' @param period Period entered by the user.
-#' @param remove_group If TRUE the "group" column will be removed.
+#' @param added_group If TRUE the "group" column will be removed.
 #'
 #' @returns A list of data frames containing the original and formatted results
 format_diffcircadian <- function(res_original, period, added_group) {

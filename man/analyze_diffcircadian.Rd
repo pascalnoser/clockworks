@@ -28,7 +28,7 @@ cw_metadata <- clockworks::check_metadata(
   colname_subject = "Subject_ID"
 )
 cd <- CircadianData(cw_data, cw_metadata)
-cd <- clockworks:::add_experiment_info(cd, period = 24)
+cd <- clockworks:::add_experiment_info(cd, period = 24, data_type = "norm")
 results <- clockworks:::analyze_diffcircadian(cd)
 head(results)
 }

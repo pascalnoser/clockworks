@@ -4,7 +4,7 @@
 #'   `prepare_limorhyde()`.
 #' @param groups A vector with the groups in the experiment.
 #' @param method_args Additional parameters passed to `limma::lmFit()` or
-#'   `edgeR::vommLmFit()` depending on `type`.
+#'   `edgeR::vommLmFit()` depending on `data_type`.
 #'
 #' @importFrom limma lmFit eBayes topTable
 #' @importFrom edgeR voomLmFit
@@ -23,7 +23,7 @@ execute_limorhyde <- function(inputs, groups, method_args = list()) {
     fit <- do.call(limma::lmFit, inputs)
     fit <- limma::eBayes(fit, trend = TRUE)
 
-  } else if (type == "voomLmFit") {
+  } else if (func == "voomLmFit") {
     fit <- do.call(edgeR::voomLmFit(), inputs)
     fit <- limma::eBayes(fit)
   }

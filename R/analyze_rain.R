@@ -3,7 +3,7 @@
 #' This function runs rhythmicity detection with RAIN
 #'
 #' @param cd A `CircadianData` object.
-#' @param ... Additional parameters passed to `<method_function>`
+#' @param method_args Additional parameters passed to `<method_function>`
 #'
 #' @returns A list with the original and formatted results of the RAIN analysis.
 #' @examples
@@ -17,7 +17,7 @@
 #'   colname_subject = "Subject_ID"
 #' )
 #' cd <- CircadianData(cw_data, cw_metadata)
-#' cd <- clockworks:::add_experiment_info(cd, period = 24)
+#' cd <- clockworks:::add_experiment_info(cd, period = 24, data_type = "norm")
 #' results <- clockworks:::analyze_rain(cd)
 #' head(results)
 analyze_rain <- function(cd, method_args = list()) {
@@ -34,10 +34,10 @@ analyze_rain <- function(cd, method_args = list()) {
   groups <- unique(metadata(cd_local)[["group"]])
   for (grp in groups) {
     # Prepare inputs
-    ls_inputs <- prepare_rain(cd_local, grp)
+    inputs <- prepare_rain(cd_local, grp)
 
     # Run rhythmicity analysis
-    df_res_grp <- execute_rain(ls_inputs, grp, method_args)
+    df_res_grp <- execute_rain(inputs, grp, method_args)
 
     # Add to list
     ls_res_groups[[grp]] <- df_res_grp

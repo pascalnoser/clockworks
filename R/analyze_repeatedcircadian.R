@@ -20,7 +20,7 @@
 #'   colname_subject = "Subject_ID"
 #' )
 #' cd <- CircadianData(cw_data, cw_metadata)
-#' cd <- clockworks:::add_experiment_info(cd, period = 24)
+#' cd <- clockworks:::add_experiment_info(cd, period = 24, data_type = "norm")
 #' results <- clockworks:::analyze_repeatedcircadian(cd)
 #' head(results$res_original)
 analyze_repeatedcircadian <- function(cd, method_args = list()) {
@@ -54,10 +54,10 @@ analyze_repeatedcircadian <- function(cd, method_args = list()) {
   for (grp in groups) {
     # TODO: Don't loop over groups
     # Prepare inputs
-    ls_inputs <- prepare_repeatedcircadian(cd_local, grp)
+    inputs <- prepare_repeatedcircadian(cd_local, grp)
 
     # Run rhythmicity analysis
-    df_res_grp <- execute_repeatedcircadian(ls_inputs, grp, method_args)
+    df_res_grp <- execute_repeatedcircadian(inputs, grp, method_args)
 
     # Add to list
     ls_res_groups[[grp]] <- df_res_grp

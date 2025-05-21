@@ -13,12 +13,12 @@ prepare_repeatedcircadian <- function(cd, grp) {
   cd_filt <- filter_samples(cd, col = "group", value = grp)
 
   # Create named list to return
-  ls_inputs <- list(
+  inputs <- list(
     dat = dataset(cd_filt),
     tt = metadata(cd_filt)[["time"]],
     id = metadata(cd_filt)[["subject_ID"]],
     period = mean(cd_filt$period)
   )
 
-  return(ls_inputs)
+  return(inputs)
 }

@@ -13,7 +13,7 @@ execute_limorhyde(inputs, groups, method_args = list())
 \item{groups}{A vector with the groups in the experiment.}
 
 \item{method_args}{Additional parameters passed to \code{limma::lmFit()} or
-\code{edgeR::vommLmFit()} depending on \code{type}.}
+\code{edgeR::vommLmFit()} depending on \code{data_type}.}
 }
 \value{
 A data frame
