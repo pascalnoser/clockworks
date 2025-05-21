@@ -1,14 +1,14 @@
-#' ARSER prep
+#' GeneCycle prep
 #'
 #' This function is used to create the input required to run rhythmicity
-#' detection with ARSER.
+#' detection with GeneCycle.
 #'
 #' @param cd A `CircadianData` object
 #' @param grp A string specifying a value in the "group" column of the metadata
 #'   slot of `cd` which is used for filtering.
 #'
-#' @returns A list with inputs for `execute_arser()`
-prepare_arser <- function(cd, grp) {
+#' @returns A list with inputs for `execute_genecycle()`
+prepare_genecycle <- function(cd, grp) {
   # Check if there are replicates in any group
   # Note: Check all groups, not just this, to make sure we rename the samples in
   # all groups so they are consistent
@@ -31,26 +31,31 @@ prepare_arser <- function(cd, grp) {
     })
 
     # Prepare data
-    df_input <- data.frame(feature = rownames(dataset(cd_filt)), ls_meds)
+    df_dat <- t(data.frame(ls_meds))
   } else {
-    df_input <- data.frame(feature = rownames(dataset(cd_filt)), dataset(cd_filt))
+    df_dat <- t(dataset(cd_filt))
     timepoints <- metadata(cd_filt)[["time"]]
   }
 
-  # Create list with default inputs for run
+  # Create list with inputs for run
+  # Add default values for everything
   inputs <- list(
-    inDF = df_input,
-    infile = paste("Group", grp), # Using inDF, but can't be empty
-    filestyle = "csv", # Irrelevant, but needs to be either "csv" or "txt"
-    timepoints = timepoints,
-    minper = min(cd_filt$period),
-    maxper = max(cd_filt$period),
-    ARSdefaultPer = mean(cd_filt$period), # Must be minper < ARSdefaultPer > maxper
-    cycMethod = "ARS",
-    parallelize = FALSE,
-    nCores = 1,
-    outputFile = FALSE,
-    releaseNote = TRUE
+    robust_spectrum = list(
+      x = df_dat,
+      algorithm = "rank",
+      t = timepoints,
+      periodicity.time = FALSE,
+      noOfPermutations = 300
+    ),
+    robust_g_test = list(
+      y = NULL,  # Will be output of `robust.spectrum()`
+      index = NA,  # TODO: Add this
+      perm = FALSE,
+      x = NULL,
+      noOfPermutations = 300,
+      algorithm = "rank",
+      t = timepoints  # Only relevant for `algorithm = "regression"` but doesn't change anything for "rank"
+    )
   )
 
   return(inputs)

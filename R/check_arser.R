@@ -31,16 +31,11 @@ check_arser <- function(cd) {
   # Calculation of medians will be handled by `prepare_arser()`
   if (any(unlist(cd_local$n_replicates) > 1)) {
     message(
-      "WARNING: The 'ARSER' method was selected for analysis; however, clockworks ",
-      "detected replicates at one or more time points within at least one ",
-      "group (if applicable). Since ARSER does not support replicate handling, ",
-      "clockworks will aggregate replicates by computing the median at each ",
-      "time point. These median values will be used in the analysis and ",
-      "labeled as 'CT_<timepoint>'. If you prefer an alternative approach ",
-      "(e.g. concatenating replicates), please preprocess the data manually ",
-      "and rerun clockworks. Alternatively, consider using a different method ",
-      "that supports replicates."
-
+      "WARNING: 'ARSER' was selected, but replicates were detected at one or more ",
+      "time points. Since ARSER doesn’t support replicates, clockworks will ",
+      "aggregate them by taking the median at each time point. To use a different ",
+      "approach (e.g., concatenation), please preprocess the data manually or ",
+      "choose a method that supports replicates."
     )
     # TODO: Print data frame showing time, number of replicates and group?
 
