@@ -4,16 +4,31 @@
 \alias{analyze_genecycle}
 \title{Detect rhythmicity with GeneCycle}
 \usage{
-analyze_genecycle(cd, ...)
+analyze_genecycle(cd, method_args = list())
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
-\item{...}{Additional parameters passed to ...}
+\item{method_args}{Additional parameters passed to \code{GeneCycle:robust.g.test()}}
 }
 \value{
-A data frame with the results of the GeneCycle analysis.
+A list with the original and formatted results of the GeneCycle analysis.
 }
 \description{
-This function runs rhythmicity detection using GeneCycle
+This function runs rhythmicity detection with GeneCycle
+}
+\examples{
+data(cw_data)
+data(cw_metadata)
+cw_metadata <- clockworks::check_metadata(
+  cw_metadata,
+  colname_sample = "Sample_ID",
+  colname_time = "Time",
+  colname_group = "Group",
+  colname_subject = "Subject_ID"
+)
+cd <- CircadianData(cw_data, cw_metadata)
+cd <- clockworks:::add_experiment_info(cd, period = 24, data_type = "norm")
+results <- clockworks:::analyze_genecycle(cd)
+head(results)
 }

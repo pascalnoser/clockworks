@@ -38,25 +38,33 @@ prepare_genecycle <- function(cd, grp) {
   }
 
   # Create list with inputs for run
-  # Add default values for everything
   inputs <- list(
-    robust_spectrum = list(
+    spectrum = list(
       x = df_dat,
       algorithm = "rank",
-      t = timepoints,
-      periodicity.time = FALSE,
-      noOfPermutations = 300
+      t = timepoints, # Only relevant for "regression" but doesn't change anything for "rank"
+      # noOfPermutations = 300,
+      periodicity.time = mean(cd_filt$period)
     ),
-    robust_g_test = list(
+    gtest = list(
       y = NULL,  # Will be output of `robust.spectrum()`
-      index = NA,  # TODO: Add this
       perm = FALSE,
-      x = NULL,
-      noOfPermutations = 300,
+      # noOfPermutations = 300,
       algorithm = "rank",
-      t = timepoints  # Only relevant for `algorithm = "regression"` but doesn't change anything for "rank"
+      t = timepoints  # Only relevant for "regression" but doesn't change anything for "rank"
     )
   )
+
+  # If possible, add index value
+  n_cycles <- unlist(cd_filt$n_cycles)
+  if (!is.na(n_cycles)) {
+    # Note: Round because otherwise e.g. 1.9 will result in
+    # GeneCycle::g.statistic() (which is called by GeneCycle::robust.g.test())
+    # just extracts index 1 on line 19, although index 2 would be much closer.
+    # It's just a quirk of indexing in R that vec[1.9] return the first element
+    # of vec rather than an error.
+    inputs$gtest$index <- round(n_cycles*2 + 1)
+  }
 
   return(inputs)
 }
