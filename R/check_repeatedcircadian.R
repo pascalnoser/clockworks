@@ -11,17 +11,14 @@ check_repeatedcircadian <- function(cd) {
   cd_local <- cd
 
   # If for some reason the user has picked this method but there are no repeated
-  # measures, add a subject ID column with a unique subject ID for each sample
+  # measures, throw an error.
   if (cd_local$repeated_measures == FALSE) {
-    # Print warning
-    warning(
+    stop(
       "The selected method 'RepeatedCircadian' is designed for data ",
-      "with repeated measures, but no `colname_subject` has been defined. The ",
-      "samples will therefore be assumed to all come from different subjects. ",
+      "with repeated measures, but no 'colname_subject' has been defined. ",
       "If your data does contain repeated measures, please define a ",
-      "`colname_subject`. If your data does not contain repeated measures, ",
-      "other methods are likely be a better choice."
-      ,
+      "'colname_subject'. If your data does not contain repeated measures, ",
+      "select a different method.",
       call. = FALSE
     )
 

@@ -1,3 +1,41 @@
+#' clockworks
+#'
+#' Rhythmicity analysis using your method of choice.
+#'
+#' @param dataset A data frame or matrix representing the dataset to be checked.
+#'   It is expected to contain numeric data.
+#' @param metadata A data frame containing metadata associated with the samples
+#'   in the dataset.
+#' @param colname_time A string specifying the name of the column in `metadata`
+#'   that contains the time information (e.g., collection time). This column
+#'   must be numeric.
+#' @param colname_sample A string specifying the name of the column in
+#'   `metadata` that contains the sample IDs. These IDs should be unique.
+#' @param colname_group A string (optional) specifying the name of the column in
+#'   `metadata` that contains group information (e.g., treatment groups,
+#'   conditions). If no group information is available, leave as `NULL`
+#'   (default).
+#' @param colname_subject A string (optional) specifying the name of the column
+#'   in `metadata` that contains subject IDs. This is useful for repeated
+#'   measures designs where each subject has multiple samples taken over time.
+#'   If no subject information is available, leave as `NULL` (default).
+#' @param period A number specifying the period of the samples. Can also be a
+#'   vector with two numbers giving the minimum and maximum values for the
+#'   period. When using a method that requires a single value for the period but
+#'   two numbers are provided, the mean of the two will be used.
+#' @param data_type Type of data in `dataset`. Must be one of "count" (for data
+#'   following a negative bionmial distribution) or "norm" for data roughly
+#'   following a normal distribution (e.g. log-CPM values).
+#' @param method A string specifying the method used to analyse the data. Needs
+#'   to be one of c("CircaN", "diffCircadian", "GeneCycle", "JTK_CYCLE",
+#'   "RepeatedCircadian", "LimoRhyde", "LS", "meta2d", "RAIN", "TimeCycle")
+#' @param method_args Additional parameters passed to the selected method.
+#'
+#' @returns A list with two data frames containing the original results
+#'   (`res_original`) as well as formatted results that follow the same
+#'   structure for all methods (`res_formatted`).
+#' @export
+#'
 clockworks <- function(dataset,
                        metadata,
                        colname_time,
@@ -5,24 +43,24 @@ clockworks <- function(dataset,
                        colname_group = NULL,
                        colname_subject = NULL,
                        period = 24,
+                       method,
                        data_type = "norm",
-                       method = "auto",
-                       method_args = list(),
-                       ...) {
+                       method_args = list()) {
   # Make sure method is valid
   method <- match.arg(
     method,
     choices = c(
-      "auto",
+      # "auto",
       "CircaN",
-      "RepeatedCircadian",
+      "diffCircadian",
+      "GeneCycle",
       "JTK_CYCLE",
+      "RepeatedCircadian",
+      "LimoRhyde",
       "LS",
       "meta2d",
       "RAIN",
-      "TimeCycle",
-      "diffCircadian",
-      "LimoRhyde"
+      "TimeCycle"
     )
   )
 
@@ -103,7 +141,7 @@ clockworks <- function(dataset,
   #     - Others?
   # TODO: Probably remove `...` in favour of `method_args`
   # rhythmicity_results <- analyze_fn(cd, method_args, ...)
-  rhythmicity_results <- analyze_fn(cd, ...)
+  rhythmicity_results <- analyze_fn(cd, method_args)
 
   # Modify output such that it is consistent among methods (e.g. name of p-value column etc)?
   # ....

@@ -5,7 +5,7 @@
 #
 # rm(list = ls(all = TRUE))
 #
-# method = "diffCircadian"
+# method = "RepeatedCircadian"
 #
 #
 # # Test function with all CD objects ----
