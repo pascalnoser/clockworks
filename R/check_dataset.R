@@ -130,11 +130,11 @@ check_dataset <- function(dataset, metadata) {
   # adjust the dataset if not
   if (!identical(colnames(dataset), rownames(metadata))) {
     dataset <- dataset[, match(rownames(metadata), colnames(dataset))]
-    warning(
-      "The order of samples in the dataset has been adjusted to match the ",
-      "order of samples in the metadata.",
-      call. = FALSE
-    )
+    # warning(
+    #   "The order of samples in the dataset has been adjusted to match the ",
+    #   "order of samples in the metadata.",
+    #   call. = FALSE
+    # )
   }
 
 

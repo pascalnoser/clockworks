@@ -13,7 +13,6 @@ format_limorhyde <- function(res_original, period) {
   # Create formatted results data frame
   res_formatted <- data.frame(
     feature = res_original$feature,
-    group = res_original$group,
     amplitude_estimate = NA,
     amplitude_pval = NA,
     amplitude_qval = NA,
@@ -28,6 +27,15 @@ format_limorhyde <- function(res_original, period) {
     qval = res_original$adj.P.Val,
     method = "LimoRhyde"
   )
+
+  # Add group in second position if present
+  if (!is.null(res_original$group)) {
+    res_formatted <- cbind(
+      res_formatted[1],
+      group = res_original$group,
+      res_formatted[2:ncol(res_formatted)]
+    )
+  }
 
   return(list(res_original = res_original, res_formatted = res_formatted))
 }

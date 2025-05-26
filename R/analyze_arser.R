@@ -22,7 +22,7 @@
 #' head(results)
 analyze_arser <- function(cd, method_args = list()) {
   # Check if cd object contains necessary columns and add them if not
-  cd_local <- check_arser(cd_full)
+  cd_local <- check_arser(cd)
 
   # Remove group column later if added temporarily by check
   added_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)
@@ -34,7 +34,7 @@ analyze_arser <- function(cd, method_args = list()) {
   groups <- unique(metadata(cd_local)[["group"]])
   for (grp in groups) {
     # Prepare inputs
-    inputs <- prepare_arser(cd_local, grp, added_group)
+    inputs <- prepare_arser(cd_local, grp)
 
     # Run rhythmicity analysis
     ls_res_grp <- execute_arser(inputs, grp, method_args)

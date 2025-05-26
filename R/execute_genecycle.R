@@ -44,9 +44,9 @@ execute_genecycle <- function(inputs, grp, method_args = list()) {
     stop("'algorithm' must be 'rank' or 'regression'.")
   )
 
-  cat("\nalgorithm:\t", algorithm)
-  cat("\napproach:\t", approach)
-  cat("\nknown_period:\t", known_period)
+  # cat("\nalgorithm:\t", algorithm)
+  # cat("\napproach:\t", approach)
+  # cat("\nknown_period:\t", known_period)
 
   # Run analysis ----
   # Note: Whether the period is known or not for rank-based approach is

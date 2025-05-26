@@ -27,8 +27,9 @@
 #'   following a negative bionmial distribution) or "norm" for data roughly
 #'   following a normal distribution (e.g. log-CPM values).
 #' @param method A string specifying the method used to analyse the data. Needs
-#'   to be one of c("CircaN", "diffCircadian", "GeneCycle", "JTK_CYCLE",
-#'   "RepeatedCircadian", "LimoRhyde", "LS", "meta2d", "RAIN", "TimeCycle")
+#'   to be one of c("ARSER", "CircaN", "diffCircadian", "GeneCycle",
+#'   "JTK_CYCLE", "RepeatedCircadian", "LimoRhyde", "LS", "meta2d", "RAIN",
+#'   "TimeCycle")
 #' @param method_args Additional parameters passed to the selected method.
 #'
 #' @returns A list with two data frames containing the original results
@@ -51,6 +52,7 @@ clockworks <- function(dataset,
     method,
     choices = c(
       # "auto",
+      "ARSER",
       "CircaN",
       "diffCircadian",
       "GeneCycle",
@@ -97,12 +99,12 @@ clockworks <- function(dataset,
   # Create a CircadianData object
   cd <- CircadianData(dataset, metadata)
 
-  # Remove `dataset` and `metadata` after this so they don't clash with the
-  # accessor functions of the CircadianData object and to free up memory
-  # TODO: What if the user has a `dataset` or `metadata` object in their
-  # environment?
-  rm(dataset)
-  rm(metadata)
+  # # Remove `dataset` and `metadata` after this so they don't clash with the
+  # # accessor functions of the CircadianData object and to free up memory
+  # # TODO: What if the user has a `dataset` or `metadata` object in their
+  # # environment?
+  # rm(dataset)
+  # rm(metadata)
 
   # Find out what kind of data we're dealing with. Check the following (and add
   # info to experiment_info slot of CircadianData object)
@@ -121,6 +123,9 @@ clockworks <- function(dataset,
   # Add experiment info to CD object
   cd <- add_experiment_info(cd, period, data_type)
 
+  # Sort by group, time, and subject ID
+  sort_cols <- intersect(c("time", "group", "subject_ID"), colnames(metadata(cd)))
+  cd <- order_samples(cd, sort_cols)
 
   # Print CD object so the user sees what clockworks uses as input for the
   # functions as a kind of sanity check, e.g. for the number of replicats or the

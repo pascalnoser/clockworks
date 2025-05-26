@@ -258,7 +258,7 @@ check_metadata <- function(metadata,
   metadata <- as.data.frame(metadata)
 
   # 8. Add sample IDs as row names
-  row.names(metadata) <- metadata[[colname_sample]]
+  row.names(metadata) <- as.character(metadata[[colname_sample]])
 
   # 9. Add columns with pre-defined names and order, and remove other columns
   # Start with the required time column

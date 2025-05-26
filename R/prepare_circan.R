@@ -13,7 +13,7 @@ prepare_circan <- function(cd, grp) {
   cd_filt <- filter_samples(cd, col = "group", value = grp)
 
   # Prepare data (must be a data frame with features as first column)
-  df_data <- data.frame(feature = rownames(dataset(cd_filt)), dataset(cd_filt))
+  df_data <- data.frame(feature = rownames(dataset(cd_filt)), dataset(cd_filt), check.names = FALSE)
 
   # Create list with inputs
   inputs <- list(

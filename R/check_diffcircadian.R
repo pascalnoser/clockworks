@@ -10,6 +10,10 @@ check_diffcircadian <- function(cd) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
+  # Make sure samples are ordered by time and group
+  sort_cols <- intersect(c("time", "group"), colnames(metadata(cd_local)))
+  cd_local <- order_samples(cd_local, sort_cols)
+
   # Get meta data
   df_meta_temp <- metadata(cd_local)
 

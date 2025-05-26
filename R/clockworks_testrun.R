@@ -53,3 +53,21 @@
 # )
 #
 # lapply(res, head)
+#
+# # Test `clockworks()` on Simone's data ----
+# sim_data = read.csv("data-raw/sim_data_transposed.txt", sep = "\t", check.names = FALSE)
+# sim_meta <- read.csv("data-raw/sim_metadata.txt", sep = "\t")
+# method = "TimeCycle"
+#
+# res <- clockworks(
+#   dataset = sim_data,
+#   metadata = sim_meta,
+#   colname_time = "zt48",
+#   colname_sample = "mice",
+#   colname_group = NULL,
+#   colname_subject = NULL,
+#   period = 24,
+#   method = method
+# )
+#
+# res

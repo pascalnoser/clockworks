@@ -47,8 +47,9 @@ period. When using a method that requires a single value for the period but
 two numbers are provided, the mean of the two will be used.}
 
 \item{method}{A string specifying the method used to analyse the data. Needs
-to be one of c("CircaN", "diffCircadian", "GeneCycle", "JTK_CYCLE",
-"RepeatedCircadian", "LimoRhyde", "LS", "meta2d", "RAIN", "TimeCycle")}
+to be one of c("ARSER", "CircaN", "diffCircadian", "GeneCycle",
+"JTK_CYCLE", "RepeatedCircadian", "LimoRhyde", "LS", "meta2d", "RAIN",
+"TimeCycle")}
 
 \item{data_type}{Type of data in \code{dataset}. Must be one of "count" (for data
 following a negative bionmial distribution) or "norm" for data roughly
