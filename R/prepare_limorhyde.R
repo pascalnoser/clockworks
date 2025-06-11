@@ -21,6 +21,11 @@ prepare_limorhyde <- function(cd) {
     str_model <- "~ 0 + group + group:(time_sin + time_cos)"
   } else {
     str_model <- "~ time_cos + time_sin"
+
+    # If repeated measures (and no groups), add subject ID to model
+    if (cd_local$repeated_measures == TRUE) {
+      str_model <- paste(str_model, "+ subject_ID")
+    }
   }
   design <- model.matrix(as.formula(str_model), data = metadata(cd_local))
 
@@ -50,7 +55,10 @@ prepare_limorhyde <- function(cd) {
 
   # Add blocking variable ----
   if (cd_local$repeated_measures == TRUE) {
-    inputs$block <- metadata(cd_local)[["subject_ID"]]
+    # If we have groups, add subject ID as blocking variable
+    if (!is.na(cd_local$n_groups)) {
+      inputs$block <- metadata(cd_local)[["subject_ID"]]
+    }
 
     # Add 'correlation' if using lmFit()
     if (cd_local$data_type == "norm") {
