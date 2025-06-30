@@ -41,6 +41,8 @@
 # data("cw_data")
 # data("cw_metadata")
 #
+# method = "LS"
+#
 # res <- clockworks(
 #   dataset = cw_data,
 #   metadata = cw_metadata,

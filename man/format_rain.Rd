@@ -4,10 +4,13 @@
 \alias{format_rain}
 \title{Format RAIN Results}
 \usage{
-format_rain(ls_res_groups, added_group)
+format_rain(ls_res_groups, ls_harm_groups, added_group)
 }
 \arguments{
 \item{ls_res_groups}{A list with results from a RAIN rhythmicity
+analysis, split into groups.}
+
+\item{ls_harm_groups}{A list with results from a harmonic regression
 analysis, split into groups.}
 
 \item{added_group}{If TRUE the "group" column will be removed}

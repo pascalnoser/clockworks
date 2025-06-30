@@ -1,11 +1,14 @@
 #' Format ARSER Results
 #'
-#' @param ls_res_groups A list with results from a ARSER rhythmicity
-#'   analysis, split into groups.
+#' @param ls_res_groups A list with results from a ARSER rhythmicity analysis,
+#'   split into groups.
 #' @param added_group If TRUE the "group" column will be removed
+#' @param log_transformed Logical, if the data is log-transformed
+#' @param log_base Logarithmic base of data. Only relevant if `log_transformed`
+#'   is `TRUE`.
 #'
 #' @returns A list of data frames containing the original and formatted results
-format_arser <- function(ls_res_groups, added_group) {
+format_arser <- function(ls_res_groups, added_group, log_transformed, log_base) {
   # Turn list of lists into one list with one data frame per method
   method_names <- c("ARS", "meta")
   res_original <- lapply(method_names, function(x) {
@@ -20,22 +23,26 @@ format_arser <- function(ls_res_groups, added_group) {
   # Create formatted results data frame
   df_meta <- res_original$meta
   df_ars <- res_original$ARS
+
+  # Get relative amplitude
+  amp <- as.numeric(df_ars$amplitude)
+  mesor <- df_ars$mean
+  if (log_transformed == FALSE) {
+    rel_amp <- amp / mesor
+  } else {
+    rel_amp <- compute_relative_amplitude(amp, log_base)
+  }
+
   res_formatted <- data.frame(
     feature = df_meta$CycID,
     group = df_meta$group,
-    amplitude_estimate = df_ars$amplitude,  # TODO: Use ARS_amplitude or meta2d_AMP?
-    amplitude_pval = NA,
-    amplitude_qval = NA,
-    phase_estimate = df_ars$phase, # Identical to ARS_adjphase from df_meta
-    phase_pval = NA,
-    phase_qval = NA,
-    period_estimate = df_ars$period,
-    period_pval = NA,
-    period_qval = NA,
-    mesor_estimate = df_meta$meta2d_Base,  # TODO: Use meta2d_Base or not?
-    relative_amplitude_estimate = df_meta$meta2d_rAMP, # TODO: Add or not?
+    amplitude_estimate = as.numeric(df_ars$amplitude),
+    phase_estimate = as.numeric(df_ars$phase), # Identical to ARS_adjphase from df_meta
+    period_estimate = as.numeric(df_ars$period),
+    mesor_estimate = df_ars$mean,
+    relative_amplitude_estimate = rel_amp,
     pval = df_meta$ARS_pvalue,
-    qval = df_meta$ARS_BH.Q,
+    pval_adj = df_meta$ARS_BH.Q,
     method = "ARSER"
   )
 

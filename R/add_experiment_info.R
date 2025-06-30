@@ -6,11 +6,19 @@
 #'   Must be one of "count" (for data following a negative bionmial
 #'   distribution) or "norm" for data roughly following a normal distribution
 #'   (e.g. log-CPM values).
+#' @param log_transformed Logical, whether or not the data is log-transformed.
+#' @param log_base A number specifying the logarithmic base of the
+#'   log-transformed data. Only relevant if `log_transformed` is `TRUE`.
 #' @param estimate_delta_t If TRUE, sampling interval will be estimated from
 #'   meta data.
 #'
 #' @returns The `CircadianData` object with added experiment info
-add_experiment_info <- function(cd, period = NULL, data_type = NULL, estimate_delta_t = TRUE) {
+add_experiment_info <- function(cd,
+                                period = NULL,
+                                data_type = NULL,
+                                log_transformed = NULL,
+                                log_base = NULL,
+                                estimate_delta_t = TRUE) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
@@ -23,6 +31,16 @@ add_experiment_info <- function(cd, period = NULL, data_type = NULL, estimate_de
   # Add data type ----
   # TODO: ADD CHECK SOMEWHERE THAT data_type IS A VALID VALUE. Maybe `match.arg()`?
   if (!is.null(data_type)) cd_local$data_type <- data_type
+
+  # Add info about logarithmic transformation of data ----
+  if (!is.null(log_transformed)) cd_local$log_transformed <- log_transformed
+  if (!is.null(log_base) & cd_local$log_transformed == TRUE) cd_local$log_base <- log_base
+
+  # If experiment info is updated to change `log_transformed` to FALSE, set
+  # `log_base` to NULL. Use `isFALSE()` instead of ` == FALSE` because the
+  # latter throws an error if `log_transformed` is NULL.
+  if (isFALSE(log_transformed)) cd_local$log_base <- NULL
+
 
   # Add group info ----
   # TODO: Remove "n_groups" and replace with "groups"?

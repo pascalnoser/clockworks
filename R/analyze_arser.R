@@ -39,12 +39,15 @@ analyze_arser <- function(cd, method_args = list()) {
     # Run rhythmicity analysis
     ls_res_grp <- execute_arser(inputs, grp, method_args)
 
+    # Run harmonic regression
+    df_harm_grp <- estimate_wave_params(cd_local, grp)
+
     # Add to list
     ls_res_groups[[grp]] <- ls_res_grp
   }
 
   # Postprocessing
-  ls_res <- format_arser(ls_res_groups, added_group)
+  ls_res <- format_arser(ls_res_groups, added_group, cd_local$log_transformed, cd_local$log_base)
 
   return(ls_res)
 }

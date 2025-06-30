@@ -24,13 +24,18 @@
 #'   period. When using a method that requires a single value for the period but
 #'   two numbers are provided, the mean of the two will be used.
 #' @param data_type Type of data in `dataset`. Must be one of "count" (for data
-#'   following a negative bionmial distribution) or "norm" for data roughly
+#'   following a negative binomial distribution) or "norm" for data roughly
 #'   following a normal distribution (e.g. log-CPM values).
 #' @param method A string specifying the method used to analyse the data. Needs
 #'   to be one of c("ARSER", "CircaN", "diffCircadian", "GeneCycle",
 #'   "JTK_CYCLE", "RepeatedCircadian", "LimoRhyde", "LS", "meta2d", "RAIN",
 #'   "TimeCycle")
 #' @param method_args Additional parameters passed to the selected method.
+#' @param log_transformed Logical, whether or not the data is log-transformed.
+#'   This is relevant for the calculation of the relative amplitude in the
+#'   formatted output.
+#' @param log_base A number specifying the logarithmic base of the
+#'   log-transformed data. Only relevant if `log_transformed` is `TRUE`.
 #'
 #' @returns A list with two data frames containing the original results
 #'   (`res_original`) as well as formatted results that follow the same
@@ -46,6 +51,8 @@ clockworks <- function(dataset,
                        period = 24,
                        method,
                        data_type = "norm",
+                       log_transformed = FALSE,
+                       log_base = 2,
                        method_args = list()) {
   # Make sure method is valid
   method <- match.arg(
@@ -121,7 +128,7 @@ clockworks <- function(dataset,
   # - Additional checks probably added after benchmark
   # - ...
   # Add experiment info to CD object
-  cd <- add_experiment_info(cd, period, data_type)
+  cd <- add_experiment_info(cd, period, data_type, log_transformed, log_base)
 
   # Sort by group, time, and subject ID
   sort_cols <- intersect(c("time", "group", "subject_ID"), colnames(metadata(cd)))

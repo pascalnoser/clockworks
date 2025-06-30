@@ -8,6 +8,8 @@ add_experiment_info(
   cd,
   period = NULL,
   data_type = NULL,
+  log_transformed = NULL,
+  log_base = NULL,
   estimate_delta_t = TRUE
 )
 }
@@ -20,6 +22,11 @@ add_experiment_info(
 Must be one of "count" (for data following a negative bionmial
 distribution) or "norm" for data roughly following a normal distribution
 (e.g. log-CPM values).}
+
+\item{log_transformed}{Logical, whether or not the data is log-transformed.}
+
+\item{log_base}{A number specifying the logarithmic base of the
+log-transformed data. Only relevant if \code{log_transformed} is \code{TRUE}.}
 
 \item{estimate_delta_t}{If TRUE, sampling interval will be estimated from
 meta data.}

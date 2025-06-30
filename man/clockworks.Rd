@@ -14,6 +14,8 @@ clockworks(
   period = 24,
   method,
   data_type = "norm",
+  log_transformed = FALSE,
+  log_base = 2,
   method_args = list()
 )
 }
@@ -52,8 +54,15 @@ to be one of c("ARSER", "CircaN", "diffCircadian", "GeneCycle",
 "TimeCycle")}
 
 \item{data_type}{Type of data in \code{dataset}. Must be one of "count" (for data
-following a negative bionmial distribution) or "norm" for data roughly
+following a negative binomial distribution) or "norm" for data roughly
 following a normal distribution (e.g. log-CPM values).}
+
+\item{log_transformed}{Logical, whether or not the data is log-transformed.
+This is relevant for the calculation of the relative amplitude in the
+formatted output.}
+
+\item{log_base}{A number specifying the logarithmic base of the
+log-transformed data. Only relevant if \code{log_transformed} is \code{TRUE}.}
 
 \item{method_args}{Additional parameters passed to the selected method.}
 }
