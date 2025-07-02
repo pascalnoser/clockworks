@@ -2,10 +2,12 @@
 #'
 #' @param ls_res_groups A list with results from a GeneCycle rhythmicity
 #'   analysis, split into groups.
+#' @param ls_harm_groups A list with results from a harmonic regression
+#'   analysis, split into groups.
 #' @param added_group If TRUE the "group" column will be removed
 #'
 #' @returns A list of data frames containing the original and formatted results
-format_genecycle <- function(ls_res_groups, added_group) {
+format_genecycle <- function(ls_res_groups, ls_harm_groups, added_group) {
   # Turn into one data frame
   res_original <- do.call("rbind", ls_res_groups)
 
@@ -13,27 +15,28 @@ format_genecycle <- function(ls_res_groups, added_group) {
   rownames(res_original) <- NULL
 
   # Calculate adjusted p-values by group
-  grp_split <- split(res_original, res_original$group)
-  p_adj <- unlist(lapply(grp_split, function(grp) {
-    p.adjust(grp$pval, method = "BH")
-  }))
+  p_adj <- ave(
+    res_original$pval,
+    res_original$group,
+    FUN = function(p)
+      p.adjust(p, method = "BH")
+  )
+
+  # Get harmonic regression params
+  res_harm <- do.call("rbind", ls_harm_groups)
+  rownames(res_harm) <- NULL
 
   # Create formatted results data frame
   res_formatted <- data.frame(
     feature = res_original$feature,
     group = res_original$group,
-    amplitude_estimate = NA,
-    amplitude_pval = NA,
-    amplitude_qval = NA,
-    phase_estimate = NA,
-    phase_pval = NA,
-    phase_qval = NA,
-    period_estimate = NA,
-    period_pval = NA,
-    period_qval = NA,
-    mesor_estimate = NA,
+    period_estimate = res_harm$period,
+    phase_estimate = res_harm$phase_estimate,
+    mesor_estimate = res_harm$mesor_estimate,
+    amplitude_estimate = res_harm$amplitude_estimate,
+    relative_amplitude_estimate = res_harm$relative_amplitude_estimate,
     pval = res_original$pval,
-    qval = p_adj,
+    pval_adj = p_adj,
     method = "GeneCycle"
   )
 

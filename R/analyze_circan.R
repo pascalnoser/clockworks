@@ -29,6 +29,7 @@ analyze_circan <- function(cd, method_args = list()) {
 
   # Create empty list for results
   ls_res_groups = list()
+  ls_harm_groups = list()
 
   # Run rhythmicity detection for each group separately
   # TODO: Use long format prepare function from repeatedcircadian and then use
@@ -41,8 +42,12 @@ analyze_circan <- function(cd, method_args = list()) {
     # Run rhythmicity analysis
     df_res_grp <- execute_circan(inputs, grp, method_args)
 
+    # Run harmonic regression
+    df_harm_grp <- estimate_wave_params(cd_local, grp)
+
     # Add to list
     ls_res_groups[[grp]] <- df_res_grp
+    ls_harm_groups[[grp]] <- df_harm_grp
   }
 
   # Remove global variables
@@ -52,7 +57,7 @@ analyze_circan <- function(cd, method_args = list()) {
   rm(r)
 
   # Postprocessing
-  ls_res <- format_circan(ls_res_groups, added_group)
+  ls_res <- format_circan(ls_res_groups, ls_harm_groups, added_group)
 
   return(ls_res)
 }

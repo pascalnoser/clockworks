@@ -9,7 +9,7 @@
 #'
 #' @import HarmonicRegression
 #'
-#' @returns A list with inputs for `execute_rain()`
+#' @returns A data frame with the results of a harmonic regression.
 estimate_wave_params <- function(cd, grp) {
   # Filter cd object to only include the current group
   cd_filt <- filter_samples(cd, col = "group", value = grp)
@@ -27,6 +27,7 @@ estimate_wave_params <- function(cd, grp) {
   # Add phase estimate (in hours) to output
   df_out <- data.frame(
     feature = row.names(res_harm$pars),
+    period = mean(cd_filt$period),
     phase_estimate = res_harm$pars$phi / (2*pi) * mean(cd_filt$period)
   )
 

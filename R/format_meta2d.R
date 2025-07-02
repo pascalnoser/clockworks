@@ -3,9 +3,15 @@
 #' @param ls_res_groups A list with results from a meta2d rhythmicity
 #'   analysis, split into groups.
 #' @param added_group If TRUE the "group" column will be removed
+#' @param log_transformed Logical, if the data is log-transformed
+#' @param log_base Logarithmic base of data. Only relevant if `log_transformed`
+#'   is `TRUE`.
 #'
 #' @returns A list of data frames containing the original and formatted results
-format_meta2d <- function(ls_res_groups, added_group) {
+format_meta2d <- function(ls_res_groups,
+                          added_group,
+                          log_transformed = FALSE,
+                          log_base = 2) {
   # Turn list of lists into one list with one data frame per method
   method_names <- c("ARS", "LS", "JTK", "meta")
   res_original <- lapply(method_names, function(x) {
@@ -17,24 +23,27 @@ format_meta2d <- function(ls_res_groups, added_group) {
 
   names(res_original) <- method_names
 
-  # Create formatted results data frame
+  # Get relative amplitude. If data is log-transformed, calculate relative
+  # amplitude in linear scale
   df_meta <- res_original$meta
+  if (log_transformed == FALSE) {
+    rel_amp <- df_meta$meta2d_rAMP
+  } else {
+    log_amp <- df_meta$meta2d_AMP
+    rel_amp <- compute_relative_amplitude(log_amp, log_base)
+  }
+
+  # Create formatted results data frame
   res_formatted <- data.frame(
     feature = df_meta$CycID,
     group = df_meta$group,
-    amplitude_estimate = df_meta$meta2d_AMP,
-    amplitude_pval = NA,
-    amplitude_qval = NA,
-    phase_estimate = df_meta$meta2d_phase,
-    phase_pval = NA,
-    phase_qval = NA,
     period_estimate = df_meta$meta2d_period,
-    period_pval = NA,
-    period_qval = NA,
+    phase_estimate = df_meta$meta2d_phase,
     mesor_estimate = df_meta$meta2d_Base,
-    relative_amplitude_estimate = df_meta$meta2d_rAMP,
+    amplitude_estimate = df_meta$meta2d_AMP,
+    relative_amplitude_estimate = rel_amp,
     pval = df_meta$meta2d_pvalue,
-    qval = df_meta$meta2d_BH.Q,
+    pval_adj = df_meta$meta2d_BH.Q,
     method = "meta2d"
   )
 

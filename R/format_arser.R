@@ -8,7 +8,10 @@
 #'   is `TRUE`.
 #'
 #' @returns A list of data frames containing the original and formatted results
-format_arser <- function(ls_res_groups, added_group, log_transformed, log_base) {
+format_arser <- function(ls_res_groups,
+                         added_group,
+                         log_transformed = FALSE,
+                         log_base = 2) {
   # Turn list of lists into one list with one data frame per method
   method_names <- c("ARS", "meta")
   res_original <- lapply(method_names, function(x) {
@@ -36,10 +39,10 @@ format_arser <- function(ls_res_groups, added_group, log_transformed, log_base) 
   res_formatted <- data.frame(
     feature = df_meta$CycID,
     group = df_meta$group,
-    amplitude_estimate = as.numeric(df_ars$amplitude),
-    phase_estimate = as.numeric(df_ars$phase), # Identical to ARS_adjphase from df_meta
     period_estimate = as.numeric(df_ars$period),
+    phase_estimate = as.numeric(df_ars$phase), # Identical to ARS_adjphase from df_meta
     mesor_estimate = df_ars$mean,
+    amplitude_estimate = as.numeric(df_ars$amplitude),
     relative_amplitude_estimate = rel_amp,
     pval = df_meta$ARS_pvalue,
     pval_adj = df_meta$ARS_BH.Q,

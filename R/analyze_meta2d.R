@@ -44,7 +44,10 @@ analyze_meta2d <- function(cd, method_args = list()) {
   }
 
   # Postprocessing
-  ls_res <- format_meta2d(ls_res_groups, added_group)
+  ls_res <- format_meta2d(ls_res_groups,
+                          added_group,
+                          cd_local$log_transformed,
+                          cd_local$log_base)
 
   return(ls_res)
 }

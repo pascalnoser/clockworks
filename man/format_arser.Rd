@@ -4,7 +4,7 @@
 \alias{format_arser}
 \title{Format ARSER Results}
 \usage{
-format_arser(ls_res_groups, added_group, log_transformed, log_base)
+format_arser(ls_res_groups, added_group, log_transformed = FALSE, log_base = 2)
 }
 \arguments{
 \item{ls_res_groups}{A list with results from a ARSER rhythmicity analysis,

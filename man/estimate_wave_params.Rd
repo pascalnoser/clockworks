@@ -13,7 +13,7 @@ estimate_wave_params(cd, grp)
 slot of \code{cd} which is used for filtering.}
 }
 \value{
-A list with inputs for \code{execute_rain()}
+A data frame with the results of a harmonic regression.
 }
 \description{
 This function is used to get an estimate for the amplitude and phase using

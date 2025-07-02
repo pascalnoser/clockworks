@@ -44,7 +44,8 @@ analyze_jtkcycle <- function(cd, method_args = list()) {
   }
 
   # Postprocessing
-  ls_res <- format_jtkcycle(ls_res_groups, added_group)
+  ls_res <- format_jtkcycle(ls_res_groups, added_group, cd_local$log_transformed, cd_local$log_base)
+  ls_res <- format_jtkcycle(ls_res_groups, added_group, FALSE, cd_local$log_base)
 
   return(ls_res)
 }

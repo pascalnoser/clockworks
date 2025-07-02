@@ -34,7 +34,13 @@ analyze_diffcircadian <- function(cd, method_args = list()) {
   df_res <- execute_diffcircadian(inputs, method_args)
 
   # Postprocessing
-  ls_res <- format_diffcircadian(df_res, mean(cd$period), added_group)
+  ls_res <- format_diffcircadian(
+    df_res,
+    mean(cd_local$period),
+    added_group,
+    cd_local$log_transformed,
+    cd_local$log_base
+  )
 
   return(ls_res)
 }

@@ -4,7 +4,13 @@
 \alias{format_diffcircadian}
 \title{Format diffCircadian Results}
 \usage{
-format_diffcircadian(res_original, period, added_group)
+format_diffcircadian(
+  res_original,
+  period,
+  added_group,
+  log_transformed = FALSE,
+  log_base = 2
+)
 }
 \arguments{
 \item{res_original}{A data frame with results from a diffCircadian rhythmicity
@@ -13,6 +19,11 @@ analysis.}
 \item{period}{Period entered by the user.}
 
 \item{added_group}{If TRUE the "group" column will be removed.}
+
+\item{log_transformed}{Logical, if the data is log-transformed}
+
+\item{log_base}{Logarithmic base of data. Only relevant if \code{log_transformed}
+is \code{TRUE}.}
 }
 \value{
 A list of data frames containing the original and formatted results

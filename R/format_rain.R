@@ -14,7 +14,7 @@ format_rain <- function(ls_res_groups, ls_harm_groups, added_group) {
   # Remove redundant row names
   rownames(res_original) <- NULL
 
-  # Get adjusted p-values
+  # Get adjusted p-values by group
   p_adj <- ave(
     res_original$pVal,
     res_original$group,
@@ -30,10 +30,10 @@ format_rain <- function(ls_res_groups, ls_harm_groups, added_group) {
   res_formatted <- data.frame(
     feature = res_original$feature,
     group = res_original$group,
-    amplitude_estimate = res_harm$amplitude_estimate,
-    phase_estimate = res_harm$phase_estimate,
     period_estimate = res_original$period,
+    phase_estimate = res_harm$phase_estimate,
     mesor_estimate = res_harm$mesor_estimate,
+    amplitude_estimate = res_harm$amplitude_estimate,
     relative_amplitude_estimate = res_harm$relative_amplitude_estimate,
     pval = res_original$pVal,
     pval_adj = p_adj,

@@ -4,13 +4,23 @@
 \alias{format_meta2d}
 \title{Format meta2d Results}
 \usage{
-format_meta2d(ls_res_groups, added_group)
+format_meta2d(
+  ls_res_groups,
+  added_group,
+  log_transformed = FALSE,
+  log_base = 2
+)
 }
 \arguments{
 \item{ls_res_groups}{A list with results from a meta2d rhythmicity
 analysis, split into groups.}
 
 \item{added_group}{If TRUE the "group" column will be removed}
+
+\item{log_transformed}{Logical, if the data is log-transformed}
+
+\item{log_base}{Logarithmic base of data. Only relevant if \code{log_transformed}
+is \code{TRUE}.}
 }
 \value{
 A list of data frames containing the original and formatted results

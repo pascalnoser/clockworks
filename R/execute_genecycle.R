@@ -13,7 +13,9 @@ execute_genecycle <- function(inputs, grp, method_args = list()) {
   # run 'rank' GeneCycle with an unknown period they should set `index = NA` in
   # method_args. If they want to run 'regression' GeneCycle with an unknown
   # period, they should set `periodicity.time = FALSE`, otherwise the enetered
-  # period will be used.
+  # period will be used. I guess it would also be important to mention that in
+  # this case, whatever is defined as `period` in `clockworks()` will be
+  # ignored for GeneCycle.
 
   # Combine method_args with user input ----
   # Get list of possible arguments for the two functions
