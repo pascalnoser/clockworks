@@ -29,7 +29,7 @@ prepare_ls <- function(cd, grp) {
     parallelize = FALSE,
     nCores = 1,
     outputFile = FALSE,
-    releaseNote = TRUE # Probably set to FALSE?
+    releaseNote = FALSE # Probably set to FALSE?
   )
 
   return(inputs)

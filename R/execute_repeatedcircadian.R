@@ -32,6 +32,7 @@ execute_repeatedcircadian <- function(inputs, grp, method_args = list()) {
   # Add feautre IDs and group to results df
   df_res = data.frame(feature = rownames(dat),
                       df_res_raw,
+                      period = inputs$period,
                       group = grp)
 
   # Return results

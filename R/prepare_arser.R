@@ -50,7 +50,7 @@ prepare_arser <- function(cd, grp) {
     parallelize = FALSE,
     nCores = 1,
     outputFile = FALSE,
-    releaseNote = TRUE
+    releaseNote = FALSE
   )
 
   return(inputs)

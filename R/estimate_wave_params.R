@@ -9,32 +9,50 @@
 #'
 #' @import HarmonicRegression
 #'
+#' @details
+#' The returned parameters correspond to the model \deqn{y = M + A
+#' sin(\frac{2\pi}{p} (t - \phi))} With \eqn{M} the mesor, \eqn{A} the
+#' amplitude, \eqn{p} the period, \eqn{t} the time and \eqn{\phi} the phase in
+#' the same units as \eqn{t} (e.g. hours).
+#' EXPLAIN STUFF ABOUT RELATIVE AMPLITUDE!
+#'
+#'
 #' @returns A data frame with the results of a harmonic regression.
-estimate_wave_params <- function(cd, grp) {
+estimate_wave_params <- function(cd, grp = NA) {
   # Filter cd object to only include the current group
-  cd_filt <- filter_samples(cd, col = "group", value = grp)
+  if (!is.na(grp)) {
+    cd <- filter_samples(cd, col = "group", value = grp)
+  }
 
   # Run harmonic regression
   res_harm <- HarmonicRegression::harmonic.regression(
-    inputts = t(dataset(cd_filt)),
-    inputtime = metadata(cd_filt)[["time"]],
-    Tau = mean(cd_filt$period),
+    inputts = t(dataset(cd)),
+    inputtime = metadata(cd)[["time"]],
+    Tau = mean(cd$period),
     normalize = FALSE,
-    trend.eliminate = TRUE,  # TODO: make this a variable,
+    trend.eliminate = FALSE,  # TODO: make this a variable,
     trend.degree = 1  # TODO: make this a variable
   )
 
-  # Add phase estimate (in hours) to output
+  # Get phase estimate in hours.`harmonic.regression()` uses a cosine, but I
+  # tend to think of sine waves. Amplitude and mesor stay the same, but the
+  # phase is shifted by -pi/2 in radians, so by -period/4 in hours. Using the
+  # modulo operator negative phase values "wrap" around and become positive.
+  per <- mean(cd$period)
+  phase_estimate_rad <- res_harm$pars$phi
+  phase_estimate_h_cos <- phase_estimate_rad * per / (2 * pi)
+  phase_estimate_h_sin <- (phase_estimate_h_cos - per / 4) %% per
+
   df_out <- data.frame(
     feature = row.names(res_harm$pars),
-    period = mean(cd_filt$period),
-    phase_estimate = res_harm$pars$phi / (2*pi) * mean(cd_filt$period)
+    period = mean(cd$period),
+    phase_estimate = phase_estimate_h_sin
   )
 
   # Add mesor and amplitude estimates
-  if (cd_filt$log_transformed == TRUE) {
+  if (cd$log_transformed == TRUE) {
     # Get logarithmic base
-    b <- cd_filt$log_base
+    b <- cd$log_base
 
     # Get estimates for mesor and amplitude in log scale
     log_mesors <- res_harm$means
@@ -75,7 +93,9 @@ estimate_wave_params <- function(cd, grp) {
   }
 
   # Add group
-  df_out$group <- grp
+  if (!is.na(grp)) {
+    df_out$group <- grp
+  }
 
   return(df_out)
 }

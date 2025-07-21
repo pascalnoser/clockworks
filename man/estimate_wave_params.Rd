@@ -4,7 +4,7 @@
 \alias{estimate_wave_params}
 \title{Harmonic regression}
 \usage{
-estimate_wave_params(cd, grp)
+estimate_wave_params(cd, grp = NA)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object}
@@ -18,4 +18,10 @@ A data frame with the results of a harmonic regression.
 \description{
 This function is used to get an estimate for the amplitude and phase using
 harmonic regression.
+}
+\details{
+The returned parameters correspond to the model \deqn{y = M + A
+sin(\frac{2\pi}{p} (t - \phi))} With \eqn{M} the mesor, \eqn{A} the
+amplitude, \eqn{p} the period, \eqn{t} the time and \eqn{\phi} the phase in
+the same units as \eqn{t} (e.g. hours).
 }
