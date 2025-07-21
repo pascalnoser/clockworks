@@ -6,6 +6,7 @@
 \usage{
 format_meta2d(
   ls_res_groups,
+  ls_harm_groups,
   added_group,
   log_transformed = FALSE,
   log_base = 2
@@ -13,6 +14,9 @@ format_meta2d(
 }
 \arguments{
 \item{ls_res_groups}{A list with results from a meta2d rhythmicity
+analysis, split into groups.}
+
+\item{ls_harm_groups}{A list with results from a harmonic regression
 analysis, split into groups.}
 
 \item{added_group}{If TRUE the "group" column will be removed}

@@ -817,6 +817,192 @@ setMethod("show", "CircadianData", function(object) {
 })
 
 
+
+# --- Generic Function Definition for Plotting ---
+
+#' Plot Feature Values Over Time
+#'
+#' Creates a scatterplot of the values for a specific feature against time.
+#' If a 'group' column exists in the metadata, points are colored by group,
+#' and the plot can be optionally filtered to a single group.
+#'
+#' @param x A \code{CircadianData} object.
+#' @param feature A single character string specifying the name of the feature
+#'   (from `rownames(dataset(x))`) to plot.
+#' @param group An optional single character string specifying a group to filter
+#'   by. This is only applicable if a 'group' column exists in the metadata.
+#'   If `NULL` (the default) and a 'group' column exists, data from all
+#'   groups are plotted with different colors.
+#' @param ... Additional arguments passed to the base `plot()` function.
+#'
+#'
+#' @export
+#' @rdname plot_feature
+#' @examples
+#' # --- With a 'group' column in metadata ---
+#' set.seed(123)
+#' counts <- matrix(rpois(80, lambda = 50), nrow = 10, ncol = 8,
+#'                  dimnames = list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
+#' meta <- data.frame(
+#'   row.names = paste0("Sample", 1:8),
+#'   time = rep(c(0, 6, 12, 18), each = 2),
+#'   group = factor(rep(c("Control", "Treated"), 4))
+#' )
+#' cd_obj_grouped <- CircadianData(counts, meta, experiment_info = list(period = 24))
+#'
+#' # Plot a feature for all groups (colored by group)
+#' plot_feature(cd_obj_grouped, feature = "Feature3")
+#'
+#' # Plot a feature for only the "Treated" group
+#' plot_feature(cd_obj_grouped, feature = "Feature3", group = "Treated")
+#'
+#' # --- Without a 'group' column in metadata ---
+#' meta_no_group <- meta[, "time", drop = FALSE] # Create metadata without group col
+#' cd_obj_no_group <- CircadianData(counts, meta_no_group)
+#'
+#' # Plot a feature (all points will have the same color)
+#' plot_feature(cd_obj_no_group,
+#'              feature = "Feature5",
+#'              main = "Feature 5 (No Groups Defined)")
+#'
+setGeneric("plot_feature", function(x, feature, group = NULL, ...) standardGeneric("plot_feature"))
+
+# --- Method for CircadianData Class ---
+
+#' @rdname plot_feature
+setMethod("plot_feature", "CircadianData",
+          function(x, feature, group = NULL, ...) {
+
+            # --- 1. Input Validation ---
+            mdata <- metadata(x)
+            if (!("time" %in% colnames(mdata))) {
+              stop("Metadata must contain a 'time' column for plotting.")
+            }
+            if (!is.character(feature) || length(feature) != 1) {
+              stop("'feature' must be a single character string.")
+            }
+            if (!(feature %in% rownames(dataset(x)))) {
+              stop("Feature '", feature, "' not found in the dataset.")
+            }
+
+            # Check for group column existence
+            has_group_col <- "group" %in% colnames(mdata)
+
+            # Validate the 'group' argument if the column exists
+            if (!is.null(group)) {
+              if (!has_group_col) {
+                stop("'group' argument was provided, but no 'group' column exists in metadata.")
+              }
+              if (!is.character(group) || length(group) != 1) {
+                stop("'group' argument must be NULL or a single character string.")
+              }
+              if (!(group %in% mdata$group)) {
+                stop("Group '", group, "' not found in the 'group' column of metadata.")
+              }
+            }
+
+            # --- 2. Prepare Data for Plotting ---
+            feature_values <- dataset(x)[feature, , drop = TRUE]
+            plot_df <- data.frame(
+              time = mdata$time,
+              value = feature_values
+            )
+
+            # Add group information conditionally
+            if (has_group_col) {
+              plot_df$group <- mdata$group
+            } else {
+              # Assign a dummy group if none exists
+              plot_df$group <- factor("all_samples")
+            }
+
+            # Apply filtering if a specific group is requested
+            if (!is.null(group)) {
+              plot_df <- plot_df[plot_df$group == group, , drop = FALSE]
+              if (nrow(plot_df) == 0) {
+                stop("No data available for feature '", feature, "' in group '", group, "'.")
+              }
+            }
+
+            # --- 3. Set Up Plotting Parameters ---
+            user_args <- list(...)
+            plot_args <- list()
+
+            # Set default shape
+            plot_args$pch = 21
+
+            # Set default labels and title
+            plot_args$xlab <- "Time"
+            plot_args$ylab <- "Value"
+            default_main <- if (is.null(group)) {
+              paste("Expression of", feature)
+            } else {
+              paste("Expression of", feature, "in group", group)
+            }
+            plot_args$main <- default_main
+
+            # Determine colors and if a legend is needed
+            unique_groups <- unique(as.character(plot_df$group))
+            n_groups <- length(unique_groups)
+            show_legend <- has_group_col && n_groups > 1
+
+            if (show_legend) {
+              # Background colour ---
+              if ("bg" %in% names(user_args)) {
+                if (length(user_args$bg) < n_groups) {
+                  stop("Number of background colours (`bg`) must not be smaller than number of groups")
+                }
+                bgs <- user_args$bg[1:n_groups]
+                user_args$bg <- NULL
+              } else {
+                bgs <- grDevices::palette.colors(n = n_groups, palette = "Okabe-Ito")
+              }
+              names(bgs) <- unique_groups
+              plot_args$bg <- bgs[as.character(plot_df$group)]
+
+              # Colour ---
+              if ("col" %in% names(user_args)) {
+                if (length(user_args$col) < n_groups) {
+                  stop("Number of colours (`col`) must not be smaller than number of groups")
+                }
+                cols <- user_args$col[1:n_groups]
+                user_args$col <- NULL
+              } else {
+                cols <- rep("black", n_groups)
+              }
+              names(cols) <- unique_groups
+              plot_args$col <- cols[as.character(plot_df$group)]
+
+            } else {
+              plot_args$bg <- "lightgrey"
+              plot_args$col <- "black"
+            }
+
+            # Merge and potentially overwrite with user arguments
+            final_args <- modifyList(plot_args, user_args)
+
+            # Enforce x and y parameters
+            final_args$x <- plot_df$time
+            final_args$y <- plot_df$value
+
+            # --- 4. Create the Plot ---
+            do.call("plot", final_args)
+
+            # --- 5. Add a Legend (if needed) ---
+            if (show_legend) {
+              legend("topright",
+                     legend = names(bgs),
+                     pt.bg = bgs,
+                     col = final_args$col,
+                     pch = 21,
+                     bty = "n")
+            }
+
+            invisible(NULL)
+          }
+)
+
+
 # --- Example Usage ---
 if (FALSE) { # Don't run automatically
   # Sample Data

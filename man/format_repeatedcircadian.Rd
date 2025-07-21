@@ -6,7 +6,7 @@
 \usage{
 format_repeatedcircadian(
   ls_res_groups,
-  period,
+  ls_harm_groups,
   added_group,
   log_transformed = FALSE,
   log_base = 2
@@ -16,7 +16,8 @@ format_repeatedcircadian(
 \item{ls_res_groups}{A list with results from a RepeatedCircadian rhythmicity
 analysis, split into groups.}
 
-\item{period}{Period entered by the user.}
+\item{ls_harm_groups}{A list with results from a harmonic regression
+analysis, split into groups.}
 
 \item{added_group}{If TRUE the "group" column will be removed}
 

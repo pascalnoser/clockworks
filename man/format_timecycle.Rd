@@ -4,7 +4,7 @@
 \alias{format_timecycle}
 \title{Format TimeCycle Results}
 \usage{
-format_timecycle(ls_res_groups, ls_harm_groups, added_group)
+format_timecycle(ls_res_groups, ls_harm_groups, resamplings, added_group)
 }
 \arguments{
 \item{ls_res_groups}{A list with results from a TimeCycle rhythmicity
@@ -12,6 +12,8 @@ analysis, split into groups.}
 
 \item{ls_harm_groups}{A list with results from a harmonic regression
 analysis, split into groups.}
+
+\item{resamplings}{Number of resamplings used to calculate p-values.}
 
 \item{added_group}{If TRUE the "group" column will be removed}
 }

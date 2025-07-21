@@ -4,10 +4,19 @@
 \alias{format_ls}
 \title{Format Lomb-Scargle Results}
 \usage{
-format_ls(ls_res_groups, added_group, log_transformed, log_base)
+format_ls(
+  ls_res_groups,
+  ls_harm_groups,
+  added_group,
+  log_transformed,
+  log_base
+)
 }
 \arguments{
 \item{ls_res_groups}{A list with results from a Lomb-Scargle rhythmicity
+analysis, split into groups.}
+
+\item{ls_harm_groups}{A list with results from a harmonic regression
 analysis, split into groups.}
 
 \item{added_group}{If TRUE the "group" column will be removed}
