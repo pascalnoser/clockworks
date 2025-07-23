@@ -36,9 +36,11 @@ Imports:
     dryR,
     DESeq2
 Remotes:
-    diffCircadian/diffCircadian,
-    nesscoder/TimeCycle,
+    AndreaRP/CircaN,
     cran/HarmonicRegression,
-    AndreaRP/CircaN
+    diffCircadian/diffCircadian,
+    naef-lab/dryR,
+    nesscoder/TimeCycle,
+    RepeatedCircadian/RepeatedCircadian
 Depends: 
     R (>= 3.5)
