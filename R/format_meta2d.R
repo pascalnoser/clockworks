@@ -20,8 +20,8 @@ format_meta2d <- function(ls_res_groups,
   # Alternatively, uncomment the relative amplitude calculation below.
 
   # Get harmonic regression params
-  df_harm <- do.call("rbind", ls_harm_groups)
-  rownames(df_harm) <- NULL
+  res_harm <- do.call("rbind", ls_harm_groups)
+  rownames(res_harm) <- NULL
 
   # Turn list of lists into one list with one data frame per method
   method_names <- c("ARS", "LS", "JTK", "meta")
@@ -54,15 +54,15 @@ format_meta2d <- function(ls_res_groups,
     phase_estimate = df_meta$meta2d_phase,
     mesor_estimate = df_meta$meta2d_Base,
     amplitude_estimate = df_meta$meta2d_AMP,
-    # relative_amplitude_estimate = rel_amp,
+    relative_amplitude_estimate = df_meta$meta2d_rAMP,
     pval = df_meta$meta2d_pvalue,
     pval_adj = df_meta$meta2d_BH.Q,
     method = "meta2d",
-    hr_period = df_harm$period,
-    hr_phase_estimate = df_harm$phase_estimate,
-    hr_mesor_estimate = df_harm$mesor_estimate,
-    hr_amplitude_estimate = df_harm$amplitude_estimate,
-    hr_relative_amplitude_estiamte = df_harm$relative_amplitude_estimate
+    hr_period = res_harm$period,
+    hr_phase_estimate = res_harm$phase_estimate,
+    hr_mesor_estimate = res_harm$mesor_estimate,
+    hr_amplitude_estimate = res_harm$amplitude_estimate,
+    hr_relative_amplitude_estimate = res_harm$relative_amplitude_estimate
   )
 
   # Remove group column if added temporarily by check function at the start

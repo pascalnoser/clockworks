@@ -20,7 +20,7 @@ prepare_limorhyde <- function(cd) {
     # mesor estimate for each group.
     str_model <- "~ 0 + group + group:(time_sin + time_cos)"
   } else {
-    str_model <- "~ time_cos + time_sin"
+    str_model <- "~ time_sin + time_cos"
 
     # If repeated measures (and no groups), add subject ID to model
     if (cd_local$repeated_measures == TRUE) {
@@ -50,6 +50,8 @@ prepare_limorhyde <- function(cd) {
       object = dataset(cd_local),
       design = design
     )
+  } else {
+    stop("`data_type` of CircadianData object must be 'count' or 'norm'.")
   }
 
 

@@ -8,43 +8,43 @@
 #'
 #' @returns A list of data frames containing the original and formatted results
 format_genecycle <- function(ls_res_groups, ls_harm_groups, added_group) {
+  # Get harmonic regression params
+  res_harm <- do.call("rbind", ls_harm_groups)
+  rownames(res_harm) <- NULL
+
   # Turn into one data frame
-  df_original <- do.call("rbind", ls_res_groups)
+  res_original <- do.call("rbind", ls_res_groups)
 
   # Remove redundant row names
-  rownames(df_original) <- NULL
+  rownames(res_original) <- NULL
 
   # Calculate adjusted p-values by group
   p_adj <- ave(
-    df_original$pval,
-    df_original$group,
+    res_original$pval,
+    res_original$group,
     FUN = function(p)
       p.adjust(p, method = "BH")
   )
 
-  # Get harmonic regression params
-  df_harm <- do.call("rbind", ls_harm_groups)
-  rownames(df_harm) <- NULL
-
   # Create formatted results data frame
   res_formatted <- data.frame(
-    feature = df_original$feature,
-    group = df_original$group,
-    pval = df_original$pval,
+    feature = res_original$feature,
+    group = res_original$group,
+    pval = res_original$pval,
     pval_adj = p_adj,
     method = "GeneCycle",
-    hr_period = df_harm$period,
-    hr_phase_estimate = df_harm$phase_estimate,
-    hr_mesor_estimate = df_harm$mesor_estimate,
-    hr_amplitude_estimate = df_harm$amplitude_estimate,
-    hr_relative_amplitude_estimate = df_harm$relative_amplitude_estimate
+    hr_period = res_harm$period,
+    hr_phase_estimate = res_harm$phase_estimate,
+    hr_mesor_estimate = res_harm$mesor_estimate,
+    hr_amplitude_estimate = res_harm$amplitude_estimate,
+    hr_relative_amplitude_estimate = res_harm$relative_amplitude_estimate
   )
 
   # Remove group column if added temporarily by check function at the start
   if (added_group == TRUE) {
-    df_original$group <- NULL
+    res_original$group <- NULL
     res_formatted$group <- NULL
   }
 
-  return(list(res_original = df_original, res_formatted = res_formatted))
+  return(list(res_original = res_original, res_formatted = res_formatted))
 }

@@ -3,7 +3,8 @@
 #' This function runs rhythmicity detection with LimoRhyde
 #'
 #' @param cd A `CircadianData` object.
-#' @param method_args Additional parameters passed to `<method_function>`
+#' @param method_args Additional parameters passed to `limma::lmfit()` or
+#'   `edgeR::voomLmFit()`
 #'
 #' @returns A list with the original and formatted results of the LimoRhyde analysis.
 #' @examples
@@ -31,8 +32,19 @@ analyze_limorhyde <- function(cd, method_args = list()) {
   groups <- unique(metadata(cd_local)[["group"]])
   df_res <- execute_limorhyde(inputs, groups, method_args)
 
+  # Run harmonic regression
+  if (is.null(groups)) {
+    ls_harm_groups <- list(estimate_wave_params(cd_local))
+  } else {
+    ls_harm_groups <- lapply(groups, function(grp) estimate_wave_params(cd_local, grp))
+  }
+
   # Postprocessing
-  ls_res <- format_limorhyde(df_res, mean(cd_local$period))
+  ls_res <- format_limorhyde(
+    res_original = df_res,
+    ls_harm_groups = ls_harm_groups,
+    period = mean(cd_local$period)
+  )
 
   return(ls_res)
 }

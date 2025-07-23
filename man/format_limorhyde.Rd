@@ -4,11 +4,14 @@
 \alias{format_limorhyde}
 \title{Format LimoRhyde Results}
 \usage{
-format_limorhyde(res_original, period)
+format_limorhyde(df_original, ls_harm_groups, period)
 }
 \arguments{
-\item{res_original}{A data frame with results from a LimoRhyde rhythmicity
+\item{df_original}{A data frame with results from a LimoRhyde rhythmicity
 analysis.}
+
+\item{ls_harm_groups}{A list with results from a harmonic regression
+analysis, split into groups.}
 
 \item{period}{Period from \code{CircadianData} object}
 }

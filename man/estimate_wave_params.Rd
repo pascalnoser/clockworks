@@ -21,7 +21,7 @@ harmonic regression.
 }
 \details{
 The returned parameters correspond to the model \deqn{y = M + A
-sin(\frac{2\pi}{p} (t - \phi))} With \eqn{M} the mesor, \eqn{A} the
+sin(\frac{2\pi}{p} (t + \phi))} With \eqn{M} the mesor, \eqn{A} the
 amplitude, \eqn{p} the period, \eqn{t} the time and \eqn{\phi} the phase in
 the same units as \eqn{t} (e.g. hours).
 EXPLAIN STUFF ABOUT RELATIVE AMPLITUDE!

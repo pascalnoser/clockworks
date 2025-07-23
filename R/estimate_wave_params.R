@@ -11,7 +11,7 @@
 #'
 #' @details
 #' The returned parameters correspond to the model \deqn{y = M + A
-#' sin(\frac{2\pi}{p} (t - \phi))} With \eqn{M} the mesor, \eqn{A} the
+#' sin(\frac{2\pi}{p} (t + \phi))} With \eqn{M} the mesor, \eqn{A} the
 #' amplitude, \eqn{p} the period, \eqn{t} the time and \eqn{\phi} the phase in
 #' the same units as \eqn{t} (e.g. hours).
 #' EXPLAIN STUFF ABOUT RELATIVE AMPLITUDE!
@@ -41,7 +41,7 @@ estimate_wave_params <- function(cd, grp = NA) {
   per <- mean(cd$period)
   phase_estimate_rad <- res_harm$pars$phi
   phase_estimate_h_cos <- phase_estimate_rad * per / (2 * pi)
-  phase_estimate_h_sin <- (phase_estimate_h_cos - per / 4) %% per
+  phase_estimate_h_sin <- -1 * ((phase_estimate_h_cos - per / 4) %% per)
 
   df_out <- data.frame(
     feature = row.names(res_harm$pars),

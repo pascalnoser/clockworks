@@ -8,15 +8,15 @@
 #'
 #' @returns A list of data frames containing the original and formatted results
 format_circan <- function(ls_res_groups, ls_harm_groups, added_group) {
+  # Get harmonic regression params
+  res_harm <- do.call("rbind", ls_harm_groups)
+  rownames(res_harm) <- NULL
+
   # Turn into one data frame
   res_original <- do.call("rbind", ls_res_groups)
 
   # Remove redundant row names
   rownames(res_original) <- NULL
-
-  # Get harmonic regression params
-  res_harm <- do.call("rbind", ls_harm_groups)
-  rownames(res_harm) <- NULL
 
   # TODO: Use harmonic regression or CircaN params?
 
@@ -26,12 +26,15 @@ format_circan <- function(ls_res_groups, ls_harm_groups, added_group) {
     group = res_original$group,
     period_estimate = res_original$estimate.per,
     phase_estimate = res_original$estimate.phase,
-    mesor_estimate = NA,
     amplitude_estimate = res_original$estimate.amp,
-    relative_amplitude_estimate = NA,
     pval = res_original$combined_pval,
     pval_adj = res_original$BH_combined,
-    method = "CircaN"
+    method = "CircaN",
+    hr_period = res_harm$period,
+    hr_phase_estimate = res_harm$phase_estimate,
+    hr_mesor_estimate = res_harm$mesor_estimate,
+    hr_amplitude_estimate = res_harm$amplitude_estimate,
+    hr_relative_amplitude_estimate = res_harm$relative_amplitude_estimate
   )
 
   # Remove group column if added temporarily by check function at the start

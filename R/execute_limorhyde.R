@@ -24,7 +24,7 @@ execute_limorhyde <- function(inputs, groups, method_args = list()) {
     fit <- limma::eBayes(fit, trend = TRUE)
 
   } else if (func == "voomLmFit") {
-    fit <- do.call(edgeR::voomLmFit(), inputs)
+    fit <- do.call(edgeR::voomLmFit, inputs)
     fit <- limma::eBayes(fit)
   }
 
@@ -67,6 +67,9 @@ execute_limorhyde <- function(inputs, groups, method_args = list()) {
     # Collapse list into data frame
     df_res <- do.call(rbind, ls_res)
   }
+
+  # Remove redundant row names
+  row.names(df_res) <- NULL
 
   # Return results
   return(df_res)

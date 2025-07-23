@@ -32,6 +32,8 @@ Imports:
     future,
     limma,
     diffCircadian,
-    HarmonicRegression
+    HarmonicRegression,
+    dryR,
+    DESeq2
 Depends: 
     R (>= 3.5)
