@@ -18,9 +18,9 @@ library(badger)
 
 <!-- badges: start -->
 `r badge_lifecycle("experimental")`
-`r badge_github_actions()`
 `r badge_devel("pascalnoser/clockworks", "blue")`
 `r badge_code_size("pascalnoser/clockworks")`
+`r badge_github_actions()`
 <!-- badges: end -->
 
 <!-- put logo here -->

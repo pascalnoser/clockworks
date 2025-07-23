@@ -6,10 +6,10 @@
 <!-- badges: start -->
 
 [![](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![](https://img.shields.io/badge/devel%20version-0.2.1-blue.svg)](https://github.com/pascalnoser/clockworks)
+[![](https://img.shields.io/github/languages/code-size/pascalnoser/clockworks.svg)](https://github.com/pascalnoser/clockworks)
 [![R build
 status](https://github.com/pascalnoser/clockworks/workflows/R-CMD-check/badge.svg)](https://github.com/pascalnoser/clockworks/actions)
-[![](https://img.shields.io/badge/devel%20version-0.2.0-blue.svg)](https://github.com/pascalnoser/clockworks)
-[![](https://img.shields.io/github/languages/code-size/pascalnoser/clockworks.svg)](https://github.com/pascalnoser/clockworks)
 <!-- badges: end -->
 
 <!-- put logo here -->
