@@ -16,7 +16,7 @@ execute_repeatedcircadian <- function(inputs, grp, method_args = list()) {
   inputs$dat <- NULL
 
   # Combine and overwrite inputs with method_args
-  inputs <- modifyList(inputs, method_args)
+  inputs <- utils::modifyList(inputs, method_args)
 
   # Run rhythmicity detection for each feature separately
   ls_res <- future_lapply(1:nrow(dat), function(feature) {

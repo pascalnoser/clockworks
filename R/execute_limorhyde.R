@@ -12,7 +12,7 @@
 #' @returns A data frame
 execute_limorhyde <- function(inputs, groups, method_args = list()) {
   # Combine and overwrite inputs with method_args
-  inputs <- modifyList(inputs, method_args)
+  inputs <- utils::modifyList(inputs, method_args)
 
   # Get function from inputs
   func <- inputs$func

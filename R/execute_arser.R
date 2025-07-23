@@ -12,7 +12,7 @@ execute_arser <- function(inputs, grp, method_args = list()) {
   # TODO: Figure out what to do about `parallelize` and `nCores`
 
   # Combine and overwrite inputs with method_args
-  inputs <- modifyList(inputs, method_args)
+  inputs <- utils::modifyList(inputs, method_args)
 
   # Ensure `cycMethod = "ARS"` and print message if set manually
   inputs$cycMethod = "ARS"
@@ -21,7 +21,7 @@ execute_arser <- function(inputs, grp, method_args = list()) {
       paste0(
         "'ARSER' was selected as the 'method', but the 'cycMethod' argument in ",
         "`MetaCycle::meta2d()` was manually set to '",
-        dots$cycMethod,
+        method_args$cycMethod,
         "'. The specified 'method' will take precendce and the defined ",
         "'cycMethod' will be ignored. To use a different algorithm, please set ",
         "the 'method' argument of clockworks accordingly."

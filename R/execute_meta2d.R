@@ -12,7 +12,7 @@ execute_meta2d <- function(inputs, grp, method_args = list()) {
   # TODO: Figure out what to do about `parallelize` and `nCores`
 
   # Combine and overwrite inputs with method_args
-  inputs <- modifyList(inputs, method_args)
+  inputs <- utils::modifyList(inputs, method_args)
 
   # Run rhythmicity analysis
   ls_res <- do.call(MetaCycle::meta2d, inputs)

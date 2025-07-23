@@ -49,7 +49,11 @@ analyze_rain <- function(cd, method_args = list()) {
   }
 
   # Postprocessing
-  ls_res <- format_rain(ls_res_groups, ls_harm_groups, added_group)
+  ls_res <- format_rain(
+    ls_res_groups = ls_res_groups,
+    ls_harm_groups = ls_harm_groups,
+    added_group = added_group
+  )
 
   return(ls_res)
 }

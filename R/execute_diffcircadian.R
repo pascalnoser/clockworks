@@ -16,7 +16,7 @@ execute_diffcircadian <- function(inputs, method_args = list()) {
   inputs$dat <- NULL
 
   # Combine and overwrite inputs with method_args
-  inputs <- modifyList(inputs, method_args)
+  inputs <- utils::modifyList(inputs, method_args)
 
   # Get names of columns with values
   val_cols <- grep("^T\\d+_R", colnames(dat), value = TRUE)

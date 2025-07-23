@@ -10,7 +10,7 @@
 #' @returns A list
 execute_jtkcycle <- function(inputs, grp, method_args = list()) {
   # Combine and overwrite inputs with method_args
-  inputs <- modifyList(inputs, method_args)
+  inputs <- utils::modifyList(inputs, method_args)
 
   # Run rhythmicity analysis
   ls_res <- do.call(MetaCycle::meta2d, inputs)

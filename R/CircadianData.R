@@ -197,6 +197,34 @@ setReplaceMethod("experiment_info", "CircadianData", function(x, value) {
 })
 
 
+# --- Define Generics for Base Functions to Avoid Startup Messages ---
+# Check if a generic already exists before creating it.
+
+if (!isGeneric("nrow")) {
+  setGeneric("nrow", function(x) standardGeneric("nrow"))
+}
+
+if (!isGeneric("ncol")) {
+  setGeneric("ncol", function(x) standardGeneric("ncol"))
+}
+
+if (!isGeneric("rownames")) {
+  setGeneric("rownames", function(x, do.NULL = TRUE, prefix = "row") standardGeneric("rownames"))
+}
+
+if (!isGeneric("colnames")) {
+  setGeneric("colnames", function(x, do.NULL = TRUE, prefix = "col") standardGeneric("colnames"))
+}
+
+if (!isGeneric("rownames<-")) {
+  setGeneric("rownames<-", function(x, value) standardGeneric("rownames<-"))
+}
+
+if (!isGeneric("colnames<-")) {
+  setGeneric("colnames<-", function(x, value) standardGeneric("colnames<-"))
+}
+
+
 # --- Basic Methods (Dimensions, Dimnames) ---
 
 #' Get Dimensions
@@ -979,7 +1007,7 @@ setMethod("plot_feature", "CircadianData",
             }
 
             # Merge and potentially overwrite with user arguments
-            final_args <- modifyList(plot_args, user_args)
+            final_args <- utils::modifyList(plot_args, user_args)
 
             # Enforce x and y parameters
             final_args$x <- plot_df$time

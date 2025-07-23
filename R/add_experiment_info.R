@@ -16,7 +16,7 @@
 add_experiment_info <- function(cd,
                                 period = NULL,
                                 data_type = NULL,
-                                log_transformed = NULL,
+                                log_transformed = FALSE,
                                 log_base = NULL,
                                 estimate_delta_t = TRUE) {
   # Create local copy of cd to prevent accidental changes to main object
@@ -34,7 +34,7 @@ add_experiment_info <- function(cd,
 
   # Add info about logarithmic transformation of data ----
   if (!is.null(log_transformed)) cd_local$log_transformed <- log_transformed
-  if (!is.null(log_base) & cd_local$log_transformed == TRUE) cd_local$log_base <- log_base
+  if (!is.null(log_base) & isTRUE(cd_local$log_transformed)) cd_local$log_base <- log_base
 
   # If experiment info is updated to change `log_transformed` to FALSE, set
   # `log_base` to NULL. Use `isFALSE()` instead of ` == FALSE` because the
@@ -43,7 +43,8 @@ add_experiment_info <- function(cd,
 
 
   # Add group info ----
-  # TODO: Remove "n_groups" and replace with "groups"?
+  # TODO: Remove "n_groups" and replace with "groups"? Would require lots of
+  # adjustmenst downstream in method functions
   groups <- unique(metadata(cd_local)[["group"]])
   n_groups <- length(groups)
 

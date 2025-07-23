@@ -10,7 +10,7 @@
 #' @returns A data frame
 execute_timecycle <- function(inputs, grp, method_args = list()) {
   # Combine and overwrite inputs with method_args
-  inputs <- modifyList(inputs, method_args)
+  inputs <- utils::modifyList(inputs, method_args)
 
   if (inputs$maxLag == 3 && !"maxLag" %in% method_args) {
     message(

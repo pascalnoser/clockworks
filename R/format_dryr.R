@@ -74,8 +74,9 @@ format_dryr <- function(ls_res_groups,
   )
 
   # Remove group column if added temporarily by check function at the start
+  res_original <- ls_res_groups
   if (added_group == TRUE) {
-    res_original <- ls_res_groups[[1]]
+    res_original <- res_original[[1]]
     res_original$single <- NULL
     res_formatted$group <- NULL
   }

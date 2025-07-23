@@ -8,7 +8,7 @@ add_experiment_info(
   cd,
   period = NULL,
   data_type = NULL,
-  log_transformed = NULL,
+  log_transformed = FALSE,
   log_base = NULL,
   estimate_delta_t = TRUE
 )

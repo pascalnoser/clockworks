@@ -66,7 +66,7 @@ format_ls <- function(ls_res_groups,
     hr_amplitude_estimate = res_harm$amplitude_estimate,
     hr_relative_amplitude_estimate = res_harm$relative_amplitude_estimate
   )
-MetaCycle::meta2d()
+
   # Remove group column if added temporarily by check function at the start
   if (added_group == TRUE) {
     res_formatted$group <- NULL

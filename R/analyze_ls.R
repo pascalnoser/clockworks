@@ -49,11 +49,13 @@ analyze_ls <- function(cd, method_args = list()) {
   }
 
   # Postprocessing
-  ls_res <- format_ls(ls_res_groups = ls_res_groups,
-                      ls_harm_groups = ls_harm_groups,
-                      added_group = added_group,
-                      log_transformed = cd_local$log_transformed,
-                      log_base = cd_local$log_base)
+  ls_res <- format_ls(
+    ls_res_groups = ls_res_groups,
+    ls_harm_groups = ls_harm_groups,
+    added_group = added_group,
+    log_transformed = cd_local$log_transformed,
+    log_base = cd_local$log_base
+  )
 
   return(ls_res)
 }

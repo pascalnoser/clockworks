@@ -21,7 +21,7 @@ execute_circan <- function(inputs, grp, method_args = list()) {
   r <<- NA
 
   # Combine and overwrite inputs with method_args
-  inputs <- modifyList(inputs, method_args)
+  inputs <- utils::modifyList(inputs, method_args)
 
   # Run rhythmicity analysis
   df_res <- suppressWarnings(do.call(CircaN::circan, inputs))
