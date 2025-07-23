@@ -35,5 +35,10 @@ Imports:
     HarmonicRegression,
     dryR,
     DESeq2
+Remotes:
+    diffCircadian/diffCircadian
+    nesscoder/TimeCycle
+    cran/HarmonicRegression
+    AndreaRP/CircaN
 Depends: 
     R (>= 3.5)
