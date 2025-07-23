@@ -243,15 +243,28 @@ check_metadata <- function(metadata,
     c(colname_time, colname_sample, colname_group, colname_subject)
   )
   if (length(additional_cols) > 0) {
-    message(
-      paste0(
-        "\nThe following columns in `metadata` will be ignored: ",
-        paste(additional_cols, collapse = ", "),
-        "\nIf you want to use subject information (for repeated measures) or group ",
-        "information, make sure to define these as `colname_subject` and ",
-        "`colname_group`, respectively."
-      )
+    message_cols <- paste0(
+      "\nThe following columns in `metadata` will be ignored: ",
+      paste(additional_cols, collapse = ", ")
     )
+
+    if (is.null(colname_group)) {
+      message_group <- paste0(
+        "If your data set contains groups which should be analysed ",
+        "separately, make sure to define `colname_group`."
+      )
+      message_cols <- paste0(message_cols, "\n", message_group)
+    }
+
+    if (is.null(colname_subject)) {
+      message_rpt <- paste0(
+        "If your data set contains repeated measures, make sure to define ",
+        "`colname_subject`."
+      )
+      message_cols <- paste0(message_cols, "\n", message_rpt)
+    }
+
+    message(paste0(message_cols, "\n"))
   }
 
   # 7. Make sure metadata is a data frame and not e.g. a tibble

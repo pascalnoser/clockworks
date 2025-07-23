@@ -1,7 +1,7 @@
 Package: clockworks
 Type: Package
 Title: Rhythmicity Detection in Time Series Data
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person(
       "Pascal", "Noser",
@@ -9,8 +9,15 @@ Authors@R: c(
       role = c("aut", "cre")
     )
   )
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
+Description: clockworks is an R package for streamlined rhythmicity detection in 
+    time-series data. It serves as a wrapper for several popular analysis tools, 
+    eliminating the need to wrangle data into tool-specific formats or learn 
+    each method’s quirks. With simple, consistent inputs, clockworks can 
+    automatically adjust parameters based on the input data and prevent the use 
+    of methods unsuited to your dataset. In just a few lines of code, the user 
+    can easily run multiple methods, compare results, and generate basic 
+    visualizations.
+URL: https://github.com/pascalnoser/clockworks
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

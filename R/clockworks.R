@@ -6,11 +6,11 @@
 #'   It is expected to contain numeric data.
 #' @param metadata A data frame containing metadata associated with the samples
 #'   in the dataset.
+#' @param colname_sample A string specifying the name of the column in
+#'   `metadata` that contains the sample IDs. These IDs should be unique.
 #' @param colname_time A string specifying the name of the column in `metadata`
 #'   that contains the time information (e.g., collection time). This column
 #'   must be numeric.
-#' @param colname_sample A string specifying the name of the column in
-#'   `metadata` that contains the sample IDs. These IDs should be unique.
 #' @param colname_group A string (optional) specifying the name of the column in
 #'   `metadata` that contains group information (e.g., treatment groups,
 #'   conditions). If no group information is available, leave as `NULL`
@@ -44,8 +44,8 @@
 #'
 clockworks <- function(dataset,
                        metadata,
-                       colname_time,
                        colname_sample,
+                       colname_time,
                        colname_group = NULL,
                        colname_subject = NULL,
                        period = 24,
