@@ -8,19 +8,17 @@
 [![](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![](https://img.shields.io/badge/devel%20version-0.2.1-blue.svg)](https://github.com/pascalnoser/clockworks)
 [![](https://img.shields.io/github/languages/code-size/pascalnoser/clockworks.svg)](https://github.com/pascalnoser/clockworks)
-[![R build
-status](https://github.com/pascalnoser/clockworks/workflows/R-CMD-check/badge.svg)](https://github.com/pascalnoser/clockworks/actions)
 <!-- badges: end -->
 
-<!-- put logo here -->
+<img src="man/figures/clockworks_logo_v1.png" width="200" align="right"/>
 
 > clockworks is an R package for streamlined rhythmicity detection in
 > time-series data. It serves as a wrapper for several popular analysis
 > tools, eliminating the need to wrangle data into tool-specific formats
 > or learn each method’s quirks. With simple, consistent inputs,
 > clockworks can automatically adjust parameters based on the input data
-> and prevent the use of methods unsuited to your dataset. In just a few
-> lines of code, the user can easily run multiple methods, compare
+> and prevent the use of methods not suited to a given dataset. In just
+> a few lines of code, the user can easily run multiple methods, compare
 > results, and generate basic visualizations.
 
 ------------------------------------------------------------------------
@@ -63,7 +61,7 @@ clockworks_results <- clockworks(
 )
 #> 
 #> The following columns in `metadata` will be ignored: Subject_ID
-#> If you want to use subject information (for repeated measures) or group information, make sure to define these as `colname_subject` and `colname_group`, respectively.
+#> If your data set contains repeated measures, make sure to define `colname_subject`.
 #> An object of class 'CircadianData'
 #>  Dimensions: 10 features, 96 samples
 #>  Feature names: Gene_01 Gene_02 Gene_03 ... Gene_09 Gene_10 
@@ -142,9 +140,9 @@ head(clockworks_results$res_formatted)
 
 The column names in the formatted output follow the same pattern for all
 methods. Furthermore, the results of a harmonic regression are also
-added included in this output, allowing for a quick comparison of the
+included in this output, allowing for a quick comparison of the
 estimated parameters to those of a simple sine wave fit. The harmonic
 regression used is equivalent to the model
 $y = M + A \sin(\frac{2 \pi}{P}(t + \phi))$ with $M$ the mesor, $A$ the
 amplitude, $t$ the time (e.g. in hours), and $P$ and $\phi$ the period
-and phase in the units of the time series.
+and phase in the same units as $t$.
