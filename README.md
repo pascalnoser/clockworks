@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 [![](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![](https://img.shields.io/badge/devel%20version-0.2.1-blue.svg)](https://github.com/pascalnoser/clockworks)
+[![](https://img.shields.io/badge/devel%20version-0.2.2-blue.svg)](https://github.com/pascalnoser/clockworks)
 [![](https://img.shields.io/github/languages/code-size/pascalnoser/clockworks.svg)](https://github.com/pascalnoser/clockworks)
 <!-- badges: end -->
 
@@ -36,9 +36,9 @@ pak::pak("pascalnoser/clockworks")
 
 Detecting rhythmic features using your method of choice is very
 straightforward. In the example below, we will use a synthetic data set
-of two rhythmic and eight non-rhythmic genes and the
-[MetaCycle](https://github.com/gangwug/MetaCycle) implementation of the
-[JTK_CYCLE](https://doi.org/10.1177/0748730410379711) method:
+of two rhythmic and eight non-rhythmic genes. We will analyse them using
+the [MetaCycle](https://github.com/gangwug/MetaCycle) implementation of
+the [JTK_CYCLE](https://doi.org/10.1177/0748730410379711) method:
 
 ``` r
 library(clockworks)
