@@ -35,9 +35,6 @@
 #'   Supported methods include "ARSER", "CircaN", "diffCircadian", "dryR",
 #'   "GeneCycle", "JTK_CYCLE", "RepeatedCircadian", "LimoRhyde", "LS"
 #'   (Lomb-Scargle), "meta2d", "RAIN", and "TimeCycle".
-#' @param method_args A list of additional arguments to be passed directly to
-#'   the chosen analysis method. This allows for more advanced customisation of
-#'   the analysis.
 #' @param log_transformed A logical value indicating whether the data in
 #'   `dataset` has been log-transformed. This information is used for
 #'   calculating the relative amplitude in the output of the harmonic regression
@@ -45,14 +42,20 @@
 #' @param log_base A numeric value specifying the base of the logarithm if the
 #'   data is log-transformed. Only used if `log_transformed` is `TRUE`. Default
 #'   is 2.
+#' @param verbose A logical value indicating whether the `CircadianData` object
+#'   should be printed before running the rhythmicity detection.
+#' @param method_args A list of additional arguments to be passed directly to
+#'   the chosen analysis method. This allows for more advanced customisation of
+#'   the analysis.
 #'
-#' @details
-#' Additional details coming soon...
+#' @details Additional details coming soon...
 #'
-#' @returns A list containing: \item{res_original}{The original, unaltered
+#' @returns A list containing:
+#'   \item{res_original}{The original, unaltered
 #'   results from the chosen analysis method.}
 #'   \item{res_formatted}{The results formatted into a standardized structure,
 #'   allowing for direct comparison across different methods.}
+#'
 #' @export
 #'
 clockworks <- function(dataset,
@@ -66,6 +69,7 @@ clockworks <- function(dataset,
                        data_type = "norm",
                        log_transformed = FALSE,
                        log_base = 2,
+                       verbose = TRUE,
                        method_args = list()) {
   # Make sure method is valid
   method <- match.arg(
@@ -130,7 +134,7 @@ clockworks <- function(dataset,
 
   # Print CD object so the user sees what clockworks uses as input for the
   # functions as a kind of sanity check
-  print(cd)
+  if (verbose == TRUE) print(cd)
 
   # Run rhythmicity detection with chosen method
   rhythmicity_results <- analyze_fn(cd, method_args)
