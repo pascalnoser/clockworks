@@ -51,30 +51,45 @@ setClass("CircadianData",
 
 setValidity("CircadianData", function(object) {
   errors <- character()
-  dset <- object@dataset
-  mdata <- object@metadata
 
-  # --- Structural Invariants ---
-  if (!is.matrix(dset) || !is.numeric(dset)) {
-    errors <- c(errors, "'dataset' slot must be a numeric matrix.")
+  # Check 1: dataset columns and metadata rows must have names
+  if (is.null(colnames(object@dataset))) {
+    errors <- c(errors, "The 'dataset' matrix must have column names (sample IDs).")
+  }
+  if (is.null(rownames(object@metadata))) {
+    errors <- c(errors, "The 'metadata' data.frame must have row names (sample IDs).")
   }
 
-  # TODO: Probably NA values are fine?
-  if (anyNA(dset)) {
-    errors <- c(errors, "'dataset' slot cannot contain NA values.")
-  }
-  if (is.null(rownames(dset))) {
-    errors <- c(errors, "'dataset' slot must have feature names (row names).")
+  # Check 2: Dimensions must match
+  if (ncol(object@dataset) != nrow(object@metadata)) {
+    msg <- sprintf(
+      "Number of columns in 'dataset' (%d) does not match number of rows in 'metadata' (%d).",
+      ncol(object@dataset), nrow(object@metadata)
+    )
+    errors <- c(errors, msg)
+  } else {
+    # Check 3: Sample IDs must match exactly (if names exist and dimensions match)
+    if (!is.null(colnames(object@dataset)) && !is.null(rownames(object@metadata))) {
+      if (!identical(colnames(object@dataset), rownames(object@metadata))) {
+        errors <- c(errors, "Column names of 'dataset' must be identical to row names of 'metadata'. Check order and values.")
+      }
+    }
   }
 
-  # --- Metadata Invariants ---
-  if (!"time" %in% colnames(mdata) || !is.numeric(mdata$time)) {
-    errors <- c(errors, "A valid object must have a numeric 'time' column in its metadata.")
+  # Check 4: dataset should ideally have row names (feature IDs)
+  if (is.null(rownames(object@dataset))) {
+    warning("The 'dataset' matrix ideally should have row names (feature IDs).")
+    # Not enforcing as an error, but good practice.
   }
 
-  # --- Synchronization Invariant ---
-  if (!identical(colnames(dset), rownames(mdata))) {
-    errors <- c(errors, "Column names of 'dataset' must be identical to and in the same order as row names of 'metadata'.")
+  # Check 5: experiment_info must be a list
+  if (!is.list(object@experiment_info)) {
+    errors <- c(errors, "'experiment_info' slot must be a list.")
+  }
+
+  # Check 6: results must be a list
+  if (!is.list(object@results)) {
+    errors <- c(errors, "'results' slot must be a list.")
   }
 
   if (length(errors) == 0) TRUE else errors
@@ -85,269 +100,68 @@ setValidity("CircadianData", function(object) {
 
 #' Create a CircadianData Object
 #'
-#' @description
-#' This constructor function validates and standardizes user-provided dataset and
-#' metadata, creating a `CircadianData` object. It serves as the primary entry
-#' point for creating a valid object, integrating checks for data integrity,
-#' required columns, and consistent sample IDs.
+#' @param dataset A numeric matrix with features as rows and samples as columns.
+#'   Must have column names (sample IDs) and preferably row names (feature IDs).
+#'   Features could be genes, proteins, metabolites, etc.
+#' @param metadata A data.frame with samples as rows and annotations as columns.
+#'   Must have row names (sample IDs) that match the column names of `dataset`
+#'   exactly (in order and value).
+#' @param experiment_info A list to store experiment-level data or parameters
+#'   (e.g. period). `clockworks` will try to infer the relevant parameters from
+#'   the `dataset` and `metadata` automatically.
+#' @param results An optional list to pre-populate the results slot. This is
+#'   typically left empty upon initial object creation and is populated by
+#'   downstream analysis functions.
 #'
-#' @param dataset A data frame or numeric matrix with features as rows and
-#'   samples as columns. Must have column names (sample IDs).
-#' @param metadata A data frame containing sample annotations.
-#' @param colname_time A character string specifying the name of the column in `metadata`
-#'   that contains the time information (e.g., collection time). This column
-#'   must be numeric.
-#' @param colname_sample A character string specifying the name of the column in
-#'   `metadata` that contains the sample IDs. These IDs must be unique and match
-#'   the column names of `dataset`. Use `"rownames"` if sample IDs are in the
-#'   metadata's row names.
-#' @param colname_group An optional character string specifying the name of the
-#'   column in `metadata` that contains group information.
-#' @param colname_subject An optional character string specifying the name of the
-#'   column in `metadata` containing subject IDs for repeated measures designs.
-#' @param experiment_info An optional list for storing experiment-level parameters.
-#' @param results An optional list for storing analysis results.
-#'
-#' @return A valid `CircadianData` object.
+#' @return A \code{CircadianData} object.
 #' @export
 #' @examples
-#' counts <- matrix(rpois(80, 50), nrow=10, ncol=8,
-#'                  dimnames=list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
-#' meta_df <- data.frame(
-#'   sample_id = paste0("Sample", 1:8),
-#'   zeitgeber_time = rep(c(0,6,12,18), each=2),
-#'   condition = rep(c("WT", "KO"), 4),
-#'   mouse_id = rep(1:4, 2)
+#' # --- Basic object creation ---
+#' counts <- matrix(rpois(100, lambda = 10), nrow = 10, ncol = 10,
+#'                  dimnames = list(paste0("Feature", 1:10), paste0("Sample", 1:10)))
+#' meta <- data.frame(
+#'   row.names = paste0("Sample", 1:10),
+#'   group = rep(c("Control", "Treated"), each = 5),
+#'   time = rep(seq(0, 8, by = 2), 2)
 #' )
 #'
-#' # Create the object, mapping user column names to standard internal names
-#' cd_obj <- CircadianData(
-#'   dataset = counts,
-#'   metadata = meta_df,
-#'   colname_sample = "sample_id",
-#'   colname_time = "zeitgeber_time",
-#'   colname_group = "condition",
-#'   colname_subject = "mouse_id"
-#' )
-#'
+#' # Create a basic object (most common use case)
+#' cd_obj <- CircadianData(dataset = counts, metadata = meta,
+#'                         experiment_info = list(period = 24))
 #' print(cd_obj)
-#' # Note how metadata columns have been renamed and standardized
-#' head(metadata(cd_obj))
 #'
-CircadianData <- function(dataset,
-                          metadata,
-                          colname_sample,
-                          colname_time,
-                          colname_group = NULL,
-                          colname_subject = NULL,
-                          experiment_info = list(),
-                          results = list()) {
+CircadianData <- function(dataset, metadata, experiment_info = list(), results = list()) {
 
-  # === 1. Metadata Processing and Validation ===
-  ## -- 1. Check if metadata is a data.frame --
-  if (!inherits(metadata, "data.frame")) {
-    stop("'metadata' must be a data.frame.", call. = FALSE)
+  # Basic checks before creating the object
+  if (!is.matrix(dataset)) stop("'dataset' must be a matrix.")
+  if (!is.data.frame(metadata)) stop("'metadata' must be a data.frame.")
+  if (!is.list(experiment_info)) stop("'experiment_info' must be a list.")
+
+  # Ensure names match - crucial step before calling new() which triggers validity
+  if (is.null(colnames(dataset))) stop("'dataset' must have column names.")
+  if (is.null(rownames(metadata))) stop("'metadata' must have row names.")
+
+  if (ncol(dataset) != nrow(metadata)) {
+    stop(sprintf(
+      "Number of columns in 'dataset' (%d) must match number of rows in 'metadata' (%d).",
+      ncol(dataset), nrow(metadata)
+    ))
   }
 
-
-  ## -- 2. Ensure it's a data frame and not e.g. a tibble or data.table --
-  metadata <- as.data.frame(metadata)
-
-
-  ## -- 3. Check if columns are present --
-  # Get column names
-  cnames <- colnames(metadata)
-
-  ### 3a. Required columns (`colname_sample` and `colname_time`)
-  # Handle case where sample IDs are in the rownames
-  if (colname_sample == "rownames") {
-    if (is.null(rownames(metadata))) stop("`colname_sample` is 'rownames', but metadata has no row names.", call.=FALSE)
-    metadata$`.internal_sample_id` <- rownames(metadata)
-    colname_sample <- ".internal_sample_id"
+  # Ensure sample IDs match exactly
+  if (!identical(colnames(dataset), rownames(metadata))) {
+    stop("Column names of 'dataset' must be identical to, and in the same order as, row names of 'metadata'.")
   }
 
-  # Check if the columns exist
-  required_args <- c("colname_sample", "colname_time")
-  user_cols <- stats::setNames(c(colname_sample, colname_time), required_args)
+  # Ensure results is a list
+  if (!is.list(results)) stop("'results' must be a list.")
 
-  missing_cols <- user_cols[!user_cols %in% cnames]
-  if (length(missing_cols) > 0) {
-    stop("The following required columns are missing from metadata: ",
-         paste0("'", missing_cols, "' (specified by '", names(missing_cols), "') ", collapse=", "),
-         call. = FALSE)
-  }
-
-
-  ### 3b. Optional columns (`colname_group` and `colname_subject`)
-  if (!is.null(colname_group) && !colname_group %in% cnames) {
-    stop(
-      paste0(
-        "Missing column '", colname_group, "' in `metadata`. ",
-        "If applicable, please make sure that `colname_group` corresponds to the ",
-        "column containing the group information or leave it as NULL otherwise."
-      ),
-      call. = FALSE
-    )
-  }
-
-  if (!is.null(colname_subject) && !colname_subject %in% cnames) {
-    stop(
-      paste0(
-        "Missing column '", colname_subject, "' in `metadata`. ",
-        "If your data contains repeated measures, please make sure that ",
-        "`colname_subject` corresponds to the column containing the subject IDs ",
-        "or set it to NULL (default) otherwise."
-      ),
-      call. = FALSE
-    )
-  }
-
-  ## -- 4. Check if the values in colname_time are numeric --
-  if (!is.numeric(metadata[[colname_time]])) {
-    stop(
-      paste0(
-        "Column '", colname_time, "' of `metadata` is of type ", class(metadata[[colname_time]]),
-        ". The column defined as `colname_time` in `metadata` must be of type numeric."
-      ),
-      call. = FALSE
-    )
-  }
-
-  ## -- 5. Check if the values in colname_sample are unique --
-  if (any(duplicated(metadata[[colname_sample]]))) {
-    stop(
-      paste0("Values in metadata column '", colname_sample, "' must be unique."),
-      call. = FALSE
-    )
-  }
-
-  ## -- 6. Check subject ID logic --
-  # Print a message if all values are unique because this suggests the user
-  # simply has replicates rather than repeated measures, in which case
-  # `colname_sample` need not be defined.
-  if (!is.null(colname_subject) && !any(duplicated(metadata[[colname_subject]]))) {
-    message("All values in column '", colname_subject, "' are unique. ",
-            "Assuming no repeated measures and ignoring this column.")
-    colname_subject <- NULL
-  }
-
-
-  ## -- 7. Warn the user that additional columns will be ignored --
-  ignored_cols <- setdiff(
-    cnames,
-    c(colname_time, colname_sample, colname_group, colname_subject)
-  )
-  if (length(ignored_cols) > 0) {
-    message_cols <- paste0(
-      "\nThe following columns in `metadata` will be ignored: ",
-      paste(ignored_cols, collapse = ", ")
-    )
-
-    if (is.null(colname_group)) {
-      message_group <- paste0(
-        "If your data set contains groups which should be analysed ",
-        "separately, make sure to define `colname_group`."
-      )
-      message_cols <- paste0(message_cols, "\n", message_group)
-    }
-
-    if (is.null(colname_subject)) {
-      message_rpt <- paste0(
-        "If your data set contains repeated measures, make sure to define ",
-        "`colname_subject`."
-      )
-      message_cols <- paste0(message_cols, "\n", message_rpt)
-    }
-
-    message(paste0(message_cols, "\n"))
-  }
-
-  ## -- 8. Standardize Metadata: Select and rename columns ---
-  # TODO: Enforce type `factor` for group and subject ID?
-  final_meta <- data.frame(row.names = as.character(metadata[[colname_sample]]))
-  final_meta$time <- metadata[[colname_time]]
-  if (!is.null(colname_group)) {
-    final_meta$group <- metadata[[colname_group]]
-  }
-  if (!is.null(colname_subject)) {
-    final_meta$subject_id <- metadata[[colname_subject]]
-  }
-
-
-  # === 2. Dataset Processing and Validation ===
-  ## -- 1. Check if dataset is a data.frame or matrix ---
-  if (!inherits(dataset, c("data.frame", "matrix"))) {
-    stop("`dataset` must be a data frame or matrix.", call. = FALSE)
-  }
-
-  ## -- 2. Check if dataset is numeric --
-  if (is.data.frame(dataset)) {
-    non_numeric_cols <- which(sapply(dataset, function(col) !is.numeric(col)))
-    if (length(non_numeric_cols) > 0) {
-      cols_types <- sapply(dataset, function(col) class(col))[non_numeric_cols]
-      str_combined <- paste0(names(cols_types), " (", cols_types, ")")
-      stop(paste(
-        "All columns of `dataset` are expected to be of type numeric.",
-        "The following columns have a different data type:\n",
-        paste(str_combined, collapse = "\n ")
-      ), call. = FALSE)
-    }
-
-    # Convert to matrix
-    dataset <- as.matrix(dataset)
-  }
-
-  if (is.matrix(dataset) && !is.numeric(dataset)) {
-    stop(paste0(
-      "The `dataset` matrix is of type ", typeof(dataset),
-      " but is expected to be numerical"
-    ), call. = FALSE)
-  }
-
-  ## -- 3. Check if dataset has row numbers --
-  if (is.null(rownames(dataset))) {
-    warning("Dataset has no feature IDs (row names). Using row numbers as feature IDs.", call. = FALSE)
-    rownames(dataset) <- as.character(seq_len(nrow(dataset)))
-  }
-
-
-  # === 3. Synchronize Dataset and Metadata ===
-  meta_samples <- rownames(final_meta)
-  dset_samples <- colnames(dataset)
-
-  if (is.null(dset_samples)) {
-    stop("'dataset' must have column names that correspond to sample IDs.", call. = FALSE)
-  }
-
-  missing_in_meta <- setdiff(dset_samples, meta_samples)
-  if (length(missing_in_meta) > 0) {
-    stop("The following sample IDs in the dataset are not found in the metadata: ",
-         paste(missing_in_meta, collapse = ", "), call. = FALSE)
-  }
-  missing_in_dset <- setdiff(meta_samples, dset_samples)
-  if (length(missing_in_dset) > 0) {
-    stop("The following sample IDs in the metadata are not found in the dataset: ",
-         paste(missing_in_dset, collapse = ", "), call. = FALSE)
-  }
-
-  # Reorder dataset columns to match the standardized metadata order
-  final_dataset <- dataset[, meta_samples, drop = FALSE]
-
-
-  # === 4. Create the Object ===
-  # The validity check will run automatically here on the final, processed data
-  cd_obj <- tryCatch({
-    new("CircadianData",
-        dataset = final_dataset,
-        metadata = final_meta,
-        experiment_info = experiment_info,
-        results = results)
-  }, error = function(e) {
-    stop("Failed to create CircadianData object. Please check the following error(s):\n",
-         e$message, call. = FALSE)
-  })
-
-  return(cd_obj)
+  # Create the object (validity check runs automatically)
+  new("CircadianData",
+      dataset = dataset,
+      metadata = metadata,
+      experiment_info = experiment_info,
+      results = results)
 }
 
 
@@ -686,197 +500,6 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
           })
 
 
-# ---- Adding experiment_info ----
-
-#' Add or Update Experiment Parameters for Analysis
-#'
-#' @description
-#' This method populates or updates the `experiment_info` slot of a
-#' `CircadianData` object with parameters required for downstream analysis.
-#'
-#' @details
-#' On the first call, core parameters can be omitted to use sensible defaults
-#' (e.g., `period = 24`, `log_transformed = FALSE`). On subsequent calls, the
-#' function will use the values already stored in the object unless they are
-#' explicitly provided again to be overwritten. The function always re-calculates
-#' inferred details like `n_replicates` and `n_cycles`.
-#'
-#' @param x A \code{CircadianData} object.
-#' @param period An optional numeric vector of length 1 or 2. Defaults to 24
-#'   if not already set.
-#' @param data_type An optional character string specifying the data type. Must be
-#'   one of "count" or "norm". Defaults to "norm" if not already set.
-#' @param log_transformed An optional logical value (`TRUE`/`FALSE`). Defaults to
-#'   `FALSE` if not already set.
-#' @param log_base An optional single numeric value specifying the base of the
-#'   logarithm. Defaults to 2 if `log_transformed` is `TRUE` and no base is set.
-#' @param estimate_delta_t A logical value. If `TRUE` (default), the sampling
-#'   interval (`delta_t`) will be automatically estimated.
-#' @param ... Not used.
-#'
-#' @return A \code{CircadianData} object with an updated `experiment_info` slot.
-#'
-#' @export
-#' @rdname add_experiment_info
-#' @examples
-#' # --- Setup ----
-#' counts <- matrix(rpois(80, 50), nrow=10, ncol=8,
-#'                  dimnames=list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
-#' meta_df <- data.frame(
-#'   sample_id = paste0("Sample", 1:8),
-#'   time = rep(c(0,6,12,18), each=2)
-#' )
-#' cd_obj <- CircadianData(
-#'   dataset = counts, metadata = meta_df,
-#'   colname_sample = "sample_id", colname_time = "time"
-#' )
-#'
-#' # --- Configuration using defaults ----
-#' # We only need to provide the required 'data_type' argument.
-#' # 'period' and 'log_transformed' will use their defaults.
-#' cd_configured <- add_experiment_info(cd_obj, data_type = "count")
-#'
-#' # Check the configured values
-#' experiment_info(cd_configured)$period # Should be 24
-#' experiment_info(cd_configured)$log_transformed # Should be FALSE
-#'
-setGeneric("add_experiment_info", function(x, ...) standardGeneric("add_experiment_info"))
-
-#' @rdname add_experiment_info
-setMethod("add_experiment_info", "CircadianData",
-          function(x, period = NULL, data_type = NULL, log_transformed = NULL, log_base = NULL, estimate_delta_t = TRUE) {
-
-            exp_info <- experiment_info(x)
-            mdata <- metadata(x)
-
-            # === 1. Validate and Update Core Parameters ===
-            # Priority: User Argument > Existing Value > Default Value
-
-            # --- Period ---
-            if (!is.null(period)) {
-              if (!is.numeric(period) || !(length(period) %in% c(1, 2))) {
-                stop("'period' must be a numeric vector of length 1 or 2.", call. = FALSE)
-              }
-              exp_info$period <- period
-            } else if (is.null(exp_info$period)) {
-              message("`period` not provided. Using default value of 24.")
-              exp_info$period <- 24
-            }
-
-            # --- Data Type ---
-            if (!is.null(data_type)) {
-              exp_info$data_type <- match.arg(data_type, c("count", "norm"))
-            } else if (is.null(exp_info$data_type)) {
-              message("`data_type` not provided. Using default value of 'norm'.")
-              exp_info$data_type <- "norm"
-            }
-
-            # --- Log Transformed ---
-            if (!is.null(log_transformed)) {
-              if (!is.logical(log_transformed) || length(log_transformed) != 1) {
-                stop("'log_transformed' must be TRUE or FALSE.", call. = FALSE)
-              }
-              exp_info$log_transformed <- log_transformed
-            } else if (is.null(exp_info$log_transformed)) {
-              message("`log_transformed` not provided. Using default value of FALSE.")
-              exp_info$log_transformed <- FALSE
-            }
-
-            # --- Log Base (dependent on log_transformed) ---
-            if (exp_info$log_transformed) {
-              if (!is.null(log_base)) {
-                if (!is.numeric(log_base) || length(log_base) != 1) {
-                  stop("'log_base' must be a single number.", call. = FALSE)
-                }
-                exp_info$log_base <- log_base
-              } else if (is.null(exp_info$log_base)) {
-                message("Data is log-transformed but `log_base` not provided. Using default value of 2.")
-                exp_info$log_base <- 2
-              }
-            } else {
-              exp_info$log_base <- NULL # Ensure log_base is NULL if not transformed
-            }
-
-            # === 2. Automatically Re-calculate Inferred Information ===
-            meta_cnames <- colnames(mdata)
-
-            # --- Group info ---
-            groups <- unique(mdata$group)
-            n_groups <- length(groups)
-            if ("group" %in% meta_cnames) {
-              # exp_info$groups <- levels(mdata$group)
-              exp_info$n_groups <- n_groups
-            } else {
-              # exp_info$groups <- NA
-              exp_info$n_groups <- NA
-            }
-
-            # --- Repeated measures ---
-            exp_info$repeated_measures <- "subject_id" %in% meta_cnames
-
-            # --- Replicate info ---
-            # Make sure to show all time points in every group
-            t_unique <- sort(unique(mdata$time))
-            if (exp_info$n_groups > 1 && !is.null(exp_info$groups)) {
-              exp_info$n_replicates <- tapply(mdata$time, mdata$group,
-                                              function(g_time) table(factor(g_time, levels = t_unique)))
-            } else {
-              exp_info$n_replicates <- table(factor(mdata$time, levels = t_unique))
-            }
-
-            # --- Sampling interval ---
-            if (estimate_delta_t) {
-              # Extract time differences
-              delta_ts <- diff(sort(unique(mdata$time)))
-              if (length(delta_ts) == 0) {
-                exp_info$delta_t <- NA
-              } else {
-                delta_freqs <- sort(table(delta_ts), decreasing = TRUE)
-                delta_t_unique <- as.numeric(names(delta_freqs))
-                most_common <- delta_t_unique[1]
-                if (length(delta_t_unique) == 1 || all(delta_t_unique[-1] %% most_common == 0)) {
-                  exp_info$delta_t <- most_common
-                } else {
-                  exp_info$delta_t <- NA
-                  # message(
-                  #   "WARNING: Unable to determine a regular sampling interval. Proceeding ",
-                  #   "with the analysis under the assumption of irregular sampling."
-                  # )
-                }
-              }
-            }
-
-            # --- Number of cycles ---
-            dt <- exp_info$delta_t
-            if (!is.null(dt) && !is.na(dt)) {
-              mean_period <- mean(exp_info$period)
-
-              if (is.na(exp_info$n_groups)) {
-                # No groups
-                t_min <- min(mdata$time)
-                t_max <- max(mdata$time)
-                exp_info$n_cycles <- ((t_max + dt) - t_min) / mean_period
-              } else {
-                # Group-wise
-                exp_info$n_cycles <- tapply(mdata$time, mdata$group,
-                                            function(g_time) (max(g_time) - min(g_time) + dt) / mean_period,
-                                            simplify = FALSE)
-              }
-            } else {
-              # Sampling interval NA or NULL
-              cd_local$n_cycles <- NA
-            }
-
-
-            # === 3. Put the updated list back into the object ===
-            experiment_info(x) <- exp_info
-
-            return(x)
-          }
-)
-
-
-
 # ---- Element-wise access/modification of experiment_info ----
 
 #' Access and modify elements of `experiment_info`
@@ -1093,7 +716,7 @@ setMethod("order_samples", "CircadianData",
 
 
 # ---- Filtering ----
-# TODO: Remove `...` param after checking that it doesn't break anything?
+
 #' Filter Samples by Matching Values in a Metadata Column
 #'
 #' Subsets a \code{CircadianData} object, keeping only samples where the value

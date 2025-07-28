@@ -4,44 +4,73 @@
 \alias{CircadianData}
 \title{Create a CircadianData Object}
 \usage{
-CircadianData(dataset, metadata, experiment_info = list(), results = list())
+CircadianData(
+  dataset,
+  metadata,
+  colname_sample,
+  colname_time,
+  colname_group = NULL,
+  colname_subject = NULL,
+  experiment_info = list(),
+  results = list()
+)
 }
 \arguments{
-\item{dataset}{A numeric matrix with features as rows and samples as columns.
-Must have column names (sample IDs) and preferably row names (feature IDs).
-Features could be genes, proteins, metabolites, etc.}
+\item{dataset}{A data frame or numeric matrix with features as rows and
+samples as columns. Must have column names (sample IDs).}
 
-\item{metadata}{A data.frame with samples as rows and annotations as columns.
-Must have row names (sample IDs) that match the column names of \code{dataset}
-exactly (in order and value).}
+\item{metadata}{A data frame containing sample annotations.}
 
-\item{experiment_info}{A list to store experiment-level data or parameters
-(e.g. period). \code{clockworks} will try to infer the relevant parameters from
-the \code{dataset} and \code{metadata} automatically.}
+\item{colname_sample}{A character string specifying the name of the column in
+\code{metadata} that contains the sample IDs. These IDs must be unique and match
+the column names of \code{dataset}. Use \code{"rownames"} if sample IDs are in the
+metadata's row names.}
 
-\item{results}{An optional list to pre-populate the results slot. This is
-typically left empty upon initial object creation and is populated by
-downstream analysis functions.}
+\item{colname_time}{A character string specifying the name of the column in \code{metadata}
+that contains the time information (e.g., collection time). This column
+must be numeric.}
+
+\item{colname_group}{An optional character string specifying the name of the
+column in \code{metadata} that contains group information.}
+
+\item{colname_subject}{An optional character string specifying the name of the
+column in \code{metadata} containing subject IDs for repeated measures designs.}
+
+\item{experiment_info}{An optional list for storing experiment-level parameters.}
+
+\item{results}{An optional list for storing analysis results.}
 }
 \value{
-A \code{CircadianData} object.
+A valid \code{CircadianData} object.
 }
 \description{
-Create a CircadianData Object
+This constructor function validates and standardizes user-provided dataset and
+metadata, creating a \code{CircadianData} object. It serves as the primary entry
+point for creating a valid object, integrating checks for data integrity,
+required columns, and consistent sample IDs.
 }
 \examples{
-# --- Basic object creation ---
-counts <- matrix(rpois(100, lambda = 10), nrow = 10, ncol = 10,
-                 dimnames = list(paste0("Feature", 1:10), paste0("Sample", 1:10)))
-meta <- data.frame(
-  row.names = paste0("Sample", 1:10),
-  group = rep(c("Control", "Treated"), each = 5),
-  time = rep(seq(0, 8, by = 2), 2)
+counts <- matrix(rpois(80, 50), nrow=10, ncol=8,
+                 dimnames=list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
+meta_df <- data.frame(
+  sample_id = paste0("Sample", 1:8),
+  zeitgeber_time = rep(c(0,6,12,18), each=2),
+  condition = rep(c("WT", "KO"), 4),
+  mouse_id = rep(1:4, 2)
 )
 
-# Create a basic object (most common use case)
-cd_obj <- CircadianData(dataset = counts, metadata = meta,
-                        experiment_info = list(period = 24))
+# Create the object, mapping user column names to standard internal names
+cd_obj <- CircadianData(
+  dataset = counts,
+  metadata = meta_df,
+  colname_sample = "sample_id",
+  colname_time = "zeitgeber_time",
+  colname_group = "condition",
+  colname_subject = "mouse_id"
+)
+
 print(cd_obj)
+# Note how metadata columns have been renamed and standardized
+head(metadata(cd_obj))
 
 }

@@ -185,20 +185,21 @@ check_metadata <- function(metadata,
     )
   }
 
-  # Throw an error if subject ID column contains only one value because this
-  # suggests a misunderstanding by the user
-  if (!is.null(colname_subject)) unique_subjects <- unique(metadata[[colname_subject]])
-
-  if (!is.null(colname_subject) && !length(unique_subjects) > 1) {
-    stop(
-      paste0(
-        "The `colname_subject` column of metadata ('", colname_subject, "')",
-        "contains only one unique value ('", unique_groups, "'). Set ",
-        "`colname_subject` to NULL (default) unless you have repeated measures."
-      ),
-      call. = FALSE
-    )
-  }
+  # TODO: Not sure what I was thinking below here, this could be completely valid?
+  # # Throw an error if subject ID column contains only one value because this
+  # # suggests a misunderstanding by the user
+  # if (!is.null(colname_subject)) unique_subjects <- unique(metadata[[colname_subject]])
+  #
+  # if (!is.null(colname_subject) && !length(unique_subjects) > 1) {
+  #   stop(
+  #     paste0(
+  #       "The `colname_subject` column of metadata ('", colname_subject, "')",
+  #       "contains only one unique value ('", unique_groups, "'). Set ",
+  #       "`colname_subject` to NULL (default) unless you have repeated measures."
+  #     ),
+  #     call. = FALSE
+  #   )
+  # }
 
   # Print a message if all values are unique because this suggests the user
   # simply has replicates rather than repeated measures, in which case

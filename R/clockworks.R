@@ -50,11 +50,8 @@
 #'
 #' @details Additional details coming soon...
 #'
-#' @returns A list containing:
-#'   \item{res_original}{The original, unaltered
-#'   results from the chosen analysis method.}
-#'   \item{res_formatted}{The results formatted into a standardized structure,
-#'   allowing for direct comparison across different methods.}
+#' @returns A `CircadianData` object including the results of a rhythmicity
+#'   analysis using the chosen `method`.
 #'
 #' @export
 #'
@@ -69,7 +66,7 @@ clockworks <- function(dataset,
                        data_type = "norm",
                        log_transformed = FALSE,
                        log_base = 2,
-                       verbose = TRUE,
+                       verbose = FALSE,
                        method_args = list()) {
   # Make sure method is valid
   method <- match.arg(
@@ -91,12 +88,6 @@ clockworks <- function(dataset,
     )
   )
 
-  # Make sure data type is valid
-  data_type <- match.arg(
-    data_type,
-    choices = c("count", "norm")
-  )
-
   # Plan session for parallel processing
   # TODO: Can probably run `parallelly::supportsMulticore()` and if TRUE use
   # multicore instead of multisession
@@ -107,6 +98,12 @@ clockworks <- function(dataset,
   # Use function dispatch
   method_str <- gsub("[_-]", "", tolower(method)) # Remove "-" and "_" from method names
   analyze_fn <- get((paste0("analyze_", method_str)), mode = "function")
+
+  # Make sure data type is valid
+  data_type <- match.arg(
+    data_type,
+    choices = c("count", "norm")
+  )
 
   # Check validity of meta data and sort columns
   metadata <- check_metadata(
@@ -139,5 +136,8 @@ clockworks <- function(dataset,
   # Run rhythmicity detection with chosen method
   rhythmicity_results <- analyze_fn(cd, method_args)
 
-  return(rhythmicity_results)
+  # Add to CD object
+  results(cd)[[method]] <- rhythmicity_results
+
+  return(cd)
 }

@@ -16,7 +16,7 @@ clockworks(
   data_type = "norm",
   log_transformed = FALSE,
   log_base = 2,
-  verbose = TRUE,
+  verbose = FALSE,
   method_args = list()
 )
 }
@@ -77,11 +77,8 @@ the chosen analysis method. This allows for more advanced customisation of
 the analysis.}
 }
 \value{
-A list containing:
-\item{res_original}{The original, unaltered
-results from the chosen analysis method.}
-\item{res_formatted}{The results formatted into a standardized structure,
-allowing for direct comparison across different methods.}
+A \code{CircadianData} object including the results of a rhythmicity
+analysis using the chosen \code{method}.
 }
 \description{
 The main \code{clockworks()} function is used to detect rhythms in time series

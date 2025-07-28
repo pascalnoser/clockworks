@@ -27,7 +27,6 @@
 #'   \item Orders the columns of `dataset` to match the row names of `metadata`.
 #' }
 #'
-
 #' @examples
 #' # Create dummy data and metadata
 #' set.seed(123)

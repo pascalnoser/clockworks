@@ -13,7 +13,7 @@
 #'   meta data.
 #'
 #' @returns The `CircadianData` object with added experiment info
-add_experiment_info <- function(cd,
+add_experiment_info_old <- function(cd,
                                 period = NULL,
                                 data_type = NULL,
                                 log_transformed = FALSE,
