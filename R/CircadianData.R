@@ -1,15 +1,38 @@
+# ---- Class definition ----
+
 #' Define the CircadianData Class
 #'
-#' @slot dataset A matrix containing measurement data (features x samples).
-#' @slot metadata A data.frame containing sample annotations (samples x attributes).
-#' @slot experiment_info A list to store additional arbitrary information or
-#'   parameters related to the experiment (e.g., period, design details).
+#' @description
+#' An S4 class to store and manage data from biological experiments, such as
+#' circadian studies. It serves as an integrated container for raw measurement
+#' data, sample annotations, experimental parameters, and analysis results.
 #'
 #' @details
-#' This class stores data from biological experiments (e.g., circadian studies),
-#' ensuring that the samples (columns of `dataset`, rows of `metadata`) remain
-#' synchronized during operations like subsetting or renaming. The rows of
-#' `dataset` represent features (e.g., genes, proteins, metabolites).
+#' This class bundles the main components of an experimental dataset. Its
+#' primary goal is to ensure that the samples (columns of `dataset`, rows of
+#' `metadata`) remain synchronized during data manipulation operations like
+#' subsetting, ordering, and filtering. Analysis functions within the package
+#' are designed to take this object as input and can store their output in the
+#' `results` slot, creating a self-contained analysis workflow. The rows of the
+#' `dataset` represent features (e.g., genes, proteins, metabolites). The
+#' columns of `dataset` and rows of `metadata` represent samples. The
+#' `experiment_info` stores parameters (e.g. period) that are relevant for the
+#' analysis.
+#'
+#' To manipulate the object:
+#' \itemize{
+#'   \item To access main data slots, see \code{\link{CircadianData-accessors}}.
+#'   \item To subset by features or samples, see \code{\link{CircadianData-subsetting}}.
+#'   \item To sort samples by metadata columns, see \code{\link{order_samples}}.
+#'   \item To filter samples by metadata values, see \code{\link{filter_samples}}.
+#'   \item To interact with the `experiment_info` list, see \code{\link{CircadianData-subset-expinfo}}.
+#' }
+#'
+#' @slot dataset A matrix containing measurement data (features x samples).
+#' @slot metadata A data.frame containing sample annotations (samples x
+#'   attributes).
+#' @slot experiment_info A list for storing experiment-level parameters.
+#' @slot results A list for storing the output from various analysis functions.
 #'
 #' @name CircadianData-class
 #' @rdname CircadianData-class
@@ -18,12 +41,13 @@ setClass("CircadianData",
          slots = c(
            dataset = "matrix",
            metadata = "data.frame",
-           experiment_info = "list" # Renamed from otherData
+           experiment_info = "list",
+           results = "list"
          )
 )
 
 
-# --- Validity Check ---
+# ---- Validity Check ----
 
 setValidity("CircadianData", function(object) {
   errors <- character()
@@ -63,27 +87,36 @@ setValidity("CircadianData", function(object) {
     errors <- c(errors, "'experiment_info' slot must be a list.")
   }
 
+  # Check 6: results must be a list
+  if (!is.list(object@results)) {
+    errors <- c(errors, "'results' slot must be a list.")
+  }
+
   if (length(errors) == 0) TRUE else errors
 })
 
 
-# --- Constructor Function ---
+# ---- Constructor Function ----
 
 #' Create a CircadianData Object
 #'
 #' @param dataset A numeric matrix with features as rows and samples as columns.
-#'        Must have column names (sample IDs) and preferably row names (feature IDs).
-#'        Features could be genes, proteins, metabolites, etc.
+#'   Must have column names (sample IDs) and preferably row names (feature IDs).
+#'   Features could be genes, proteins, metabolites, etc.
 #' @param metadata A data.frame with samples as rows and annotations as columns.
-#'        Must have row names (sample IDs) that match the column names of `dataset`
-#'        exactly (in order and value).
-#' @param experiment_info An optional list to store additional experiment-level
-#'        data or parameters (e.g., experimental period, batch information, notes).
+#'   Must have row names (sample IDs) that match the column names of `dataset`
+#'   exactly (in order and value).
+#' @param experiment_info A list to store experiment-level data or parameters
+#'   (e.g. period). `clockworks` will try to infer the relevant parameters from
+#'   the `dataset` and `metadata` automatically.
+#' @param results An optional list to pre-populate the results slot. This is
+#'   typically left empty upon initial object creation and is populated by
+#'   downstream analysis functions.
 #'
 #' @return A \code{CircadianData} object.
 #' @export
 #' @examples
-#' # Sample Data
+#' # --- Basic object creation ---
 #' counts <- matrix(rpois(100, lambda = 10), nrow = 10, ncol = 10,
 #'                  dimnames = list(paste0("Feature", 1:10), paste0("Sample", 1:10)))
 #' meta <- data.frame(
@@ -92,16 +125,12 @@ setValidity("CircadianData", function(object) {
 #'   time = rep(seq(0, 8, by = 2), 2)
 #' )
 #'
-#' # Create object
-#' cd_obj <- CircadianData(dataset = counts, metadata = meta)
+#' # Create a basic object (most common use case)
+#' cd_obj <- CircadianData(dataset = counts, metadata = meta,
+#'                         experiment_info = list(period = 24))
 #' print(cd_obj)
 #'
-#' # Add experiment info
-#' expInfo <- list(period = 24, notes = "Initial experiment")
-#' experiment_info(cd_obj) <- expInfo
-#' print(experiment_info(cd_obj))
-#'
-CircadianData <- function(dataset, metadata, experiment_info = list()) {
+CircadianData <- function(dataset, metadata, experiment_info = list(), results = list()) {
 
   # Basic checks before creating the object
   if (!is.matrix(dataset)) stop("'dataset' must be a matrix.")
@@ -124,68 +153,104 @@ CircadianData <- function(dataset, metadata, experiment_info = list()) {
     stop("Column names of 'dataset' must be identical to, and in the same order as, row names of 'metadata'.")
   }
 
+  # Ensure results is a list
+  if (!is.list(results)) stop("'results' must be a list.")
+
   # Create the object (validity check runs automatically)
   new("CircadianData",
       dataset = dataset,
       metadata = metadata,
-      experiment_info = experiment_info)
+      experiment_info = experiment_info,
+      results = results)
 }
 
 
-# --- Accessor Methods ---
 
-#' Get the Dataset Matrix
+# ---- Accessor Methods ----
+
+#' Access or Replace Object Components
+#'
+#' @description
+#' Functions to access or replace the main components of a \code{CircadianData}
+#' object, including the dataset matrix, metadata data.frame, experiment_info
+#' list, and results list.
+#'
 #' @param x A \code{CircadianData} object.
-#' @return The dataset matrix (features x samples).
-#' @export
+#' @param value A value to replace a component with. See individual function
+#'   details for required class (e.g., a matrix for `dataset<-`, a list for
+#'   `results<-`).
+#'
+#' @details
+#' \itemize{
+#'   \item \code{dataset()}: Retrieves the feature x sample matrix.
+#'   \item \code{metadata()}: Retrieves the sample x attribute data.frame.
+#'   \item \code{experiment_info()}: Retrieves the list of experiment-level details.
+#'   \item \code{results()}: Retrieves the list of analysis results.
+#' }
+#'
+#' @return The requested component (for accessors) or the modified
+#'   \code{CircadianData} object (for replacement methods).
+#'
+#' @name CircadianData-accessors
+#' @aliases dataset dataset<- metadata metadata<- experiment_info experiment_info<- results results<-
+NULL # A NULL object to hold the main documentation block
+
+
+## ---- Dataset Accessor/Replacement ----
+
 #' @rdname CircadianData-accessors
+#' @export
 setGeneric("dataset", function(x) standardGeneric("dataset"))
 
 #' @rdname CircadianData-accessors
 setMethod("dataset", "CircadianData", function(x) x@dataset)
 
-#' Get the Metadata Data Frame
-#' @param x A \code{CircadianData} object.
-#' @return The metadata data.frame (samples x attributes).
-#' @export
 #' @rdname CircadianData-accessors
+#' @export
+setGeneric("dataset<-", function(x, value) standardGeneric("dataset<-"))
+
+#' @rdname CircadianData-accessors
+setReplaceMethod("dataset", "CircadianData", function(x, value) {
+  if (!is.matrix(value)) stop("'value' must be a matrix.")
+  x@dataset <- value
+  validObject(x)
+  x
+})
+
+
+## ---- Metadata Accessor/Replacement ----
+
+#' @rdname CircadianData-accessors
+#' @export
 setGeneric("metadata", function(x) standardGeneric("metadata"))
 
 #' @rdname CircadianData-accessors
 setMethod("metadata", "CircadianData", function(x) x@metadata)
 
-#' Set the Metadata Data Frame
-#' @param x A \code{CircadianData} object.
-#' @param value A data.frame to replace the current metadata
-#' @return The modified \code{CircadianData} object.
-#' @export
 #' @rdname CircadianData-accessors
+#' @export
 setGeneric("metadata<-", function(x, value) standardGeneric("metadata<-"))
 
 #' @rdname CircadianData-accessors
 setReplaceMethod("metadata", "CircadianData", function(x, value) {
-  if (!inherits(value, "data.frame")) stop("'value' must be a data frame.")
+  if (!is.data.frame(value)) stop("'value' must be a data frame.")
   x@metadata <- value
-  validObject(x) # Re-validate
+  validObject(x)
   x
 })
 
-#' Get the Experiment Information List
-#' @param x A \code{CircadianData} object.
-#' @return The experiment_info list.
-#' @export
+
+## ---- Experiment Info Accessor/Replacement ----
+
 #' @rdname CircadianData-accessors
+#' @export
 setGeneric("experiment_info", function(x) standardGeneric("experiment_info"))
 
 #' @rdname CircadianData-accessors
 setMethod("experiment_info", "CircadianData", function(x) x@experiment_info)
 
-#' Set the Experiment Information List
-#' @param x A \code{CircadianData} object.
-#' @param value A list to replace the current experiment_info.
-#' @return The modified \code{CircadianData} object.
-#' @export
 #' @rdname CircadianData-accessors
+#' @export
 setGeneric("experiment_info<-", function(x, value) standardGeneric("experiment_info<-"))
 
 #' @rdname CircadianData-accessors
@@ -197,7 +262,31 @@ setReplaceMethod("experiment_info", "CircadianData", function(x, value) {
 })
 
 
-# --- Define Generics for Base Functions to Avoid Startup Messages ---
+## ---- Results Accessor/Replacement ----
+
+#' @rdname CircadianData-accessors
+#' @export
+setGeneric("results", function(x) standardGeneric("results"))
+
+#' @rdname CircadianData-accessors
+setMethod("results", "CircadianData", function(x) x@results)
+
+#' @rdname CircadianData-accessors
+#' @export
+setGeneric("results<-", function(x, value) standardGeneric("results<-"))
+
+#' @rdname CircadianData-accessors
+setReplaceMethod("results", "CircadianData", function(x, value) {
+  if (!is.list(value)) stop("'value' must be a list.")
+  x@results <- value
+  validObject(x)
+  x
+})
+
+
+# ---- Generics for Base Functions ----
+# Note: Necessary to avoid startup messages
+
 # Check if a generic already exists before creating it.
 
 if (!isGeneric("nrow")) {
@@ -225,7 +314,7 @@ if (!isGeneric("colnames<-")) {
 }
 
 
-# --- Basic Methods (Dimensions, Dimnames) ---
+# ---- Basic Methods (Dimensions, Dimnames) ----
 
 #' Get Dimensions
 #' @param x A \code{CircadianData} object.
@@ -276,7 +365,7 @@ setMethod("colnames", "CircadianData", function(x) {
 })
 
 
-# --- Replacement Methods (Dimnames - Crucial for Sync) ---
+# ---- Replacement Methods (Dimnames - Crucial for Sync) ----
 
 #' Set Dimension Names
 #' @param x A \code{CircadianData} object.
@@ -333,13 +422,14 @@ setReplaceMethod("colnames", "CircadianData", function(x, value) {
 })
 
 
-# --- Subsetting Method (Crucial for Sync) ---
+# ---- Subsetting Method (Crucial for Sync) ----
 
 #' Subset a CircadianData Object
 #'
-#' Subsets the object by features (rows) and/or samples (columns), ensuring
-#' that the dataset and metadata remain synchronized. The experiment_info
-#' slot is carried over unchanged.
+#' @description
+#' Subsets the object by features (rows) and/or samples (columns) using the `[`
+#' operator. This method ensures that the `dataset` and `metadata` slots remain
+#' synchronized after subsetting.
 #'
 #' @param x A \code{CircadianData} object.
 #' @param i Row indices or names (features).
@@ -348,8 +438,12 @@ setReplaceMethod("colnames", "CircadianData", function(x, value) {
 #' @param drop Logical, currently ignored (always FALSE for dataset/metadata).
 #'
 #' @return A new, subsetted \code{CircadianData} object.
-#' @export
-#' @aliases [,CircadianData,ANY,ANY,ANY-method
+#'
+#' @name CircadianData-subsetting
+#' @aliases
+#' [,CircadianData,ANY,ANY,ANY-method
+#' [.CircadianData
+#'
 #' @examples
 #' # Sample Data
 #' counts <- matrix(rpois(100, lambda = 10), nrow = 10, ncol = 10,
@@ -359,8 +453,7 @@ setReplaceMethod("colnames", "CircadianData", function(x, value) {
 #'   group = rep(c("Control", "Treated"), each = 5),
 #'   time = rep(seq(0, 8, by = 2), 2)
 #' )
-#' cd_obj <- CircadianData(dataset = counts, metadata = meta,
-#'                         experiment_info = list(type = "RNA-Seq"))
+#' cd_obj <- CircadianData(dataset = counts, metadata = meta)
 #'
 #' # Subset features (rows)
 #' cd_obj_sub1 <- cd_obj[c("Feature1", "Feature5"), ]
@@ -407,130 +500,95 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
           })
 
 
-# --- Methods for element-wise access/modification of experiment_info ---
+# ---- Element-wise access/modification of experiment_info ----
 
-#' Access Elements of experiment_info using `[[`
+#' Access and modify elements of `experiment_info`
 #'
-#' Allows retrieving individual elements from the `experiment_info` list slot
-#' using the double-bracket subset operator.
+#' @description Provides methods for getting and setting elements within the
+#' `experiment_info` list slot of a \code{CircadianData} object using standard R
+#' operators.
 #'
 #' @param x A \code{CircadianData} object.
-#' @param i A single character string representing the name of the element
-#'   to retrieve from `experiment_info`.
-#' @param j Optional, not used for accessing `experiment_info`.
-#' @param ... Optional arguments, not used.
+#' @param i,name A single character string specifying the name of the element.
+#' @param value The value to assign to the element.
+#' @param j, ... Not used in these methods.
 #'
-#' @return The value of the element `i` within the `experiment_info` list.
-#' @export
-#' @rdname CircadianData-subset-expinfo
+#' @details These methods allow for intuitive interaction with the
+#' `experiment_info` list:
+#' \itemize{
+#'   \item `x$name` or `x[["name"]]`: Retrieve an element.
+#'   \item `x$name <- value` or `x[["name"]] <- value`: Assign or add an element.
+#' }
+#'
+#' @name CircadianData-subset-expinfo
 #' @aliases [[,CircadianData,character,missing-method
+#'   [[<-,CircadianData,character,missing-method $,CircadianData-method
+#'   $<-,CircadianData-method
 #' @examples
-#' # Assuming cd_obj is a CircadianData object with experiment_info(cd_obj)$period <- 24
-#' # period_val <- cd_obj[["period"]]
+#' counts <- matrix(rpois(10, 50), 2, 5)
+#' meta <- data.frame(row.names = paste0("S", 1:5))
+#' cd_obj <- CircadianData(counts, meta)
+#'
+#' # Add a new element to experiment_info using `$`
+#' cd_obj$period <- 24
+#'
+#' # Add another element using `[[`
+#' cd_obj[["data_type"]] <- "norm"
+#'
+#' # Retrieve the information
+#' cd_obj$period
+#' cd_obj[["data_type"]]
+#'
+#' # See the entire updated list
+#' experiment_info(cd_obj)
+NULL # Attach documentation to a NULL object
+
+
+## ---- Methods for `[[` ----
+
+#' @rdname CircadianData-subset-expinfo
 setMethod("[[", c("CircadianData", "character", "missing"),
           function(x, i, j, ...) {
-            # Ensure i is a single element character string
             if (length(i) != 1) {
               stop("Index 'i' must be a single character string for accessing experiment_info.")
             }
-            # Access the element within the experiment_info slot
             return(x@experiment_info[[i]])
           }
 )
 
-#' Assign or Add Elements to experiment_info using `[[<-`
-#'
-#' Allows assigning a value to an existing element or adding a new element
-#' to the `experiment_info` list slot using the double-bracket subset assignment operator.
-#'
-#' @param x A \code{CircadianData} object.
-#' @param i A single character string representing the name of the element
-#'   in `experiment_info` to assign to or add.
-#' @param j Optional, not used for assigning to `experiment_info`.
-#' @param value The value to assign to the element `i`.
-#'
-#' @return The modified \code{CircadianData} object.
-#' @export
 #' @rdname CircadianData-subset-expinfo
-#' @aliases [[<-,CircadianData,character,missing-method
-#' @examples
-#' # Assuming cd_obj is a CircadianData object
-#' # cd_obj[["period"]] <- 24
-#' # cd_obj[["notes"]] <- "Updated notes"
-#' # print(experiment_info(cd_obj))
 setReplaceMethod("[[", c("CircadianData", "character", "missing"),
                  function(x, i, j, value) {
-                   # Ensure i is a single element character string
                    if (length(i) != 1) {
                      stop("Index 'i' must be a single character string for assigning to experiment_info.")
                    }
-                   # Assign the value within the experiment_info slot list
                    x@experiment_info[[i]] <- value
-                   # Re-validate the object (optional, but ensures experiment_info remains a list)
                    validObject(x)
-                   # Return the modified object
                    return(x)
                  }
 )
 
 
-#' Access Elements of experiment_info using `$`
-#'
-#' Allows retrieving individual elements from the `experiment_info` list slot
-#' using the `$` operator.
-#'
-#' @param x A \code{CircadianData} object.
-#' @param name The name (as a symbol or character string) of the element
-#'   to retrieve from `experiment_info`.
-#'
-#' @return The value of the element `name` within the `experiment_info` list.
-#' @export
+## ---- Methods for `$` ----
+
 #' @rdname CircadianData-subset-expinfo
-#' @aliases $,CircadianData-method
-#' @examples
-#' # Assuming cd_obj is a CircadianData object with experiment_info(cd_obj)$period <- 24
-#' # period_val <- cd_obj$period
 setMethod("$", "CircadianData",
           function(x, name) {
-            # name is automatically a character string here
             return(x@experiment_info[[name]])
-            # Alternative: return(slot(x, "experiment_info")[[name]])
           }
 )
 
-
-#' Assign or Add Elements to experiment_info using `$<-`
-#'
-#' Allows assigning a value to an existing element or adding a new element
-#' to the `experiment_info` list slot using the `$` assignment operator.
-#'
-#' @param x A \code{CircadianData} object.
-#' @param name The name (as a symbol or character string) of the element
-#'   in `experiment_info` to assign to or add.
-#' @param value The value to assign to the element `name`.
-#'
-#' @return The modified \code{CircadianData} object.
-#' @export
 #' @rdname CircadianData-subset-expinfo
-#' @aliases $<-,CircadianData-method
-#' @examples
-#' # Assuming cd_obj is a CircadianData object
-#' # cd_obj$period <- 24
-#' # cd_obj$notes <- "Updated notes"
-#' # print(experiment_info(cd_obj))
 setMethod("$<-", "CircadianData",
           function(x, name, value) {
-            # name is automatically a character string here
             x@experiment_info[[name]] <- value
-            # Re-validate the object
             validObject(x)
-            # Return the modified object
             return(x)
           }
 )
 
 
-# --- Generic Function Definition for Sorting ---
+# ---- Sorting ----
 
 #' Order Samples in a CircadianData Object
 #'
@@ -581,10 +639,7 @@ setMethod("$<-", "CircadianData",
 #'
 setGeneric("order_samples", function(x, by_columns, decreasing = FALSE, ...) standardGeneric("order_samples"))
 
-# --- Method for CircadianData Class ---
-
 #' @rdname order_samples
-#' @export
 setMethod("order_samples", "CircadianData",
           function(x, by_columns, decreasing = FALSE) {
 
@@ -660,7 +715,7 @@ setMethod("order_samples", "CircadianData",
 )
 
 
-# --- Generic Function Definition for Filtering ---
+# ---- Filtering ----
 
 #' Filter Samples by Matching Values in a Metadata Column
 #'
@@ -704,8 +759,6 @@ setMethod("order_samples", "CircadianData",
 #' print(metadata(cd_t0_t6))
 #'
 setGeneric("filter_samples", function(x, col, value, ...) standardGeneric("filter_samples"))
-
-# --- Method for CircadianData Class ---
 
 #' @rdname filter_samples
 setMethod("filter_samples", "CircadianData",
@@ -752,7 +805,7 @@ setMethod("filter_samples", "CircadianData",
 )
 
 
-# --- Show Method ---
+# ---- Show Method ----
 
 #' Show Method for CircadianData
 #'
@@ -840,13 +893,22 @@ setMethod("show", "CircadianData", function(object) {
     cat(" [Empty list]\n")
   }
 
+  # --- Results Info ---
+  cat("\nResults:\n")
+  res <- results(object)
+  if (length(res) > 0) {
+    cat(" Stored results for:", paste(names(res), collapse=", "), "\n")
+  } else {
+    cat(" [No results stored]\n")
+  }
+
   # Add a final newline for spacing
   cat("\n")
 })
 
 
 
-# --- Generic Function Definition for Plotting ---
+# ---- Plotting ----
 
 #' Plot Feature Values Over Time
 #'
@@ -894,8 +956,6 @@ setMethod("show", "CircadianData", function(object) {
 #'              main = "Feature 5 (No Groups Defined)")
 #'
 setGeneric("plot_feature", function(x, feature, group = NULL, ...) standardGeneric("plot_feature"))
-
-# --- Method for CircadianData Class ---
 
 #' @rdname plot_feature
 setMethod("plot_feature", "CircadianData",

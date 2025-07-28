@@ -5,22 +5,41 @@
 \alias{CircadianData-class}
 \title{Define the CircadianData Class}
 \description{
-Define the CircadianData Class
+An S4 class to store and manage data from biological experiments, such as
+circadian studies. It serves as an integrated container for raw measurement
+data, sample annotations, experimental parameters, and analysis results.
 }
 \details{
-This class stores data from biological experiments (e.g., circadian studies),
-ensuring that the samples (columns of \code{dataset}, rows of \code{metadata}) remain
-synchronized during operations like subsetting or renaming. The rows of
-\code{dataset} represent features (e.g., genes, proteins, metabolites).
+This class bundles the main components of an experimental dataset. Its
+primary goal is to ensure that the samples (columns of \code{dataset}, rows of
+\code{metadata}) remain synchronized during data manipulation operations like
+subsetting, ordering, and filtering. Analysis functions within the package
+are designed to take this object as input and can store their output in the
+\code{results} slot, creating a self-contained analysis workflow. The rows of the
+\code{dataset} represent features (e.g., genes, proteins, metabolites). The
+columns of \code{dataset} and rows of \code{metadata} represent samples. The
+\code{experiment_info} stores parameters (e.g. period) that are relevant for the
+analysis.
+
+To manipulate the object:
+\itemize{
+\item To access main data slots, see \code{\link{CircadianData-accessors}}.
+\item To subset by features or samples, see \code{\link{CircadianData-subsetting}}.
+\item To sort samples by metadata columns, see \code{\link{order_samples}}.
+\item To filter samples by metadata values, see \code{\link{filter_samples}}.
+\item To interact with the \code{experiment_info} list, see \code{\link{CircadianData-subset-expinfo}}.
+}
 }
 \section{Slots}{
 
 \describe{
 \item{\code{dataset}}{A matrix containing measurement data (features x samples).}
 
-\item{\code{metadata}}{A data.frame containing sample annotations (samples x attributes).}
+\item{\code{metadata}}{A data.frame containing sample annotations (samples x
+attributes).}
 
-\item{\code{experiment_info}}{A list to store additional arbitrary information or
-parameters related to the experiment (e.g., period, design details).}
+\item{\code{experiment_info}}{A list for storing experiment-level parameters.}
+
+\item{\code{results}}{A list for storing the output from various analysis functions.}
 }}
 

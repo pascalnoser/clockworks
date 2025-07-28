@@ -4,7 +4,7 @@
 \alias{CircadianData}
 \title{Create a CircadianData Object}
 \usage{
-CircadianData(dataset, metadata, experiment_info = list())
+CircadianData(dataset, metadata, experiment_info = list(), results = list())
 }
 \arguments{
 \item{dataset}{A numeric matrix with features as rows and samples as columns.
@@ -15,8 +15,13 @@ Features could be genes, proteins, metabolites, etc.}
 Must have row names (sample IDs) that match the column names of \code{dataset}
 exactly (in order and value).}
 
-\item{experiment_info}{An optional list to store additional experiment-level
-data or parameters (e.g., experimental period, batch information, notes).}
+\item{experiment_info}{A list to store experiment-level data or parameters
+(e.g. period). \code{clockworks} will try to infer the relevant parameters from
+the \code{dataset} and \code{metadata} automatically.}
+
+\item{results}{An optional list to pre-populate the results slot. This is
+typically left empty upon initial object creation and is populated by
+downstream analysis functions.}
 }
 \value{
 A \code{CircadianData} object.
@@ -25,7 +30,7 @@ A \code{CircadianData} object.
 Create a CircadianData Object
 }
 \examples{
-# Sample Data
+# --- Basic object creation ---
 counts <- matrix(rpois(100, lambda = 10), nrow = 10, ncol = 10,
                  dimnames = list(paste0("Feature", 1:10), paste0("Sample", 1:10)))
 meta <- data.frame(
@@ -34,13 +39,9 @@ meta <- data.frame(
   time = rep(seq(0, 8, by = 2), 2)
 )
 
-# Create object
-cd_obj <- CircadianData(dataset = counts, metadata = meta)
+# Create a basic object (most common use case)
+cd_obj <- CircadianData(dataset = counts, metadata = meta,
+                        experiment_info = list(period = 24))
 print(cd_obj)
-
-# Add experiment info
-expInfo <- list(period = 24, notes = "Initial experiment")
-experiment_info(cd_obj) <- expInfo
-print(experiment_info(cd_obj))
 
 }

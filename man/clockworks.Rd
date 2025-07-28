@@ -16,6 +16,7 @@ clockworks(
   data_type = "norm",
   log_transformed = FALSE,
   log_base = 2,
+  verbose = TRUE,
   method_args = list()
 )
 }
@@ -68,12 +69,16 @@ but has no influence on the chosen method.}
 data is log-transformed. Only used if \code{log_transformed} is \code{TRUE}. Default
 is 2.}
 
+\item{verbose}{A logical value indicating whether the \code{CircadianData} object
+should be printed before running the rhythmicity detection.}
+
 \item{method_args}{A list of additional arguments to be passed directly to
 the chosen analysis method. This allows for more advanced customisation of
 the analysis.}
 }
 \value{
-A list containing: \item{res_original}{The original, unaltered
+A list containing:
+\item{res_original}{The original, unaltered
 results from the chosen analysis method.}
 \item{res_formatted}{The results formatted into a standardized structure,
 allowing for direct comparison across different methods.}
