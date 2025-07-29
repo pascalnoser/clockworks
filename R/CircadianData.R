@@ -243,21 +243,21 @@ CircadianData <- function(dataset,
       paste(ignored_cols, collapse = ", ")
     )
 
-    if (is.null(colname_group)) {
-      message_group <- paste0(
-        "If your data set contains groups which should be analysed ",
-        "separately, make sure to define `colname_group`."
-      )
-      message_cols <- paste0(message_cols, "\n", message_group)
-    }
+    # if (is.null(colname_group)) {
+    #   message_group <- paste0(
+    #     "If your data set contains groups which should be analysed ",
+    #     "separately, make sure to define `colname_group`."
+    #   )
+    #   message_cols <- paste0(message_cols, "\n", message_group)
+    # }
 
-    if (is.null(colname_subject)) {
-      message_rpt <- paste0(
-        "If your data set contains repeated measures, make sure to define ",
-        "`colname_subject`."
-      )
-      message_cols <- paste0(message_cols, "\n", message_rpt)
-    }
+    # if (is.null(colname_subject)) {
+    #   message_rpt <- paste0(
+    #     "If your data set contains repeated measures, make sure to define ",
+    #     "`colname_subject`."
+    #   )
+    #   message_cols <- paste0(message_cols, "\n", message_rpt)
+    # }
 
     message(paste0(message_cols, "\n"))
   }
@@ -690,18 +690,15 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
 
 #' Add or Update Experiment Parameters for Analysis
 #'
-#' @description
-#' This method populates or updates the `experiment_info` slot of a
+#' This function populates or updates the `experiment_info` slot of a
 #' `CircadianData` object with parameters required for downstream analysis.
 #'
 #' @details
 #' On the first call, core parameters can be omitted to use sensible defaults
-#' (e.g., `period = 24`, `log_transformed = FALSE`). On subsequent calls, the
-#' function will use the values already stored in the object unless they are
-#' explicitly provided again to be overwritten. The function always re-calculates
-#' inferred details like `n_replicates` and `n_cycles`.
+#' (e.g., `period = 24`, `data_type = "norm"`). Subsequent calls will use values
+#' already stored in the object unless explicitly provided again to be overwritten.
 #'
-#' @param x A \code{CircadianData} object.
+#' @param cd_obj A \code{CircadianData} object.
 #' @param period An optional numeric vector of length 1 or 2. Defaults to 24
 #'   if not already set.
 #' @param data_type An optional character string specifying the data type. Must be
@@ -712,12 +709,9 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
 #'   logarithm. Defaults to 2 if `log_transformed` is `TRUE` and no base is set.
 #' @param estimate_delta_t A logical value. If `TRUE` (default), the sampling
 #'   interval (`delta_t`) will be automatically estimated.
-#' @param ... Not used.
 #'
 #' @return A \code{CircadianData} object with an updated `experiment_info` slot.
-#'
 #' @export
-#' @rdname add_experiment_info
 #' @examples
 #' # --- Setup ----
 #' counts <- matrix(rpois(80, 50), nrow=10, ncol=8,
@@ -732,148 +726,149 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
 #' )
 #'
 #' # --- Configuration using defaults ----
-#' # We only need to provide the required 'data_type' argument.
-#' # 'period' and 'log_transformed' will use their defaults.
-#' cd_configured <- add_experiment_info(cd_obj, data_type = "count")
+#' # We only need to provide the required 'cd_obj' argument.
+#' cd_configured <- add_experiment_info(cd_obj)
 #'
 #' # Check the configured values
 #' experiment_info(cd_configured)$period # Should be 24
 #' experiment_info(cd_configured)$log_transformed # Should be FALSE
-#'
-setGeneric("add_experiment_info", function(x, ...) standardGeneric("add_experiment_info"))
+#' experiment_info(cd_configured)$data_type # Should be "norm"
+add_experiment_info <- function(cd_obj, period = NULL, data_type = NULL,
+                                log_transformed = NULL, log_base = NULL,
+                                estimate_delta_t = TRUE) {
 
-#' @rdname add_experiment_info
-setMethod("add_experiment_info", "CircadianData",
-          function(x, period = NULL, data_type = NULL, log_transformed = NULL, log_base = NULL, estimate_delta_t = TRUE) {
+  # --- Type Check ---
+  if (!inherits(cd_obj, "CircadianData")) {
+    stop("'cd_obj' must be an object of class CircadianData.", call. = FALSE)
+  }
 
-            exp_info <- experiment_info(x)
-            mdata <- metadata(x)
+  exp_info <- experiment_info(cd_obj)
+  mdata <- metadata(cd_obj)
 
-            # === 1. Validate and Update Core Parameters ===
-            # Priority: User Argument > Existing Value > Default Value
+  # === 1. Validate and Update Core Parameters ===
+  # Priority: User Argument > Existing Value > Default Value
 
-            # --- Period ---
-            if (!is.null(period)) {
-              if (!is.numeric(period) || !(length(period) %in% c(1, 2))) {
-                stop("'period' must be a numeric vector of length 1 or 2.", call. = FALSE)
-              }
-              exp_info$period <- period
-            } else if (is.null(exp_info$period)) {
-              message("`period` not provided. Using default value of 24.")
-              exp_info$period <- 24
-            }
+  # --- Period ---
+  if (!is.null(period)) {
+    if (!is.numeric(period) || !(length(period) %in% c(1, 2))) {
+      stop("'period' must be a numeric vector of length 1 or 2.", call. = FALSE)
+    }
+    exp_info$period <- period
+  } else if (is.null(exp_info$period)) {
+    message("`period` not provided. Using default value of 24.")
+    exp_info$period <- 24
+  }
 
-            # --- Data Type ---
-            if (!is.null(data_type)) {
-              exp_info$data_type <- match.arg(data_type, c("count", "norm"))
-            } else if (is.null(exp_info$data_type)) {
-              message("`data_type` not provided. Using default value of 'norm'.")
-              exp_info$data_type <- "norm"
-            }
+  # --- Data Type ---
+  if (!is.null(data_type)) {
+    exp_info$data_type <- match.arg(data_type, c("count", "norm"))
+  } else if (is.null(exp_info$data_type)) {
+    message("`data_type` not provided. Using default value of 'norm'.")
+    exp_info$data_type <- "norm"
+  }
 
-            # --- Log Transformed ---
-            if (!is.null(log_transformed)) {
-              if (!is.logical(log_transformed) || length(log_transformed) != 1) {
-                stop("'log_transformed' must be TRUE or FALSE.", call. = FALSE)
-              }
-              exp_info$log_transformed <- log_transformed
-            } else if (is.null(exp_info$log_transformed)) {
-              message("`log_transformed` not provided. Using default value of FALSE.")
-              exp_info$log_transformed <- FALSE
-            }
+  # --- Log Transformed ---
+  if (!is.null(log_transformed)) {
+    if (!is.logical(log_transformed) || length(log_transformed) != 1) {
+      stop("'log_transformed' must be TRUE or FALSE.", call. = FALSE)
+    }
+    exp_info$log_transformed <- log_transformed
+  } else if (is.null(exp_info$log_transformed)) {
+    message("`log_transformed` not provided. Using default value of FALSE.")
+    exp_info$log_transformed <- FALSE
+  }
 
-            # --- Log Base (dependent on log_transformed) ---
-            if (exp_info$log_transformed) {
-              if (!is.null(log_base)) {
-                if (!is.numeric(log_base) || length(log_base) != 1) {
-                  stop("'log_base' must be a single number.", call. = FALSE)
-                }
-                exp_info$log_base <- log_base
-              } else if (is.null(exp_info$log_base)) {
-                message("Data is log-transformed but `log_base` not provided. Using default value of 2.")
-                exp_info$log_base <- 2
-              }
-            } else {
-              exp_info$log_base <- NULL # Ensure log_base is NULL if not transformed
-            }
+  # --- Log Base (dependent on log_transformed) ---
+  if (exp_info$log_transformed) {
+    if (!is.null(log_base)) {
+      if (!is.numeric(log_base) || length(log_base) != 1) {
+        stop("'log_base' must be a single number.", call. = FALSE)
+      }
+      exp_info$log_base <- log_base
+    } else if (is.null(exp_info$log_base)) {
+      message("Data is log-transformed but `log_base` not provided. Using default value of 2.")
+      exp_info$log_base <- 2
+    }
+  } else {
+    exp_info$log_base <- NULL # Ensure log_base is NULL if not transformed
+  }
 
-            # === 2. Automatically Re-calculate Inferred Information ===
-            meta_cnames <- colnames(mdata)
+  # === 2. Automatically Re-calculate Inferred Information ===
+  meta_cnames <- colnames(mdata)
 
-            # --- Group info ---
-            groups <- unique(mdata$group)
-            n_groups <- length(groups)
-            if ("group" %in% meta_cnames) {
-              # exp_info$groups <- levels(mdata$group)
-              exp_info$n_groups <- n_groups
-            } else {
-              # exp_info$groups <- NA
-              exp_info$n_groups <- NA
-            }
+  # --- Group info ---
+  groups <- unique(mdata$group)
+  n_groups <- length(groups)
+  if ("group" %in% meta_cnames) {
+    # exp_info$groups <- levels(mdata$group)
+    exp_info$n_groups <- n_groups
+  } else {
+    # exp_info$groups <- NA
+    exp_info$n_groups <- NA
+  }
 
-            # --- Repeated measures ---
-            exp_info$repeated_measures <- "subject_id" %in% meta_cnames
+  # --- Repeated measures ---
+  exp_info$repeated_measures <- "subject_id" %in% meta_cnames
 
-            # --- Replicate info ---
-            # Make sure to show all time points in every group
-            t_unique <- sort(unique(mdata$time))
-            if (exp_info$n_groups > 1 && !is.null(exp_info$groups)) {
-              exp_info$n_replicates <- tapply(mdata$time, mdata$group,
-                                              function(g_time) table(factor(g_time, levels = t_unique)))
-            } else {
-              exp_info$n_replicates <- table(factor(mdata$time, levels = t_unique))
-            }
+  # --- Replicate info ---
+  # Make sure to show all time points in every group
+  t_unique <- sort(unique(mdata$time))
+  if (exp_info$n_groups > 1 && !is.null(exp_info$groups)) {
+    exp_info$n_replicates <- tapply(mdata$time, mdata$group,
+                                    function(g_time) table(factor(g_time, levels = t_unique)))
+  } else {
+    exp_info$n_replicates <- table(factor(mdata$time, levels = t_unique))
+  }
 
-            # --- Sampling interval ---
-            if (estimate_delta_t) {
-              # Extract time differences
-              delta_ts <- diff(sort(unique(mdata$time)))
-              if (length(delta_ts) == 0) {
-                exp_info$delta_t <- NA
-              } else {
-                delta_freqs <- sort(table(delta_ts), decreasing = TRUE)
-                delta_t_unique <- as.numeric(names(delta_freqs))
-                most_common <- delta_t_unique[1]
-                if (length(delta_t_unique) == 1 || all(delta_t_unique[-1] %% most_common == 0)) {
-                  exp_info$delta_t <- most_common
-                } else {
-                  exp_info$delta_t <- NA
-                  # message(
-                  #   "WARNING: Unable to determine a regular sampling interval. Proceeding ",
-                  #   "with the analysis under the assumption of irregular sampling."
-                  # )
-                }
-              }
-            }
+  # --- Sampling interval ---
+  if (estimate_delta_t) {
+    # Extract time differences
+    delta_ts <- diff(sort(unique(mdata$time)))
+    if (length(delta_ts) == 0) {
+      exp_info$delta_t <- NA
+    } else {
+      delta_freqs <- sort(table(delta_ts), decreasing = TRUE)
+      delta_t_unique <- as.numeric(names(delta_freqs))
+      most_common <- delta_t_unique[1]
+      if (length(delta_t_unique) == 1 || all(delta_t_unique[-1] %% most_common == 0)) {
+        exp_info$delta_t <- most_common
+      } else {
+        exp_info$delta_t <- NA
+        # message(
+        #   "WARNING: Unable to determine a regular sampling interval. Proceeding ",
+        #   "with the analysis under the assumption of irregular sampling."
+        # )
+      }
+    }
+  }
 
-            # --- Number of cycles ---
-            dt <- exp_info$delta_t
-            if (!is.null(dt) && !is.na(dt)) {
-              mean_period <- mean(exp_info$period)
+  # --- Number of cycles ---
+  dt <- exp_info$delta_t
+  if (!is.null(dt) && !is.na(dt)) {
+    mean_period <- mean(exp_info$period)
 
-              if (is.na(exp_info$n_groups)) {
-                # No groups
-                t_min <- min(mdata$time)
-                t_max <- max(mdata$time)
-                exp_info$n_cycles <- ((t_max + dt) - t_min) / mean_period
-              } else {
-                # Group-wise
-                exp_info$n_cycles <- tapply(mdata$time, mdata$group,
-                                            function(g_time) (max(g_time) - min(g_time) + dt) / mean_period,
-                                            simplify = FALSE)
-              }
-            } else {
-              # Sampling interval NA or NULL
-              cd_local$n_cycles <- NA
-            }
+    if (is.na(exp_info$n_groups)) {
+      # No groups
+      t_min <- min(mdata$time)
+      t_max <- max(mdata$time)
+      exp_info$n_cycles <- ((t_max + dt) - t_min) / mean_period
+    } else {
+      # Group-wise
+      exp_info$n_cycles <- tapply(mdata$time, mdata$group,
+                                  function(g_time) (max(g_time) - min(g_time) + dt) / mean_period,
+                                  simplify = FALSE)
+    }
+  } else {
+    # Sampling interval NA or NULL
+    exp_info$n_cycles <- NA
+  }
 
 
-            # === 3. Put the updated list back into the object ===
-            experiment_info(x) <- exp_info
+  # === 3. Put the updated list back into the object ===
+  experiment_info(cd_obj) <- exp_info
 
-            return(x)
-          }
-)
+  return(cd_obj)
+}
 
 
 

@@ -2,13 +2,10 @@
 % Please edit documentation in R/CircadianData.R
 \name{add_experiment_info}
 \alias{add_experiment_info}
-\alias{add_experiment_info,CircadianData-method}
 \title{Add or Update Experiment Parameters for Analysis}
 \usage{
-add_experiment_info(x, ...)
-
-\S4method{add_experiment_info}{CircadianData}(
-  x,
+add_experiment_info(
+  cd_obj,
   period = NULL,
   data_type = NULL,
   log_transformed = NULL,
@@ -17,9 +14,7 @@ add_experiment_info(x, ...)
 )
 }
 \arguments{
-\item{x}{A \code{CircadianData} object.}
-
-\item{...}{Not used.}
+\item{cd_obj}{A \code{CircadianData} object.}
 
 \item{period}{An optional numeric vector of length 1 or 2. Defaults to 24
 if not already set.}
@@ -40,15 +35,13 @@ interval (\code{delta_t}) will be automatically estimated.}
 A \code{CircadianData} object with an updated \code{experiment_info} slot.
 }
 \description{
-This method populates or updates the \code{experiment_info} slot of a
+This function populates or updates the \code{experiment_info} slot of a
 \code{CircadianData} object with parameters required for downstream analysis.
 }
 \details{
 On the first call, core parameters can be omitted to use sensible defaults
-(e.g., \code{period = 24}, \code{log_transformed = FALSE}). On subsequent calls, the
-function will use the values already stored in the object unless they are
-explicitly provided again to be overwritten. The function always re-calculates
-inferred details like \code{n_replicates} and \code{n_cycles}.
+(e.g., \code{period = 24}, \code{data_type = "norm"}). Subsequent calls will use values
+already stored in the object unless explicitly provided again to be overwritten.
 }
 \examples{
 # --- Setup ----
@@ -64,12 +57,11 @@ cd_obj <- CircadianData(
 )
 
 # --- Configuration using defaults ----
-# We only need to provide the required 'data_type' argument.
-# 'period' and 'log_transformed' will use their defaults.
-cd_configured <- add_experiment_info(cd_obj, data_type = "count")
+# We only need to provide the required 'cd_obj' argument.
+cd_configured <- add_experiment_info(cd_obj)
 
 # Check the configured values
 experiment_info(cd_configured)$period # Should be 24
 experiment_info(cd_configured)$log_transformed # Should be FALSE
-
+experiment_info(cd_configured)$data_type # Should be "norm"
 }
