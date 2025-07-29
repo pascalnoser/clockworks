@@ -813,9 +813,9 @@ add_experiment_info <- function(cd_obj, period = NULL, data_type = NULL,
   # --- Replicate info ---
   # Make sure to show all time points in every group
   t_unique <- sort(unique(mdata$time))
-  if (exp_info$n_groups > 1 && !is.null(exp_info$groups)) {
-    exp_info$n_replicates <- tapply(mdata$time, mdata$group,
-                                    function(g_time) table(factor(g_time, levels = t_unique)))
+  if (!is.na(exp_info$n_groups)) {
+    exp_info$n_replicates <- tapply(mdata$time, mdata$group, function(g_time)
+      table(factor(g_time, levels = t_unique)), simplify = FALSE)
   } else {
     exp_info$n_replicates <- table(factor(mdata$time, levels = t_unique))
   }
@@ -977,34 +977,40 @@ setMethod("$<-", "CircadianData",
 #' @param ... Additional arguments (currently unused).
 #'
 #' @return A new \code{CircadianData} object with samples sorted according
-#'   to the specified criteria. The `dataset` columns and `metadata` rows
-#'   remain synchronized.
+#'   to the specified criteria.
 #'
 #' @export
 #' @rdname order_samples
 #' @examples
-#' # Create minimal reproducible data
+#' # --- Create a valid CircadianData object first ---
 #' set.seed(456)
 #' counts <- matrix(rpois(80, lambda = 50), nrow = 10, ncol = 8,
 #'                  dimnames = list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
-#' meta <- data.frame(
-#'   row.names = paste0("Sample", 1:8),
-#'   time = rep(c(12, 0, 6, 18), each = 2), # Unordered times
-#'   subject_id = paste0("S", rep(1:4, 2)), # Unordered subjects
-#'   group = rep(c("A", "B"), 4)
+#' meta_df <- data.frame(
+#'   sample_name = paste0("Sample", 1:8),
+#'   time_point = rep(c(12, 0, 6, 18), each = 2), # Unordered times
+#'   subject = paste0("S", rep(1:4, 2)), # Unordered subjects
+#'   condition = rep(c("A", "B"), 4)
 #' )
-#' cd_obj <- CircadianData(counts, meta, experiment_info = list(period = 24))
+#' cd_obj <- CircadianData(
+#'   dataset = counts,
+#'   metadata = meta_df,
+#'   colname_sample = "sample_name",
+#'   colname_time = "time_point",
+#'   colname_subject = "subject",
+#'   colname_group = "condition"
+#' )
 #'
 #' print("Original Metadata Order:")
 #' print(metadata(cd_obj))
 #'
+#' # --- Now run the sorting function ---
 #' # Sort samples by time
 #' cd_sorted_time <- order_samples(cd_obj, "time")
 #' print("Metadata sorted by time:")
 #' print(metadata(cd_sorted_time))
-#' print(colnames(dataset(cd_sorted_time))) # Check dataset colnames match metadata rownames
 #'
-#' # Sort samples first by time (ascending), then by subject_id (descending)
+#' # Sort samples first by time (asc), then by subject_id (desc)
 #' cd_sorted_multi <- order_samples(cd_obj, c("time", "subject_id"), decreasing = c(FALSE, TRUE))
 #' print("Metadata sorted by time (asc) then subject_id (desc):")
 #' print(metadata(cd_sorted_multi))
@@ -1053,16 +1059,9 @@ setMethod("order_samples", "CircadianData",
             sort_cols_list <- as.list(mdata[, by_columns, drop = FALSE])
 
             # Prepare arguments for do.call with order()
-            # Note: The default 'shell" method in order() can only handle the
-            # case where `decreasing` is identical for all columns
+            # Always use method = "radix" for consistency and vector `decreasing` support
             order_args <- c(sort_cols_list,
                             list(decreasing = decreasing, method = "radix"))
-
-            if (length(decreasing) > 1) {
-              # Note: We add this check because the default 'shell' method
-              # in order() doesn't support vector 'decreasing'. Radix does.
-              order_args$method <- "radix"
-            }
 
             # Get the indices that define the new order
             new_order_indices <- do.call(order, order_args)
@@ -1075,14 +1074,14 @@ setMethod("order_samples", "CircadianData",
             new_metadata <- mdata[new_order_indices, , drop = FALSE]
 
             # --- Create and Return New Object ---
-            # experiment_info remains unchanged
-            new_expInfo <- experiment_info(x)
-
-            # Use the constructor (or new()) to create the sorted object
-            # This ensures validity checks are run on the result
-            CircadianData(dataset = new_dataset,
-                          metadata = new_metadata,
-                          experiment_info = new_expInfo)
+            # Use new() instead of the user-facing CircadianData() constructor
+            # This correctly builds the object from already-processed slots.
+            new("CircadianData",
+                dataset = new_dataset,
+                metadata = new_metadata,
+                experiment_info = experiment_info(x),
+                results = results(x)
+            )
           }
 )
 
