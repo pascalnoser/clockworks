@@ -270,7 +270,7 @@ CircadianData <- function(dataset,
     final_meta$group <- metadata[[colname_group]]
   }
   if (!is.null(colname_subject)) {
-    final_meta$subject_id <- metadata[[colname_subject]]
+    final_meta$subject_ID <- metadata[[colname_subject]]
   }
 
 
@@ -808,7 +808,7 @@ add_experiment_info <- function(cd_obj, period = NULL, data_type = NULL,
   }
 
   # --- Repeated measures ---
-  exp_info$repeated_measures <- "subject_id" %in% meta_cnames
+  exp_info$repeated_measures <- "subject_ID" %in% meta_cnames
 
   # --- Replicate info ---
   # Make sure to show all time points in every group
@@ -1010,9 +1010,9 @@ setMethod("$<-", "CircadianData",
 #' print("Metadata sorted by time:")
 #' print(metadata(cd_sorted_time))
 #'
-#' # Sort samples first by time (asc), then by subject_id (desc)
-#' cd_sorted_multi <- order_samples(cd_obj, c("time", "subject_id"), decreasing = c(FALSE, TRUE))
-#' print("Metadata sorted by time (asc) then subject_id (desc):")
+#' # Sort samples first by time (asc), then by subject_ID (desc)
+#' cd_sorted_multi <- order_samples(cd_obj, c("time", "subject_ID"), decreasing = c(FALSE, TRUE))
+#' print("Metadata sorted by time (asc) then subject_ID (desc):")
 #' print(metadata(cd_sorted_multi))
 #'
 setGeneric("order_samples", function(x, by_columns, decreasing = FALSE, ...) standardGeneric("order_samples"))
@@ -1112,7 +1112,7 @@ setMethod("order_samples", "CircadianData",
 #' meta <- data.frame(
 #'   row.names = paste0("Sample", 1:8),
 #'   time = rep(c(0, 6, 12, 18), each = 2),
-#'   subject_id = paste0("S", rep(1:4, 2)),
+#'   subject_ID = paste0("S", rep(1:4, 2)),
 #'   group = rep(c("Control", "Treated"), 4)
 #' )
 #' cd_obj <- CircadianData(counts, meta, experiment_info = list(period = 24))
@@ -1122,7 +1122,7 @@ setMethod("order_samples", "CircadianData",
 #' print(metadata(cd_control))
 #'
 #' # Filter samples from subject S1 or S3
-#' cd_s1_s3 <- filter_samples(cd_obj, col = "subject_id", value = c("S1", "S3"))
+#' cd_s1_s3 <- filter_samples(cd_obj, col = "subject_ID", value = c("S1", "S3"))
 #' print(metadata(cd_s1_s3))
 #'
 #' # Filter samples collected at time 0 or 6

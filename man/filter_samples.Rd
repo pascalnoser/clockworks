@@ -36,7 +36,7 @@ counts <- matrix(rpois(80, lambda = 50), nrow = 10, ncol = 8,
 meta <- data.frame(
   row.names = paste0("Sample", 1:8),
   time = rep(c(0, 6, 12, 18), each = 2),
-  subject_id = paste0("S", rep(1:4, 2)),
+  subject_ID = paste0("S", rep(1:4, 2)),
   group = rep(c("Control", "Treated"), 4)
 )
 cd_obj <- CircadianData(counts, meta, experiment_info = list(period = 24))
@@ -46,7 +46,7 @@ cd_control <- filter_samples(cd_obj, col = "group", value = "Control")
 print(metadata(cd_control))
 
 # Filter samples from subject S1 or S3
-cd_s1_s3 <- filter_samples(cd_obj, col = "subject_id", value = c("S1", "S3"))
+cd_s1_s3 <- filter_samples(cd_obj, col = "subject_ID", value = c("S1", "S3"))
 print(metadata(cd_s1_s3))
 
 # Filter samples collected at time 0 or 6

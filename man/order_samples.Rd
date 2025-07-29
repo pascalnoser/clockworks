@@ -23,8 +23,7 @@ Defaults to FALSE (ascending order) for all columns.}
 }
 \value{
 A new \code{CircadianData} object with samples sorted according
-to the specified criteria. The \code{dataset} columns and \code{metadata} rows
-remain synchronized.
+to the specified criteria.
 }
 \description{
 Reorders the samples (columns in \code{dataset}, rows in \code{metadata}) of a
@@ -32,30 +31,37 @@ Reorders the samples (columns in \code{dataset}, rows in \code{metadata}) of a
 of the metadata.
 }
 \examples{
-# Create minimal reproducible data
+# --- Create a valid CircadianData object first ---
 set.seed(456)
 counts <- matrix(rpois(80, lambda = 50), nrow = 10, ncol = 8,
                  dimnames = list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
-meta <- data.frame(
-  row.names = paste0("Sample", 1:8),
-  time = rep(c(12, 0, 6, 18), each = 2), # Unordered times
-  subject_id = paste0("S", rep(1:4, 2)), # Unordered subjects
-  group = rep(c("A", "B"), 4)
+meta_df <- data.frame(
+  sample_name = paste0("Sample", 1:8),
+  time_point = rep(c(12, 0, 6, 18), each = 2), # Unordered times
+  subject = paste0("S", rep(1:4, 2)), # Unordered subjects
+  condition = rep(c("A", "B"), 4)
 )
-cd_obj <- CircadianData(counts, meta, experiment_info = list(period = 24))
+cd_obj <- CircadianData(
+  dataset = counts,
+  metadata = meta_df,
+  colname_sample = "sample_name",
+  colname_time = "time_point",
+  colname_subject = "subject",
+  colname_group = "condition"
+)
 
 print("Original Metadata Order:")
 print(metadata(cd_obj))
 
+# --- Now run the sorting function ---
 # Sort samples by time
 cd_sorted_time <- order_samples(cd_obj, "time")
 print("Metadata sorted by time:")
 print(metadata(cd_sorted_time))
-print(colnames(dataset(cd_sorted_time))) # Check dataset colnames match metadata rownames
 
-# Sort samples first by time (ascending), then by subject_id (descending)
-cd_sorted_multi <- order_samples(cd_obj, c("time", "subject_id"), decreasing = c(FALSE, TRUE))
-print("Metadata sorted by time (asc) then subject_id (desc):")
+# Sort samples first by time (asc), then by subject_ID (desc)
+cd_sorted_multi <- order_samples(cd_obj, c("time", "subject_ID"), decreasing = c(FALSE, TRUE))
+print("Metadata sorted by time (asc) then subject_ID (desc):")
 print(metadata(cd_sorted_multi))
 
 }

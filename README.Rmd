@@ -39,7 +39,7 @@ pak::pak("pascalnoser/clockworks")
 
 ## Usage
 
-Detecting rhythmic features using your method of choice is very straightforward. In the example below, we will use a synthetic data set of two rhythmic and eight non-rhythmic genes. We will analyse them using the [MetaCycle](https://github.com/gangwug/MetaCycle) implementation of the [JTK_CYCLE](https://doi.org/10.1177/0748730410379711) method:
+Detecting rhythmic features using your method of choice is very straightforward. In the example below, we will use a synthetic data set of two rhythmic and eight non-rhythmic genes. We will analyse them using [RAIN](https://www.bioconductor.org/packages/release/bioc/html/rain.html) as well as the [MetaCycle](https://github.com/gangwug/MetaCycle) implementation the [JTK_CYCLE](https://doi.org/10.1177/0748730410379711):
 
 ```{r example}
 library(clockworks)
@@ -48,19 +48,30 @@ library(clockworks)
 data("cw_data")
 data("cw_metadata")
 
-# Run rhythmicity detection with JTK_CYCLE
-clockworks_results <- clockworks(
+# Create CircadianData object
+cd_obj = CircadianData(
   dataset = cw_data,
   metadata = cw_metadata,
   colname_sample = "Sample_ID",
   colname_time = "Time",
-  colname_group = "Group",
-  method = "JTK_CYCLE",
-  log_transformed = TRUE
+  colname_group = "Group"
 )
 
-# Show formatted output
-head(clockworks_results$res_formatted)
+# Add necessary experiment info. Using default values
+cd_obj = add_experiment_info(cd_obj)
+
+# Look at object before running analysis
+print(cd_obj)
+
+# Run analysis using RAIN
+cd_obj = clockworks(cd_obj, method = "RAIN")
+# Run analysis using JTK_CYCLE
+cd_obj = clockworks(cd_obj, method = "JTK_CYCLE")
+
+# Show results
+res = results(cd_obj)
+head(res$RAIN$res_formatted)
+head(res$JTK_CYCLE$res_formatted)
 ```
 
 The column names in the formatted output follow the same pattern for all methods. Furthermore, the results of a harmonic regression are also included in this output, allowing for a quick comparison of the estimated parameters to those of a simple sine wave fit. The harmonic regression used is equivalent to the model $y = M + A \sin(\frac{2 \pi}{P}(t + \phi))$ with $M$ the mesor, $A$ the amplitude, $t$ the time (e.g. in hours), and $P$ and $\phi$ the period and phase in the same units as $t$.

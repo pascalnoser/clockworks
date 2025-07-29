@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 [![](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![](https://img.shields.io/badge/devel%20version-0.2.2-blue.svg)](https://github.com/pascalnoser/clockworks)
+[![](https://img.shields.io/badge/devel%20version-0.2.7-blue.svg)](https://github.com/pascalnoser/clockworks)
 [![](https://img.shields.io/github/languages/code-size/pascalnoser/clockworks.svg)](https://github.com/pascalnoser/clockworks)
 <!-- badges: end -->
 
@@ -37,8 +37,10 @@ pak::pak("pascalnoser/clockworks")
 Detecting rhythmic features using your method of choice is very
 straightforward. In the example below, we will use a synthetic data set
 of two rhythmic and eight non-rhythmic genes. We will analyse them using
-the [MetaCycle](https://github.com/gangwug/MetaCycle) implementation of
-the [JTK_CYCLE](https://doi.org/10.1177/0748730410379711) method:
+[RAIN](https://www.bioconductor.org/packages/release/bioc/html/rain.html)
+as well as the [MetaCycle](https://github.com/gangwug/MetaCycle)
+implementation the
+[JTK_CYCLE](https://doi.org/10.1177/0748730410379711):
 
 ``` r
 library(clockworks)
@@ -49,19 +51,25 @@ library(clockworks)
 data("cw_data")
 data("cw_metadata")
 
-# Run rhythmicity detection with JTK_CYCLE
-clockworks_results <- clockworks(
+# Create CircadianData object
+cd_obj = CircadianData(
   dataset = cw_data,
   metadata = cw_metadata,
   colname_sample = "Sample_ID",
   colname_time = "Time",
-  colname_group = "Group",
-  method = "JTK_CYCLE",
-  log_transformed = TRUE
+  colname_group = "Group"
 )
 #> 
 #> The following columns in `metadata` will be ignored: Subject_ID
-#> If your data set contains repeated measures, make sure to define `colname_subject`.
+
+# Add necessary experiment info. Using default values
+cd_obj = add_experiment_info(cd_obj)
+#> `period` not provided. Using default value of 24.
+#> `data_type` not provided. Using default value of 'norm'.
+#> `log_transformed` not provided. Using default value of FALSE.
+
+# Look at object before running analysis
+print(cd_obj)
 #> An object of class 'CircadianData'
 #>  Dimensions: 10 features, 96 samples
 #>  Feature names: Gene_01 Gene_02 Gene_03 ... Gene_09 Gene_10 
@@ -89,8 +97,7 @@ clockworks_results <- clockworks(
 #> Experiment Info:
 #>  $ period: [1] 24
 #>  $ data_type: [1] "norm"
-#>  $ log_transformed: [1] TRUE
-#>  $ log_base: [1] 2
+#>  $ log_transformed: [1] FALSE
 #>  $ n_groups: [1] 2
 #>  $ repeated_measures: [1] FALSE
 #>  $ n_replicates:
@@ -111,10 +118,41 @@ clockworks_results <- clockworks(
 #>     
 #>     $B
 #>     [1] 2
+#>      
 #> 
+#> Results:
+#>  [No results stored]
 
-# Show formatted output
-head(clockworks_results$res_formatted)
+# Run analysis using RAIN
+cd_obj = clockworks(cd_obj, method = "RAIN")
+# Run analysis using JTK_CYCLE
+cd_obj = clockworks(cd_obj, method = "JTK_CYCLE")
+
+# Show results
+res = results(cd_obj)
+head(res$RAIN$res_formatted)
+#>   feature group period_estimate         pval     pval_adj method hr_period
+#> 1 Gene_01     A              24 5.280247e-32 5.280247e-31   RAIN        24
+#> 2 Gene_02     A              24 2.513425e-29 1.256713e-28   RAIN        24
+#> 3 Gene_03     A              24 1.795976e-01 2.993293e-01   RAIN        24
+#> 4 Gene_04     A              24 8.390387e-02 2.097597e-01   RAIN        24
+#> 5 Gene_05     A              24 8.537546e-01 8.537546e-01   RAIN        24
+#> 6 Gene_06     A              24 2.138942e-02 7.129806e-02   RAIN        24
+#>   hr_phase_estimate hr_mesor_estimate hr_amplitude_estimate
+#> 1         -6.409005          4.301432             0.7053057
+#> 2         -1.461794          4.576863             1.4168445
+#> 3         -8.919992          5.886923             0.4085035
+#> 4        -19.482196          6.297386             0.4843375
+#> 5         -8.305386          6.056194             0.1668934
+#> 6         -1.320141          6.025998             0.3418065
+#>   hr_relative_amplitude_estimate
+#> 1                     0.16396996
+#> 2                     0.30956671
+#> 3                     0.06939169
+#> 4                     0.07691087
+#> 5                     0.02755747
+#> 6                     0.05672197
+head(res$JTK_CYCLE$res_formatted)
 #>   feature group period_estimate phase_estimate amplitude_estimate         pval
 #> 1 Gene_01     A              24             13          0.6508123 1.096605e-30
 #> 2 Gene_02     A              24              8          1.2826325 5.092351e-27
