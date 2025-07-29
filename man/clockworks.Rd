@@ -4,73 +4,15 @@
 \alias{clockworks}
 \title{Streamlined Rhythmicity Analysis of Time Series Data}
 \usage{
-clockworks(
-  dataset,
-  metadata,
-  colname_sample,
-  colname_time,
-  colname_group = NULL,
-  colname_subject = NULL,
-  period = 24,
-  method,
-  data_type = "norm",
-  log_transformed = FALSE,
-  log_base = 2,
-  verbose = FALSE,
-  method_args = list()
-)
+clockworks(cd, method, method_args = list())
 }
 \arguments{
-\item{dataset}{A data frame or matrix containing the time-series data. Each
-row should represent a feature (e.g., a gene or metabolite), and each
-column should correspond to a sample. The data within should be numeric.}
-
-\item{metadata}{A data frame with metadata for the samples in \code{dataset}. It
-must contain columns for sample IDs and time points, and can optionally
-include grouping and subject information.}
-
-\item{colname_sample}{A string specifying the column name in \code{metadata} that
-contains unique sample identifiers. These identifiers should correspond to
-the column names of the \code{dataset}.}
-
-\item{colname_time}{A string specifying the column name in \code{metadata} that
-contains the time information for each sample. This column must be numeric.}
-
-\item{colname_group}{A string specifying the column name in \code{metadata} that
-identifies the experimental group for each sample (e.g., "treatment" vs.
-"control"). Default is \code{NULL} for datasets without groups.}
-
-\item{colname_subject}{A string specifying the column name in \code{metadata} that
-identifies the subject for each sample. This is useful for repeated
-measures designs where multiple samples are taken from the same subject
-over time. Default is \code{NULL}.}
-
-\item{period}{The expected period of the rhythm in the same units as
-\code{colname_time}. This can be a single numeric value or a numeric vector of
-length two specifying the minimum and maximum period to be considered. If a
-method requires a single period, the mean of the range will be used.}
+\item{cd}{A \code{CircadianData} object with added experiment info.}
 
 \item{method}{A string specifying the rhythmicity detection method to use.
 Supported methods include "ARSER", "CircaN", "diffCircadian", "dryR",
 "GeneCycle", "JTK_CYCLE", "RepeatedCircadian", "LimoRhyde", "LS"
 (Lomb-Scargle), "meta2d", "RAIN", and "TimeCycle".}
-
-\item{data_type}{A string indicating the type of data in \code{dataset}. Must be
-either \code{"count"} for data that can be modeled by a negative binomial
-distribution (e.g., raw gene counts) or \code{"norm"} for data that is
-approximately normally distributed (e.g., log-transformed CPM values).}
-
-\item{log_transformed}{A logical value indicating whether the data in
-\code{dataset} has been log-transformed. This information is used for
-calculating the relative amplitude in the output of the harmonic regression
-but has no influence on the chosen method.}
-
-\item{log_base}{A numeric value specifying the base of the logarithm if the
-data is log-transformed. Only used if \code{log_transformed} is \code{TRUE}. Default
-is 2.}
-
-\item{verbose}{A logical value indicating whether the \code{CircadianData} object
-should be printed before running the rhythmicity detection.}
 
 \item{method_args}{A list of additional arguments to be passed directly to
 the chosen analysis method. This allows for more advanced customisation of
