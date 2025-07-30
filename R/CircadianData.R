@@ -1089,7 +1089,7 @@ estimate_wave_params <- function(cd_obj) {
     # modulo operator negative phase values "wrap" around and become positive.
     phase_estimate_rad <- res_harm$pars$phi
     phase_estimate_h_cos <- phase_estimate_rad * per / (2 * pi)
-    phase_estimate_h_sin <- -1 * ((phase_estimate_h_cos - per / 4) %% per)
+    phase_estimate_h_sin <- (-1 * (phase_estimate_h_cos - per / 4)) %% per
 
     # Create data frame
     df_res = data.frame(
@@ -1496,17 +1496,22 @@ setMethod("show", "CircadianData", function(object) {
 
 #' Plot Feature Values Over Time
 #'
-#' Creates a scatterplot of the values for a specific feature against time.
-#' If a 'group' column exists in the metadata, points are colored by group,
-#' and the plot can be optionally filtered to a single group.
+#' Creates a scatterplot of the values for a specific feature against time. If a
+#' 'group' column exists in the metadata, points are colored by group, and the
+#' plot can be optionally filtered to a single group.
 #'
 #' @param x A \code{CircadianData} object.
-#' @param feature A single character string specifying the name of the feature
-#'   (from `rownames(dataset(x))`) to plot.
+#' @param feature A single character string specifying the name or a single
+#'   numeric value specifying the row number of the feature (from
+#'   `rownames(dataset(x))`) to plot.
 #' @param group An optional single character string specifying a group to filter
-#'   by. This is only applicable if a 'group' column exists in the metadata.
-#'   If `NULL` (the default) and a 'group' column exists, data from all
-#'   groups are plotted with different colors.
+#'   by. This is only applicable if a 'group' column exists in the metadata. If
+#'   `NULL` (the default) and a 'group' column exists, data from all groups are
+#'   plotted with different colors.
+#' @param add_wave An optional logical value (TRUE/FALSE) specifying whether a
+#'   sine wave fitted by harmonic regression should be plotted on top of the
+#'   data. Only applies when `wave_params` has been filled by running
+#'   `estimate_wave_params()` or `clockworks()` on `x`.
 #' @param ... Additional arguments passed to the base `plot()` function.
 #'
 #'
@@ -1539,23 +1544,33 @@ setMethod("show", "CircadianData", function(object) {
 #'              feature = "Feature5",
 #'              main = "Feature 5 (No Groups Defined)")
 #'
-setGeneric("plot_feature", function(x, feature, group = NULL, ...) standardGeneric("plot_feature"))
+setGeneric("plot_feature", function(x, feature, group = NULL, add_wave = TRUE, ...) standardGeneric("plot_feature"))
 
 #' @rdname plot_feature
 setMethod("plot_feature", "CircadianData",
-          function(x, feature, group = NULL, ...) {
+          function(x, feature, group = NULL, add_wave = TRUE, ...) {
 
             # --- 1. Input Validation ---
             mdata <- metadata(x)
             if (!("time" %in% colnames(mdata))) {
               stop("Metadata must contain a 'time' column for plotting.")
             }
-            if (!is.character(feature) || length(feature) != 1) {
-              stop("'feature' must be a single character string.")
+            if (!(is.character(feature) || is.numeric(feature)) || length(feature) != 1) {
+              stop("'feature' must be a single character string or a single numeric value.")
             }
-            if (!(feature %in% rownames(dataset(x)))) {
-              stop("Feature '", feature, "' not found in the dataset.")
+
+            if (is.character(feature)) {
+              if (!(feature %in% rownames(dataset(x)))) {
+                stop("Feature '", feature, "' not found in the dataset.")
+              }
+            } else if (is.numeric(feature)) {
+              if (feature > nrow(x)) {
+                stop("Feature position (", feature, ") out of bounds.")
+              }
+              # Get feature name so logic downstream is the same
+              feature <- rownames(x)[feature]
             }
+
 
             # Check for group column existence
             has_group_col <- "group" %in% colnames(mdata)
@@ -1618,7 +1633,7 @@ setMethod("plot_feature", "CircadianData",
             n_groups <- length(unique_groups)
             show_legend <- has_group_col && n_groups > 1
 
-            if (show_legend) {
+            if (show_legend == TRUE) {
               # Background colour ---
               if ("bg" %in% names(user_args)) {
                 if (length(user_args$bg) < n_groups) {
@@ -1657,10 +1672,65 @@ setMethod("plot_feature", "CircadianData",
             final_args$x <- plot_df$time
             final_args$y <- plot_df$value
 
-            # --- 4. Create the Plot ---
+            # --- 4. Create Plot ---
             do.call("plot", final_args)
 
-            # --- 5. Add a Legend (if needed) ---
+            # --- 5. Add Fitted Wave ---
+            w_params <- wave_params(x)
+
+            if (add_wave == TRUE && ncol(w_params) > 0) {
+              # Get wave parameters just for this feature
+              w_params <- w_params[w_params$feature == feature, ]
+
+              if (!is.null(group)) {
+                w_params <- w_params[w_params$group == group, ]
+              }
+
+              # `show_legend` tells us whether we have multiple groups to plot
+              if (show_legend == TRUE) {
+                # One wave per group
+                for (grp in unique_groups) {
+                  plot_df_grp <- plot_df[plot_df$group == grp, ]
+                  w_params_grp <- w_params[w_params$group == grp, ]
+
+                  # Generate points
+                  wave_time <- seq(min(plot_df_grp$time), max(plot_df_grp$time), length.out = 100)
+
+                  # Reconstruct sine wave from harmonic regression results
+                  per <- w_params_grp$period
+                  phase <- w_params_grp$phase_estimate
+                  mesor <- w_params_grp$mesor_estimate
+                  amp <- w_params_grp$amplitude_estimate
+
+                  wave_vals <- mesor + amp * sin((2*pi/per) * (wave_time + phase))
+
+                  # Add the line to the plot
+                  graphics::lines(wave_time, wave_vals, col = bgs[[grp]])
+                }
+
+              } else {
+                # One wave
+                # Generate points
+                wave_time <- seq(min(plot_df$time), max(plot_df$time), length.out = 100)
+
+                # Reconstruct sine wave from harmonic regression results
+                per <- w_params$period
+                phase <- w_params$phase_estimate
+                mesor <- w_params$mesor_estimate
+                amp <- w_params$amplitude_estimate
+
+                wave_vals <- mesor + amp * sin((2*pi/per) * (wave_time + phase))
+
+                # Add the line to the plot
+                graphics::lines(wave_time, wave_vals, col = final_args$bg)
+              }
+
+              # Plot points again so they are on top of the lines
+              par(new = TRUE)
+              do.call("plot", final_args)
+            }
+
+            # --- 6. Add a Legend (if needed) ---
             if (show_legend) {
               legend("topright",
                      legend = names(bgs),
