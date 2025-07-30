@@ -2,8 +2,8 @@
 #'
 #' @param res_original A data frame with results from a diffCircadian rhythmicity
 #'   analysis.
-#' @param ls_harm_groups A list with results from a harmonic regression
-#'   analysis, split into groups.
+#' @param w_params A data frame with results from a harmonic regression
+#'   analysis.
 #' @param period Period entered by the user.
 #' @param added_group If TRUE the "group" column will be removed.
 #' @param log_transformed Logical, if the data is log-transformed
@@ -12,7 +12,7 @@
 #'
 #' @returns A list of data frames containing the original and formatted results
 format_diffcircadian <- function(res_original,
-                                 ls_harm_groups,
+                                 w_params,
                                  period,
                                  added_group,
                                  log_transformed = FALSE,
@@ -20,10 +20,6 @@ format_diffcircadian <- function(res_original,
   # TODO: Probably remove `log_transformed` and `log_base` parameters since we
   # will likely only report the relative amplitude from the harmonic regression.
   # Alternatively, uncomment the relative amplitude calculation below.
-
-  # Get harmonic regression params
-  res_harm <- do.call("rbind", ls_harm_groups)
-  rownames(res_harm) <- NULL
 
   # Get adjusted p-values by group
   p_adj <- ave(
@@ -53,16 +49,20 @@ format_diffcircadian <- function(res_original,
     # relative_amplitude_estimate = rel_amp,
     pval = res_original$pvalue,
     pval_adj = p_adj,
-    method = "diffCircadian",
-    hr_period = res_harm$period,
-    hr_phase_estimate = res_harm$phase_estimate,
-    hr_mesor_estimate = res_harm$mesor_estimate,
-    hr_amplitude_estimate = res_harm$amplitude_estimate,
-    hr_relative_amplitude_estimate = res_harm$relative_amplitude_estimate
+    method = "diffCircadian"
   )
 
-  # Remove row names from formatted results
-  row.names(res_formatted) <- NULL
+  # Add wave parameters
+  merge_cols <- intersect(c("feature", "group"), colnames(w_params))
+  colnames(w_params) <- paste0("hr_", colnames(w_params))
+  res_formatted <- merge(
+    x = res_formatted,
+    y = w_params,
+    by.x = merge_cols,
+    by.y = paste0("hr_", merge_cols),
+    all.x = TRUE, # should not make a difference but just to be safe
+    sort = FALSE
+  )
 
   # Remove group column if added temporarily by check function at the start
   if (added_group == TRUE) {

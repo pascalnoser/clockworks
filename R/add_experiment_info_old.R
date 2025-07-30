@@ -1,3 +1,5 @@
+# TODO: Delete this function when sure that it's no longer needed
+
 #' Add experiment information to CircadianData object
 #'
 #' @param cd A `CircadianData` object.

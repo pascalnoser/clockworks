@@ -29,7 +29,10 @@ analyze_arser <- function(cd, method_args = list()) {
 
   # Create empty list for results
   ls_res_groups = list()
-  ls_harm_groups = list()
+
+  # TODO: Since I'm taking the median at each time point in case of replicates,
+  # should I recalculate the wave parameters? It probably doesn't make a big
+  # difference
 
   # Run rhythmicity detection for each group separately
   groups <- unique(metadata(cd_local)[["group"]])
@@ -40,17 +43,13 @@ analyze_arser <- function(cd, method_args = list()) {
     # Run rhythmicity analysis
     ls_res_grp <- execute_arser(inputs, grp, method_args)
 
-    # Run harmonic regression
-    df_harm_grp <- estimate_wave_params(cd_local, grp)
-
     # Add to list
     ls_res_groups[[grp]] <- ls_res_grp
-    ls_harm_groups[[grp]] <- df_harm_grp
   }
 
   # Postprocessing
   ls_res <- format_arser(ls_res_groups = ls_res_groups,
-                         ls_harm_groups = ls_harm_groups,
+                         w_params = wave_params(cd_local),
                          added_group = added_group,
                          log_transformed = cd_local$log_transformed,
                          log_base = cd_local$log_base)

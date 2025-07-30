@@ -1,3 +1,6 @@
+# TODO: Delete this function when sure that it's no longer needed
+
+
 #' Streamlined Rhythmicity Analysis of Time Series Data
 #'
 #' The main `clockworks()` function is used to detect rhythms in time series

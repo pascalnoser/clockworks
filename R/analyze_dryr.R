@@ -30,7 +30,6 @@ analyze_dryr <- function(cd, method_args = list()) {
 
   # Create empty list for results
   ls_res_groups = list()
-  ls_harm_groups = list()
 
   # Run rhythmicity detection for each group separately
   groups <- unique(metadata(cd_local)[["group"]])
@@ -41,18 +40,14 @@ analyze_dryr <- function(cd, method_args = list()) {
     # Run rhythmicity analysis
     df_res_grp <- execute_dryr(inputs, grp, method_args)
 
-    # Run harmonic regression
-    df_harm_grp <- estimate_wave_params(cd_local, grp)
-
     # Add to list
     ls_res_groups[[grp]] <- df_res_grp
-    ls_harm_groups[[grp]] <- df_harm_grp
   }
 
   # Postprocessing
   ls_res <- format_dryr(
     ls_res_groups = ls_res_groups,
-    ls_harm_groups = ls_harm_groups,
+    w_params = wave_params(cd_local),
     method = inputs$method,
     added_group = added_group
   )

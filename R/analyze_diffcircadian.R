@@ -33,14 +33,10 @@ analyze_diffcircadian <- function(cd, method_args = list()) {
   # Run rhythmicity analysis
   df_res <- execute_diffcircadian(inputs, method_args)
 
-  # Run harmonic regression
-  groups <- unique(metadata(cd_local)$group)
-  ls_harm_groups <- lapply(groups, function(grp) estimate_wave_params(cd_local, grp))
-
   # Postprocessing
   ls_res <- format_diffcircadian(
     res_original = df_res,
-    ls_harm_groups = ls_harm_groups,
+    w_params = wave_params(cd_local),
     period = mean(cd_local$period),
     added_group = added_group,
     log_transformed = cd_local$log_transformed,

@@ -32,17 +32,10 @@ analyze_limorhyde <- function(cd, method_args = list()) {
   groups <- unique(metadata(cd_local)[["group"]])
   df_res <- execute_limorhyde(inputs, groups, method_args)
 
-  # Run harmonic regression
-  if (is.null(groups)) {
-    ls_harm_groups <- list(estimate_wave_params(cd_local))
-  } else {
-    ls_harm_groups <- lapply(groups, function(grp) estimate_wave_params(cd_local, grp))
-  }
-
   # Postprocessing
   ls_res <- format_limorhyde(
     res_original = df_res,
-    ls_harm_groups = ls_harm_groups,
+    w_params = wave_params(cd_local),
     period = mean(cd_local$period)
   )
 

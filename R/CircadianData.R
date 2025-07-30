@@ -2,14 +2,13 @@
 
 #' Define the CircadianData Class
 #'
-#' @description
-#' An S4 class to store and manage data from biological experiments, such as
-#' circadian studies. It serves as an integrated container for raw measurement
-#' data, sample annotations, experimental parameters, and analysis results.
+#' @description An S4 class to store and manage data from biological
+#' experiments, such as circadian studies. It serves as an integrated container
+#' for raw measurement data, sample annotations, experimental parameters, and
+#' analysis results.
 #'
-#' @details
-#' This class bundles the main components of an experimental dataset. Its
-#' primary goal is to ensure that the samples (columns of `dataset`, rows of
+#' @details This class bundles the main components of an experimental dataset.
+#' Its primary goal is to ensure that the samples (columns of `dataset`, rows of
 #' `metadata`) remain synchronized during data manipulation operations like
 #' subsetting, ordering, and filtering. Analysis functions within the package
 #' are designed to take this object as input and can store their output in the
@@ -32,6 +31,8 @@
 #' @slot metadata A data.frame containing sample annotations (samples x
 #'   attributes).
 #' @slot experiment_info A list for storing experiment-level parameters.
+#' @slot wave_params A data frame containing estimated wave parameters
+#'   of a sine wave fit to each feature using a harmonic regression.
 #' @slot results A list for storing the output from various analysis functions.
 #'
 #' @name CircadianData-class
@@ -42,6 +43,7 @@ setClass("CircadianData",
            dataset = "matrix",
            metadata = "data.frame",
            experiment_info = "list",
+           wave_params = "data.frame",
            results = "list"
          )
 )
@@ -53,28 +55,59 @@ setValidity("CircadianData", function(object) {
   errors <- character()
   dset <- object@dataset
   mdata <- object@metadata
+  wave_par <- object@wave_params
+  exp_info <- object@experiment_info
+  res <- object@results
 
-  # --- Structural Invariants ---
+  # --- Dataset ---
   if (!is.matrix(dset) || !is.numeric(dset)) {
     errors <- c(errors, "'dataset' slot must be a numeric matrix.")
   }
 
-  # TODO: Probably NA values are fine?
-  if (anyNA(dset)) {
-    errors <- c(errors, "'dataset' slot cannot contain NA values.")
-  }
   if (is.null(rownames(dset))) {
     errors <- c(errors, "'dataset' slot must have feature names (row names).")
   }
 
-  # --- Metadata Invariants ---
+  # --- Metadata ---
   if (!"time" %in% colnames(mdata) || !is.numeric(mdata$time)) {
     errors <- c(errors, "A valid object must have a numeric 'time' column in its metadata.")
   }
 
-  # --- Synchronization Invariant ---
+  # --- Synchronization ---
   if (!identical(colnames(dset), rownames(mdata))) {
     errors <- c(errors, "Column names of 'dataset' must be identical to and in the same order as row names of 'metadata'.")
+  }
+
+
+  # --- Experiment Info ---
+  if (!is.list(exp_info)) {
+    errors <- c(errors, "'experiment_info' slot must be a list.")
+  }
+
+  # --- Wave parameters ---
+  required_cols <- c(
+    "feature",
+    "period",
+    "phase_estimate",
+    "mesor_estimate",
+    "amplitude_estimate",
+    "relative_amplitude_estimate"
+  )
+  if (!is.na(object$n_groups)) required_cols <- c(required_cols, "group")
+
+  if (!is.data.frame(wave_par)) {
+    errors <- c(errors, "'wave_params' slot must be a data frame")
+  } else {
+    missing_cols <- setdiff(required_cols, colnames(wave_par))
+    if (ncol(wave_par) > 0 && length(missing_cols) > 1) {
+      str_missing_cols <- paste(missing_cols, collapse = ", ")
+      errors <- c(errors, paste("'wave_params' data frame is missing the following columns:", str_missing_cols))
+    }
+  }
+
+  # --- Results ---
+  if (!is.list(res)) {
+    errors <- c(errors, "'results' slot must be a list.")
   }
 
   if (length(errors) == 0) TRUE else errors
@@ -85,28 +118,26 @@ setValidity("CircadianData", function(object) {
 
 #' Create a CircadianData Object
 #'
-#' @description
-#' This constructor function validates and standardizes user-provided dataset and
-#' metadata, creating a `CircadianData` object. It serves as the primary entry
-#' point for creating a valid object, integrating checks for data integrity,
-#' required columns, and consistent sample IDs.
+#' This constructor function validates and standardizes user-provided dataset
+#' and metadata, creating a `CircadianData` object. It serves as the primary
+#' entry point for creating a valid object, integrating checks for data
+#' integrity, required columns, and consistent sample IDs.
 #'
 #' @param dataset A data frame or numeric matrix with features as rows and
 #'   samples as columns. Must have column names (sample IDs).
 #' @param metadata A data frame containing sample annotations.
-#' @param colname_time A character string specifying the name of the column in `metadata`
-#'   that contains the time information (e.g., collection time). This column
-#'   must be numeric.
+#' @param colname_time A character string specifying the name of the column in
+#'   `metadata` that contains the time information (e.g., collection time). This
+#'   column must be numeric.
 #' @param colname_sample A character string specifying the name of the column in
 #'   `metadata` that contains the sample IDs. These IDs must be unique and match
 #'   the column names of `dataset`. Use `"rownames"` if sample IDs are in the
 #'   metadata's row names.
 #' @param colname_group An optional character string specifying the name of the
 #'   column in `metadata` that contains group information.
-#' @param colname_subject An optional character string specifying the name of the
-#'   column in `metadata` containing subject IDs for repeated measures designs.
-#' @param experiment_info An optional list for storing experiment-level parameters.
-#' @param results An optional list for storing analysis results.
+#' @param colname_subject An optional character string specifying the name of
+#'   the column in `metadata` containing subject IDs for repeated measures
+#'   designs.
 #'
 #' @return A valid `CircadianData` object.
 #' @export
@@ -139,26 +170,24 @@ CircadianData <- function(dataset,
                           colname_sample,
                           colname_time,
                           colname_group = NULL,
-                          colname_subject = NULL,
-                          experiment_info = list(),
-                          results = list()) {
+                          colname_subject = NULL) {
 
   # === 1. Metadata Processing and Validation ===
-  ## -- 1. Check if metadata is a data.frame --
+  ## -- 1.1 Check if metadata is a data.frame --
   if (!inherits(metadata, "data.frame")) {
     stop("'metadata' must be a data.frame.", call. = FALSE)
   }
 
 
-  ## -- 2. Ensure it's a data frame and not e.g. a tibble or data.table --
+  ## -- 1.2 Ensure it's a data frame and not e.g. a tibble or data.table --
   metadata <- as.data.frame(metadata)
 
 
-  ## -- 3. Check if columns are present --
+  ## -- 1.3 Check if columns are present --
   # Get column names
   cnames <- colnames(metadata)
 
-  ### 3a. Required columns (`colname_sample` and `colname_time`)
+  ### 1.3a Required columns (`colname_sample` and `colname_time`)
   # Handle case where sample IDs are in the rownames
   if (colname_sample == "rownames") {
     if (is.null(rownames(metadata))) stop("`colname_sample` is 'rownames', but metadata has no row names.", call.=FALSE)
@@ -178,7 +207,7 @@ CircadianData <- function(dataset,
   }
 
 
-  ### 3b. Optional columns (`colname_group` and `colname_subject`)
+  ### 1.3b Optional columns (`colname_group` and `colname_subject`)
   if (!is.null(colname_group) && !colname_group %in% cnames) {
     stop(
       paste0(
@@ -202,7 +231,7 @@ CircadianData <- function(dataset,
     )
   }
 
-  ## -- 4. Check if the values in colname_time are numeric --
+  ## -- 1.4 Check if the values in colname_time are numeric --
   if (!is.numeric(metadata[[colname_time]])) {
     stop(
       paste0(
@@ -213,7 +242,7 @@ CircadianData <- function(dataset,
     )
   }
 
-  ## -- 5. Check if the values in colname_sample are unique --
+  ## -- 1.5 Check if the values in colname_sample are unique --
   if (any(duplicated(metadata[[colname_sample]]))) {
     stop(
       paste0("Values in metadata column '", colname_sample, "' must be unique."),
@@ -221,7 +250,7 @@ CircadianData <- function(dataset,
     )
   }
 
-  ## -- 6. Check subject ID logic --
+  ## -- 1.6 Check subject ID logic --
   # Print a message if all values are unique because this suggests the user
   # simply has replicates rather than repeated measures, in which case
   # `colname_sample` need not be defined.
@@ -232,7 +261,7 @@ CircadianData <- function(dataset,
   }
 
 
-  ## -- 7. Warn the user that additional columns will be ignored --
+  ## -- 1.7 Warn the user that additional columns will be ignored --
   ignored_cols <- setdiff(
     cnames,
     c(colname_time, colname_sample, colname_group, colname_subject)
@@ -262,7 +291,7 @@ CircadianData <- function(dataset,
     message(paste0(message_cols, "\n"))
   }
 
-  ## -- 8. Standardize Metadata: Select and rename columns ---
+  ## -- 1.8 Standardize Metadata: Select and rename columns ---
   # TODO: Enforce type `factor` for group and subject ID?
   final_meta <- data.frame(row.names = as.character(metadata[[colname_sample]]))
   final_meta$time <- metadata[[colname_time]]
@@ -275,12 +304,12 @@ CircadianData <- function(dataset,
 
 
   # === 2. Dataset Processing and Validation ===
-  ## -- 1. Check if dataset is a data.frame or matrix ---
+  ## -- 2.1 Check if dataset is a data.frame or matrix ---
   if (!inherits(dataset, c("data.frame", "matrix"))) {
     stop("`dataset` must be a data frame or matrix.", call. = FALSE)
   }
 
-  ## -- 2. Check if dataset is numeric --
+  ## -- 2.2 Check if dataset is numeric --
   if (is.data.frame(dataset)) {
     non_numeric_cols <- which(sapply(dataset, function(col) !is.numeric(col)))
     if (length(non_numeric_cols) > 0) {
@@ -304,7 +333,7 @@ CircadianData <- function(dataset,
     ), call. = FALSE)
   }
 
-  ## -- 3. Check if dataset has row numbers --
+  ## -- 2.3 Check if dataset has row numbers --
   if (is.null(rownames(dataset))) {
     warning("Dataset has no feature IDs (row names). Using row numbers as feature IDs.", call. = FALSE)
     rownames(dataset) <- as.character(seq_len(nrow(dataset)))
@@ -340,8 +369,9 @@ CircadianData <- function(dataset,
     new("CircadianData",
         dataset = final_dataset,
         metadata = final_meta,
-        experiment_info = experiment_info,
-        results = results)
+        experiment_info = list(),
+        wave_params = data.frame(),
+        results = list())
   }, error = function(e) {
     stop("Failed to create CircadianData object. Please check the following error(s):\n",
          e$message, call. = FALSE)
@@ -356,10 +386,9 @@ CircadianData <- function(dataset,
 
 #' Access or Replace Object Components
 #'
-#' @description
-#' Functions to access or replace the main components of a \code{CircadianData}
-#' object, including the dataset matrix, metadata data.frame, experiment_info
-#' list, and results list.
+#' @description Functions to access or replace the main components of a
+#' \code{CircadianData} object, including the dataset matrix, metadata
+#' data.frame, experiment_info list, and results list.
 #'
 #' @param x A \code{CircadianData} object.
 #' @param value A value to replace a component with. See individual function
@@ -371,6 +400,7 @@ CircadianData <- function(dataset,
 #'   \item \code{dataset()}: Retrieves the feature x sample matrix.
 #'   \item \code{metadata()}: Retrieves the sample x attribute data.frame.
 #'   \item \code{experiment_info()}: Retrieves the list of experiment-level details.
+#'   \item \code{wave_params()}: Retrieves the list of estimated sine wave parameters.
 #'   \item \code{results()}: Retrieves the list of analysis results.
 #' }
 #'
@@ -378,7 +408,8 @@ CircadianData <- function(dataset,
 #'   \code{CircadianData} object (for replacement methods).
 #'
 #' @name CircadianData-accessors
-#' @aliases dataset dataset<- metadata metadata<- experiment_info experiment_info<- results results<-
+#' @aliases dataset dataset<- metadata metadata<- experiment_info
+#'   experiment_info<- results results<- wave_params wave_params<-
 NULL # A NULL object to hold the main documentation block
 
 
@@ -392,7 +423,6 @@ setGeneric("dataset", function(x) standardGeneric("dataset"))
 setMethod("dataset", "CircadianData", function(x) x@dataset)
 
 #' @rdname CircadianData-accessors
-#' @export
 setGeneric("dataset<-", function(x, value) standardGeneric("dataset<-"))
 
 #' @rdname CircadianData-accessors
@@ -414,7 +444,6 @@ setGeneric("metadata", function(x) standardGeneric("metadata"))
 setMethod("metadata", "CircadianData", function(x) x@metadata)
 
 #' @rdname CircadianData-accessors
-#' @export
 setGeneric("metadata<-", function(x, value) standardGeneric("metadata<-"))
 
 #' @rdname CircadianData-accessors
@@ -465,6 +494,27 @@ setGeneric("results<-", function(x, value) standardGeneric("results<-"))
 setReplaceMethod("results", "CircadianData", function(x, value) {
   if (!is.list(value)) stop("'value' must be a list.")
   x@results <- value
+  validObject(x)
+  x
+})
+
+
+## ---- Wave params Accessor/Replacement ----
+
+#' @rdname CircadianData-accessors
+#' @export
+setGeneric("wave_params", function(x) standardGeneric("wave_params"))
+
+#' @rdname CircadianData-accessors
+setMethod("wave_params", "CircadianData", function(x) x@wave_params)
+
+#' @rdname CircadianData-accessors
+setGeneric("wave_params<-", function(x, value) standardGeneric("wave_params<-"))
+
+#' @rdname CircadianData-accessors
+setReplaceMethod("wave_params", "CircadianData", function(x, value) {
+  if (!is.data.frame(value)) stop("'value' must be a data frame.")
+  x@wave_params <- value
   validObject(x)
   x
 })
@@ -678,11 +728,27 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
             # Keep experiment_info as is (subsetting doesn't naturally apply)
             new_experiment_info <- x@experiment_info
 
+            # Only keep wave parameters for the selected features (i)
+            new_wave_params <- wave_params(x)
+            if (nrow(new_wave_params) > 0) {
+              # Note: `i` can be logical, numeric, or character. This works for all.
+              # `rownames(x)` provides the names to subset by if `i` is character.
+              features_to_keep <- rownames(x)[i]
+              new_wave_params <- new_wave_params[new_wave_params$feature %in% features_to_keep, , drop = FALSE]
+            }
+
+            # TODO: Only keep results of selected features
+            # ...
+
             # Create and return the new object
-            new("CircadianData",
-                dataset = new_dataset,
-                metadata = new_metadata,
-                experiment_info = new_experiment_info)
+            new(
+              "CircadianData",
+              dataset = new_dataset,
+              metadata = new_metadata,
+              experiment_info = new_experiment_info,
+              wave_params = new_wave_params,
+              results = results(x)
+            )
           })
 
 
@@ -960,6 +1026,141 @@ setMethod("$<-", "CircadianData",
 )
 
 
+# ---- Estimating Wave Parameters ----
+
+#' Estimating sine Wave Parameters
+#'
+#' This function is used to get an estimate for the amplitude and phase using
+#' harmonic regression.
+#'
+#' @param cd A `CircadianData` object
+#'
+#' @import HarmonicRegression
+#'
+#' @details
+#' The returned parameters correspond to the model \deqn{y = M + A
+#' sin(\frac{2\pi}{p} (t + \phi))} With \eqn{M} the mesor, \eqn{A} the
+#' amplitude, \eqn{p} the period, \eqn{t} the time and \eqn{\phi} the phase in
+#' the same units as \eqn{t} (e.g. hours). EXPLAIN STUFF ABOUT RELATIVE
+#' AMPLITUDE!
+#'
+#'
+#' @returns The `CircadianData` object frame with estimated sine wave parameters
+#'   for every feature.
+estimate_wave_params <- function(cd_obj) {
+  if (!inherits(cd_obj, "CircadianData")) stop("Input must be a CircadianData object.")
+
+  # Get original meta data
+  mdata_orig <- metadata(cd_obj)
+
+  # Add temporary group if there is no group column
+  if (is.na(cd_obj$n_groups)){
+    mdata_tmp <- mdata_orig
+    mdata_tmp[["group"]] <- "tmp"
+    metadata(cd_obj) <- mdata_tmp
+    add_groups <- FALSE
+  } else {
+    add_groups <- TRUE
+  }
+
+  # Get groups
+  groups <- unique(metadata(cd_obj)$group)
+
+  # Run harmonic regression for each group separately
+  ls_params <- lapply(groups, function(grp) {
+    # Filter cd object
+    cd_filt <- filter_samples(cd_obj, col = "group", value =  grp)
+
+    # Get period
+    per <- mean(cd_filt$period)
+
+    # Run harmonic regression
+    res_harm <- HarmonicRegression::harmonic.regression(
+      inputts = t(dataset(cd_filt)),
+      inputtime = metadata(cd_filt)[["time"]],
+      Tau = per,
+      normalize = FALSE,
+      trend.eliminate = FALSE,  # TODO: make this a variable,
+      trend.degree = 1  # TODO: make this a variable
+    )
+
+    # Get phase estimate in hours.`harmonic.regression()` uses a cosine, but I
+    # tend to think of sine waves. Amplitude and mesor stay the same, but the
+    # phase is shifted by -pi/2 in radians, so by -period/4 in hours. Using the
+    # modulo operator negative phase values "wrap" around and become positive.
+    phase_estimate_rad <- res_harm$pars$phi
+    phase_estimate_h_cos <- phase_estimate_rad * per / (2 * pi)
+    phase_estimate_h_sin <- -1 * ((phase_estimate_h_cos - per / 4) %% per)
+
+    # Create data frame
+    df_res = data.frame(
+      feature = row.names(res_harm$pars),
+      period = per,
+      phase_estimate = phase_estimate_h_sin
+    )
+
+    # Add mesor and amplitude estimates
+    if (cd_obj$log_transformed == TRUE) {
+      # Get logarithmic base
+      b <- cd_obj$log_base
+
+      # Get estimates for mesor and amplitude in log scale
+      log_mesors <- res_harm$means
+      log_amps <- res_harm$pars$amp
+
+      # Get values for peak and trough
+      log_peaks <- b^(log_mesors + log_amps)
+      log_troughs <- b^(log_mesors - log_amps)
+
+      # Get mesor and amplitude in linear scale
+      lin_mesors <- (log_peaks + log_troughs) / 2
+      lin_amplitudes <- (log_peaks - log_troughs) / 2
+
+      # Get relative amplitude
+      lin_relative_amplitudes <- lin_amplitudes / lin_mesors
+      # lin_relative_amplitudes <- compute_relative_amplitude(log_amps, b)
+
+      # Add to data frame
+      # TODO: Be clear in documentation that in this case (i.e. with
+      # log-transformed data) the values you get for `mesor_estimate` and
+      # `amplitude_estimate` are in the log-scale, i.e. in the scale of the data
+      # the user provided, but the `relative_amplitude_estimate` is in the
+      # linear scale. We decided to do it this way because it seems appropriate
+      # to give the mesor and amplitude for the actual data the user provides.
+      # On the other hand, getting the relative amplitude in the linear scale is
+      # not a super trivial task (but it might still be of interest), so we
+      # provide that. The relative amplitude in the log-scale is easy to get by
+      # simply dividing the amplitude estimate by the mesor estimate.
+      df_res$mesor_estimate <- log_mesors
+      df_res$amplitude_estimate <- log_amps
+      df_res$relative_amplitude_estimate <- lin_relative_amplitudes
+
+    } else {
+      df_res$mesor_estimate <- res_harm$means
+      df_res$amplitude_estimate <- res_harm$pars$amp
+      df_res$relative_amplitude_estimate <- df_res$amplitude_estimate / df_res$mesor_estimate
+    }
+
+    # Add group if original object had groups
+    if (add_groups == TRUE) {
+      df_res$group <- grp
+    }
+
+    return(df_res)
+  })
+
+  # Add estiamted parameters to cd object
+  df_params <- do.call(rbind, ls_params)
+  wave_params(cd_obj) <- df_params
+
+  # Add original metadata back
+  metadata(cd_obj) <- mdata_orig
+
+  return(cd_obj)
+}
+
+
+
 # ---- Sorting ----
 
 #' Order Samples in a CircadianData Object
@@ -1080,6 +1281,7 @@ setMethod("order_samples", "CircadianData",
                 dataset = new_dataset,
                 metadata = new_metadata,
                 experiment_info = experiment_info(x),
+                wave_params = wave_params(x),
                 results = results(x)
             )
           }
@@ -1263,6 +1465,18 @@ setMethod("show", "CircadianData", function(object) {
   } else {
     cat(" [Empty list]\n")
   }
+
+
+  # --- Wave Parameters Info ---
+  cat("\nWave Parameters:\n")
+  w_params <- wave_params(object)
+  if (nrow(w_params) > 0) {
+    n_features_params <- length(unique(w_params$feature))
+    cat(paste(" Calculated for", n_features_params, "of", nrow(object), "features\n"))
+  } else {
+    cat(" [Not calculated]\n")
+  }
+
 
   # --- Results Info ---
   cat("\nResults:\n")
