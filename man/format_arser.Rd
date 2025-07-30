@@ -6,7 +6,7 @@
 \usage{
 format_arser(
   ls_res_groups,
-  ls_harm_groups,
+  w_params,
   added_group,
   log_transformed = FALSE,
   log_base = 2
@@ -16,8 +16,8 @@ format_arser(
 \item{ls_res_groups}{A list with results from a ARSER rhythmicity analysis,
 split into groups.}
 
-\item{ls_harm_groups}{A list with results from a harmonic regression
-analysis, split into groups.}
+\item{w_params}{A data frame with results from a harmonic regression
+analysis.}
 
 \item{added_group}{If TRUE the "group" column will be removed}
 

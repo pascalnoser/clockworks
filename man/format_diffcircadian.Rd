@@ -6,7 +6,7 @@
 \usage{
 format_diffcircadian(
   res_original,
-  ls_harm_groups,
+  w_params,
   period,
   added_group,
   log_transformed = FALSE,
@@ -17,8 +17,8 @@ format_diffcircadian(
 \item{res_original}{A data frame with results from a diffCircadian rhythmicity
 analysis.}
 
-\item{ls_harm_groups}{A list with results from a harmonic regression
-analysis, split into groups.}
+\item{w_params}{A data frame with results from a harmonic regression
+analysis.}
 
 \item{period}{Period entered by the user.}
 

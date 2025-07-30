@@ -10,9 +10,7 @@ CircadianData(
   colname_sample,
   colname_time,
   colname_group = NULL,
-  colname_subject = NULL,
-  experiment_info = list(),
-  results = list()
+  colname_subject = NULL
 )
 }
 \arguments{
@@ -26,28 +24,25 @@ samples as columns. Must have column names (sample IDs).}
 the column names of \code{dataset}. Use \code{"rownames"} if sample IDs are in the
 metadata's row names.}
 
-\item{colname_time}{A character string specifying the name of the column in \code{metadata}
-that contains the time information (e.g., collection time). This column
-must be numeric.}
+\item{colname_time}{A character string specifying the name of the column in
+\code{metadata} that contains the time information (e.g., collection time). This
+column must be numeric.}
 
 \item{colname_group}{An optional character string specifying the name of the
 column in \code{metadata} that contains group information.}
 
-\item{colname_subject}{An optional character string specifying the name of the
-column in \code{metadata} containing subject IDs for repeated measures designs.}
-
-\item{experiment_info}{An optional list for storing experiment-level parameters.}
-
-\item{results}{An optional list for storing analysis results.}
+\item{colname_subject}{An optional character string specifying the name of
+the column in \code{metadata} containing subject IDs for repeated measures
+designs.}
 }
 \value{
 A valid \code{CircadianData} object.
 }
 \description{
-This constructor function validates and standardizes user-provided dataset and
-metadata, creating a \code{CircadianData} object. It serves as the primary entry
-point for creating a valid object, integrating checks for data integrity,
-required columns, and consistent sample IDs.
+This constructor function validates and standardizes user-provided dataset
+and metadata, creating a \code{CircadianData} object. It serves as the primary
+entry point for creating a valid object, integrating checks for data
+integrity, required columns, and consistent sample IDs.
 }
 \examples{
 counts <- matrix(rpois(80, 50), nrow=10, ncol=8,

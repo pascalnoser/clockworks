@@ -5,13 +5,14 @@
 \alias{CircadianData-class}
 \title{Define the CircadianData Class}
 \description{
-An S4 class to store and manage data from biological experiments, such as
-circadian studies. It serves as an integrated container for raw measurement
-data, sample annotations, experimental parameters, and analysis results.
+An S4 class to store and manage data from biological
+experiments, such as circadian studies. It serves as an integrated container
+for raw measurement data, sample annotations, experimental parameters, and
+analysis results.
 }
 \details{
-This class bundles the main components of an experimental dataset. Its
-primary goal is to ensure that the samples (columns of \code{dataset}, rows of
+This class bundles the main components of an experimental dataset.
+Its primary goal is to ensure that the samples (columns of \code{dataset}, rows of
 \code{metadata}) remain synchronized during data manipulation operations like
 subsetting, ordering, and filtering. Analysis functions within the package
 are designed to take this object as input and can store their output in the
@@ -39,6 +40,9 @@ To manipulate the object:
 attributes).}
 
 \item{\code{experiment_info}}{A list for storing experiment-level parameters.}
+
+\item{\code{wave_params}}{A data frame containing estimated wave parameters
+of a sine wave fit to each feature using a harmonic regression.}
 
 \item{\code{results}}{A list for storing the output from various analysis functions.}
 }}

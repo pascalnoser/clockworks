@@ -93,7 +93,7 @@ setValidity("CircadianData", function(object) {
     "amplitude_estimate",
     "relative_amplitude_estimate"
   )
-  if (!is.na(object$n_groups)) required_cols <- c(required_cols, "group")
+  if ("group" %in% colnames(mdata)) required_cols <- c(required_cols, "group")
 
   if (!is.data.frame(wave_par)) {
     errors <- c(errors, "'wave_params' slot must be a data frame")
@@ -296,10 +296,10 @@ CircadianData <- function(dataset,
   final_meta <- data.frame(row.names = as.character(metadata[[colname_sample]]))
   final_meta$time <- metadata[[colname_time]]
   if (!is.null(colname_group)) {
-    final_meta$group <- metadata[[colname_group]]
+    final_meta$group <- as.factor(metadata[[colname_group]])
   }
   if (!is.null(colname_subject)) {
-    final_meta$subject_ID <- metadata[[colname_subject]]
+    final_meta$subject_ID <- as.factor(metadata[[colname_subject]])
   }
 
 
@@ -362,7 +362,6 @@ CircadianData <- function(dataset,
   # Reorder dataset columns to match the standardized metadata order
   final_dataset <- dataset[, meta_samples, drop = FALSE]
 
-
   # === 4. Create the Object ===
   # The validity check will run automatically here on the final, processed data
   cd_obj <- tryCatch({
@@ -374,7 +373,7 @@ CircadianData <- function(dataset,
         results = list())
   }, error = function(e) {
     stop("Failed to create CircadianData object. Please check the following error(s):\n",
-         e$message, call. = FALSE)
+         e, call. = FALSE)
   })
 
   return(cd_obj)

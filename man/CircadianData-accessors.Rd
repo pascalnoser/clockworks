@@ -10,6 +10,8 @@
 \alias{experiment_info<-}
 \alias{results}
 \alias{results<-}
+\alias{wave_params}
+\alias{wave_params<-}
 \alias{dataset,CircadianData-method}
 \alias{dataset<-,CircadianData-method}
 \alias{metadata,CircadianData-method}
@@ -18,6 +20,8 @@
 \alias{experiment_info<-,CircadianData-method}
 \alias{results,CircadianData-method}
 \alias{results<-,CircadianData-method}
+\alias{wave_params,CircadianData-method}
+\alias{wave_params<-,CircadianData-method}
 \title{Access or Replace Object Components}
 \usage{
 dataset(x)
@@ -51,6 +55,14 @@ results(x)
 results(x) <- value
 
 \S4method{results}{CircadianData}(x) <- value
+
+wave_params(x)
+
+\S4method{wave_params}{CircadianData}(x)
+
+wave_params(x) <- value
+
+\S4method{wave_params}{CircadianData}(x) <- value
 }
 \arguments{
 \item{x}{A \code{CircadianData} object.}
@@ -64,15 +76,16 @@ The requested component (for accessors) or the modified
 \code{CircadianData} object (for replacement methods).
 }
 \description{
-Functions to access or replace the main components of a \code{CircadianData}
-object, including the dataset matrix, metadata data.frame, experiment_info
-list, and results list.
+Functions to access or replace the main components of a
+\code{CircadianData} object, including the dataset matrix, metadata
+data.frame, experiment_info list, and results list.
 }
 \details{
 \itemize{
 \item \code{dataset()}: Retrieves the feature x sample matrix.
 \item \code{metadata()}: Retrieves the sample x attribute data.frame.
 \item \code{experiment_info()}: Retrieves the list of experiment-level details.
+\item \code{wave_params()}: Retrieves the list of estimated sine wave parameters.
 \item \code{results()}: Retrieves the list of analysis results.
 }
 }

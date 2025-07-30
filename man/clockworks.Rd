@@ -11,8 +11,8 @@ clockworks(cd, method, method_args = list())
 
 \item{method}{A string specifying the rhythmicity detection method to use.
 Supported methods include "ARSER", "CircaN", "diffCircadian", "dryR",
-"GeneCycle", "JTK_CYCLE", "RepeatedCircadian", "LimoRhyde", "LS"
-(Lomb-Scargle), "meta2d", "RAIN", and "TimeCycle".}
+"GeneCycle", "JTK_CYCLE", "RepeatedCircadian", "LimoRhyde" (limma or
+voomLmFit), "LS" (Lomb-Scargle), "meta2d", "RAIN", and "TimeCycle".}
 
 \item{method_args}{A list of additional arguments to be passed directly to
 the chosen analysis method. This allows for more advanced customisation of

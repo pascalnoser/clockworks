@@ -15,11 +15,13 @@ check_circan <- function(cd) {
 
   # If the user has picked this method but there are no repeated measures, add a
   # subject ID column with a unique subject ID for each sample because CircaN
-  # requires a column named "ind"
+  # requires a column named "ind". If there are subject IDs already, replace
+  # them by unique numerical identifiers (required by CircaN)
   if (cd_local$repeated_measures == FALSE) {
-    df_meta_temp$ind <- paste0("S", 1:nrow(df_meta_temp))
+    df_meta_temp$ind <- 1:nrow(df_meta_temp)
   } else {
-    df_meta_temp$ind <- df_meta_temp[["subject_ID"]]
+    ids_orig <- df_meta_temp[["subject_ID"]]
+    df_meta_temp$ind <- as.numeric(factor(ids_orig))
   }
 
   # Add required "time" and "sample" columns

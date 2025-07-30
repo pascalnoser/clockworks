@@ -4,14 +4,14 @@
 \alias{format_dryr}
 \title{Format dryR Results}
 \usage{
-format_dryr(ls_res_groups, ls_harm_groups, method, added_group)
+format_dryr(ls_res_groups, w_params, method, added_group)
 }
 \arguments{
 \item{ls_res_groups}{A list with results from a dryR rhythmicity analysis,
 split into groups.}
 
-\item{ls_harm_groups}{A list with results from a harmonic regression
-analysis, split into groups.}
+\item{w_params}{A data frame with results from a harmonic regression
+analysis.}
 
 \item{method}{Which method ("f_24" or "dryseq_single") was used in the
 analysis.}
