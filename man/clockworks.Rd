@@ -10,7 +10,7 @@ clockworks(cd, method, method_args = list())
 \item{cd}{A \code{CircadianData} object with added experiment info.}
 
 \item{method}{A string specifying the rhythmicity detection method to use.
-Supported methods include "ARSER", "CircaN", "diffCircadian", "dryR",
+Supported methods include "ARSER", "diffCircadian", "dryR",
 "GeneCycle", "JTK_CYCLE", "RepeatedCircadian", "LimoRhyde" (limma or
 voomLmFit), "LS" (Lomb-Scargle), "meta2d", "RAIN", and "TimeCycle".}
 

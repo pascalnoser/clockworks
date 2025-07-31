@@ -36,7 +36,13 @@ meta <- data.frame(
   group = rep(c("Control", "Treated"), each = 5),
   time = rep(seq(0, 8, by = 2), 2)
 )
-cd_obj <- CircadianData(dataset = counts, metadata = meta)
+cd_obj <- CircadianData(
+  dataset = counts,
+  metadata = meta,
+  colname_sample = "rownames",
+  colname_time = "time",
+  colname_group = "group"
+)
 
 # Subset features (rows)
 cd_obj_sub1 <- cd_obj[c("Feature1", "Feature5"), ]

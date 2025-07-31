@@ -6,7 +6,7 @@
 #' @param method_args Additional parameters passed to
 #'   `RepeatedCircadian::rpt_rhythmicity()`
 #'
-#' @import RepeatedCircadian
+#' @importFrom RepeatedCircadian rpt_rhythmicity
 #' @importFrom future.apply future_lapply
 #'
 #' @returns A data frame

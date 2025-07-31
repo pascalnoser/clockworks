@@ -14,8 +14,15 @@ prepare_ls <- function(cd, grp) {
   # Filter CD object by group
   cd_filt <- filter_samples(cd, col = "group", value = grp)
 
+  # Normalise if count data
+  if (cd_filt$data_type == "count") {
+    dset <- normalise_dataset(dataset(cd_filt), group = metadata(cd_filt)$group)
+  } else {
+    dset <- dataset(cd_filt)
+  }
+
   # Prepare data
-  df_input <- data.frame(feature = rownames(dataset(cd_filt)), dataset(cd_filt))
+  df_input <- data.frame(feature = rownames(dset), dset)
 
   # Create list with inputs for run
   inputs <- list(

@@ -6,18 +6,22 @@
 #'
 #' @returns A data frame.
 prepare_diffcircadian <- function(cd) {
-  # Get dataset
-  df_data <- dataset(cd)
+  # Normalise if count data
+  if (cd$data_type == "count") {
+    dset <- normalise_dataset(dataset(cd), group = metadata(cd)$group)
+  } else {
+    dset <- dataset(cd)
+  }
 
   # Get feature- and sample IDs
-  feature_IDs <- rownames(df_data)
-  sample_IDs <- colnames(df_data)
+  feature_IDs <- rownames(dset)
+  sample_IDs <- colnames(dset)
 
   # Convert into long format
   data_long <- data.frame(
     "feature" = rep(feature_IDs, times = length(sample_IDs)),
     "sample" = rep(sample_IDs, each = length(feature_IDs)),
-    "value" = as.vector(as.matrix(df_data))
+    "value" = as.vector(as.matrix(dset))
   )
 
   # Add sample IDs as column to metadata

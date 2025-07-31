@@ -5,27 +5,33 @@
 \alias{plot_feature,CircadianData-method}
 \title{Plot Feature Values Over Time}
 \usage{
-plot_feature(x, feature, group = NULL, ...)
+plot_feature(x, feature, group = NULL, add_wave = TRUE, ...)
 
-\S4method{plot_feature}{CircadianData}(x, feature, group = NULL, ...)
+\S4method{plot_feature}{CircadianData}(x, feature, group = NULL, add_wave = TRUE, ...)
 }
 \arguments{
 \item{x}{A \code{CircadianData} object.}
 
-\item{feature}{A single character string specifying the name of the feature
-(from \code{rownames(dataset(x))}) to plot.}
+\item{feature}{A single character string specifying the name or a single
+numeric value specifying the row number of the feature (from
+\code{rownames(dataset(x))}) to plot.}
 
 \item{group}{An optional single character string specifying a group to filter
-by. This is only applicable if a 'group' column exists in the metadata.
-If \code{NULL} (the default) and a 'group' column exists, data from all
-groups are plotted with different colors.}
+by. This is only applicable if a 'group' column exists in the metadata. If
+\code{NULL} (the default) and a 'group' column exists, data from all groups are
+plotted with different colors.}
+
+\item{add_wave}{An optional logical value (TRUE/FALSE) specifying whether a
+sine wave fitted by harmonic regression should be plotted on top of the
+data. Only applies when \code{wave_params} has been filled by running
+\code{estimate_wave_params()} or \code{clockworks()} on \code{x}.}
 
 \item{...}{Additional arguments passed to the base \code{plot()} function.}
 }
 \description{
-Creates a scatterplot of the values for a specific feature against time.
-If a 'group' column exists in the metadata, points are colored by group,
-and the plot can be optionally filtered to a single group.
+Creates a scatterplot of the values for a specific feature against time. If a
+'group' column exists in the metadata, points are colored by group, and the
+plot can be optionally filtered to a single group.
 }
 \examples{
 # --- With a 'group' column in metadata ---
@@ -37,7 +43,14 @@ meta <- data.frame(
   time = rep(c(0, 6, 12, 18), each = 2),
   group = factor(rep(c("Control", "Treated"), 4))
 )
-cd_obj_grouped <- CircadianData(counts, meta, experiment_info = list(period = 24))
+cd_obj_grouped <- CircadianData(
+  dataset = counts,
+  metadata = meta,
+  colname_sample = "rownames",
+  colname_time = "time",
+  colname_group = "group"
+)
+cd_obj_grouped <- add_experiment_info(cd_obj_grouped)
 
 # Plot a feature for all groups (colored by group)
 plot_feature(cd_obj_grouped, feature = "Feature3")
@@ -46,8 +59,13 @@ plot_feature(cd_obj_grouped, feature = "Feature3")
 plot_feature(cd_obj_grouped, feature = "Feature3", group = "Treated")
 
 # --- Without a 'group' column in metadata ---
-meta_no_group <- meta[, "time", drop = FALSE] # Create metadata without group col
-cd_obj_no_group <- CircadianData(counts, meta_no_group)
+cd_obj_no_group <- CircadianData(
+  dataset = counts,
+  metadata = meta,
+  colname_sample = "rownames",
+  colname_time = "time"
+)
+cd_obj_no_group <- add_experiment_info(cd_obj_no_group)
 
 # Plot a feature (all points will have the same color)
 plot_feature(cd_obj_no_group,

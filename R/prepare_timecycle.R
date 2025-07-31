@@ -14,6 +14,13 @@ prepare_timecycle <- function(cd, grp) {
   # Filter CD object by group
   cd_filt <- filter_samples(cd, col = "group", value = grp)
 
+  # Normalise if count data
+  if (cd_filt$data_type == "count") {
+    dset <- normalise_dataset(dataset(cd_filt), group = metadata(cd_filt)$group)
+  } else {
+    dset <- dataset(cd_filt)
+  }
+
   # Define number of replicates at each time point. Do NOT include time points
   # with 0 replicates, so don't use cd_filt$n_replicates which includes these if
   # present
@@ -35,7 +42,7 @@ prepare_timecycle <- function(cd, grp) {
 
   # Create list with inputs for run
   inputs <- list(
-    data = dataset(cd_filt),
+    data = dset,
     repLabel = repLabel,
     period = mean(cd_filt$period),
     # cores = 1, # TODO: Figure out what do to with this

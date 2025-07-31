@@ -7,7 +7,7 @@
 estimate_wave_params(cd_obj)
 }
 \arguments{
-\item{cd}{A \code{CircadianData} object}
+\item{cd_obj}{A \code{CircadianData} object}
 }
 \value{
 The \code{CircadianData} object frame with estimated sine wave parameters

@@ -21,7 +21,9 @@
 
 \item{i, name}{A single character string specifying the name of the element.}
 
-\item{j, }{... Not used in these methods.}
+\item{j}{Not used in these methods.}
+
+\item{...}{Not used}
 
 \item{value}{The value to assign to the element.}
 }
@@ -39,9 +41,12 @@ These methods allow for intuitive interaction with the
 }
 }
 \examples{
-counts <- matrix(rpois(10, 50), 2, 5)
-meta <- data.frame(row.names = paste0("S", 1:5))
-cd_obj <- CircadianData(counts, meta)
+data("cw_data", package = "clockworks")
+data("cw_metadata", package = "clockworks")
+cd_obj <- CircadianData(cw_data,
+                        cw_metadata,
+                        colname_sample = "Sample_ID",
+                        colname_time = "Time")
 
 # Add a new element to experiment_info using `$`
 cd_obj$period <- 24

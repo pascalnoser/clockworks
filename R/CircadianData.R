@@ -184,9 +184,6 @@ CircadianData <- function(dataset,
 
 
   ## -- 1.3 Check if columns are present --
-  # Get column names
-  cnames <- colnames(metadata)
-
   ### 1.3a Required columns (`colname_sample` and `colname_time`)
   # Handle case where sample IDs are in the rownames
   if (colname_sample == "rownames") {
@@ -194,6 +191,9 @@ CircadianData <- function(dataset,
     metadata$`.internal_sample_id` <- rownames(metadata)
     colname_sample <- ".internal_sample_id"
   }
+
+  # Get column names
+  cnames <- colnames(metadata)
 
   # Check if the columns exist
   required_args <- c("colname_sample", "colname_time")
@@ -688,7 +688,13 @@ setReplaceMethod("colnames", "CircadianData", function(x, value) {
 #'   group = rep(c("Control", "Treated"), each = 5),
 #'   time = rep(seq(0, 8, by = 2), 2)
 #' )
-#' cd_obj <- CircadianData(dataset = counts, metadata = meta)
+#' cd_obj <- CircadianData(
+#'   dataset = counts,
+#'   metadata = meta,
+#'   colname_sample = "rownames",
+#'   colname_time = "time",
+#'   colname_group = "group"
+#' )
 #'
 #' # Subset features (rows)
 #' cd_obj_sub1 <- cd_obj[c("Feature1", "Feature5"), ]
@@ -941,14 +947,15 @@ add_experiment_info <- function(cd_obj, period = NULL, data_type = NULL,
 
 #' Access and modify elements of `experiment_info`
 #'
-#' @description Provides methods for getting and setting elements within the
+#' Provides methods for getting and setting elements within the
 #' `experiment_info` list slot of a \code{CircadianData} object using standard R
 #' operators.
 #'
 #' @param x A \code{CircadianData} object.
 #' @param i,name A single character string specifying the name of the element.
 #' @param value The value to assign to the element.
-#' @param j, ... Not used in these methods.
+#' @param j Not used in these methods.
+#' @param ... Not used
 #'
 #' @details These methods allow for intuitive interaction with the
 #' `experiment_info` list:
@@ -962,9 +969,12 @@ add_experiment_info <- function(cd_obj, period = NULL, data_type = NULL,
 #'   [[<-,CircadianData,character,missing-method $,CircadianData-method
 #'   $<-,CircadianData-method
 #' @examples
-#' counts <- matrix(rpois(10, 50), 2, 5)
-#' meta <- data.frame(row.names = paste0("S", 1:5))
-#' cd_obj <- CircadianData(counts, meta)
+#' data("cw_data", package = "clockworks")
+#' data("cw_metadata", package = "clockworks")
+#' cd_obj <- CircadianData(cw_data,
+#'                         cw_metadata,
+#'                         colname_sample = "Sample_ID",
+#'                         colname_time = "Time")
 #'
 #' # Add a new element to experiment_info using `$`
 #' cd_obj$period <- 24
@@ -1032,7 +1042,7 @@ setMethod("$<-", "CircadianData",
 #' This function is used to get an estimate for the amplitude and phase using
 #' harmonic regression.
 #'
-#' @param cd A `CircadianData` object
+#' @param cd_obj A `CircadianData` object
 #'
 #' @import HarmonicRegression
 #'
@@ -1316,7 +1326,15 @@ setMethod("order_samples", "CircadianData",
 #'   subject_ID = paste0("S", rep(1:4, 2)),
 #'   group = rep(c("Control", "Treated"), 4)
 #' )
-#' cd_obj <- CircadianData(counts, meta, experiment_info = list(period = 24))
+#' cd_obj <- CircadianData(
+#'   dataset = counts,
+#'   metadata = meta,
+#'   colname_sample = "rownames",
+#'   colname_time = "time",
+#'   colname_group = "group",
+#'   colname_subject = "subject_ID"
+#' )
+#' cd_obj <- add_experiment_info(cd_obj)
 #'
 #' # Filter samples belonging to the "Control" group
 #' cd_control <- filter_samples(cd_obj, col = "group", value = "Control")
@@ -1527,7 +1545,14 @@ setMethod("show", "CircadianData", function(object) {
 #'   time = rep(c(0, 6, 12, 18), each = 2),
 #'   group = factor(rep(c("Control", "Treated"), 4))
 #' )
-#' cd_obj_grouped <- CircadianData(counts, meta, experiment_info = list(period = 24))
+#' cd_obj_grouped <- CircadianData(
+#'   dataset = counts,
+#'   metadata = meta,
+#'   colname_sample = "rownames",
+#'   colname_time = "time",
+#'   colname_group = "group"
+#' )
+#' cd_obj_grouped <- add_experiment_info(cd_obj_grouped)
 #'
 #' # Plot a feature for all groups (colored by group)
 #' plot_feature(cd_obj_grouped, feature = "Feature3")
@@ -1536,8 +1561,13 @@ setMethod("show", "CircadianData", function(object) {
 #' plot_feature(cd_obj_grouped, feature = "Feature3", group = "Treated")
 #'
 #' # --- Without a 'group' column in metadata ---
-#' meta_no_group <- meta[, "time", drop = FALSE] # Create metadata without group col
-#' cd_obj_no_group <- CircadianData(counts, meta_no_group)
+#' cd_obj_no_group <- CircadianData(
+#'   dataset = counts,
+#'   metadata = meta,
+#'   colname_sample = "rownames",
+#'   colname_time = "time"
+#' )
+#' cd_obj_no_group <- add_experiment_info(cd_obj_no_group)
 #'
 #' # Plot a feature (all points will have the same color)
 #' plot_feature(cd_obj_no_group,
@@ -1757,7 +1787,13 @@ if (FALSE) { # Don't run automatically
   )
 
   # Create object
-  cd_obj <- CircadianData(dataset = counts, metadata = meta)
+  cd_obj <- CircadianData(
+    dataset = counts,
+    metadata = meta,
+    colname_sample = "rownames",
+    colname_time = "time",
+    colname_group = "group"
+  )
   print(cd_obj)
 
   # Access data

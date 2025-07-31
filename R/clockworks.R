@@ -7,7 +7,7 @@
 #'
 #' @param cd A `CircadianData` object with added experiment info.
 #' @param method A string specifying the rhythmicity detection method to use.
-#'   Supported methods include "ARSER", "CircaN", "diffCircadian", "dryR",
+#'   Supported methods include "ARSER", "diffCircadian", "dryR",
 #'   "GeneCycle", "JTK_CYCLE", "RepeatedCircadian", "LimoRhyde" (limma or
 #'   voomLmFit), "LS" (Lomb-Scargle), "meta2d", "RAIN", and "TimeCycle".
 #' @param method_args A list of additional arguments to be passed directly to
@@ -30,7 +30,7 @@ clockworks <- function(cd,
     choices = c(
       # "auto",
       "ARSER",
-      "CircaN",
+      # "CircaN",
       "diffCircadian",
       "dryR",
       "GeneCycle",
@@ -49,32 +49,7 @@ clockworks <- function(cd,
   analyze_fn <- get((paste0("analyze_", method_str)), mode = "function")
 
   # === Ensure required experiment info is present ===
-  exp_info_required <- c(
-    "period",
-    "data_type",
-    "log_transformed",
-    "n_groups",
-    "repeated_measures",
-    "n_replicates",
-    "delta_t",
-    "n_cycles"
-  )
-  exp_info <- names(experiment_info(cd))
-  missing_info <- setdiff(exp_info_required, exp_info)
-
-  if (is.null(exp_info)) {
-    stop(
-      "Missing experiment information. Please run `add_experiment_info()` ",
-      "on your CircadianData object before running `clockworks()`."
-    )
-  } else if (length(missing_info) > 0) {
-    stop(
-      "The following information is missing from the experiment information: ",
-      paste(missing_info, collapse = ", "),
-      "\nPlease run `add_experiment_info()` or manually add the values if you ",
-      "know what you're doing."
-    )
-  }
+  validate_exp_info(cd)
 
   # === Add wave parameters if not already present ===
   w_params <- wave_params(cd)

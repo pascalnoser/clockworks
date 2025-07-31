@@ -9,15 +9,16 @@
 #' @examples
 #' data(cw_data)
 #' data(cw_metadata)
-#' cw_metadata <- clockworks::check_metadata(
-#'   cw_metadata,
+#' cd <- CircadianData(
+#'   dataset = cw_data,
+#'   metadata = cw_metadata,
 #'   colname_sample = "Sample_ID",
 #'   colname_time = "Time",
 #'   colname_group = "Group",
 #'   colname_subject = "Subject_ID"
 #' )
-#' cd <- CircadianData(cw_data, cw_metadata)
-#' cd <- clockworks:::add_experiment_info(cd, period = 24, data_type = "norm")
+#' cd <- clockworks:::add_experiment_info(cd)
+#' cd <- clockworks:::estimate_wave_params(cd)
 #' results <- clockworks:::analyze_jtkcycle(cd)
 #' head(results)
 analyze_jtkcycle <- function(cd, method_args = list()) {

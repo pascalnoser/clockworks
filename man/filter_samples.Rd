@@ -39,7 +39,15 @@ meta <- data.frame(
   subject_ID = paste0("S", rep(1:4, 2)),
   group = rep(c("Control", "Treated"), 4)
 )
-cd_obj <- CircadianData(counts, meta, experiment_info = list(period = 24))
+cd_obj <- CircadianData(
+  dataset = counts,
+  metadata = meta,
+  colname_sample = "rownames",
+  colname_time = "time",
+  colname_group = "group",
+  colname_subject = "subject_ID"
+)
+cd_obj <- add_experiment_info(cd_obj)
 
 # Filter samples belonging to the "Control" group
 cd_control <- filter_samples(cd_obj, col = "group", value = "Control")

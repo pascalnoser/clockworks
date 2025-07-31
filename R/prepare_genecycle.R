@@ -17,6 +17,13 @@ prepare_genecycle <- function(cd, grp) {
   # Filter CD object by group
   cd_filt <- filter_samples(cd, col = "group", value = grp)
 
+  # Normalise if count data
+  if (cd_filt$data_type == "count") {
+    dset <- normalise_dataset(dataset(cd_filt), group = metadata(cd_filt)$group)
+  } else {
+    dset <- dataset(cd_filt)
+  }
+
   # If there are replicates, take median
   if (replicates == TRUE) {
     t_split <- split(metadata(cd_filt), metadata(cd_filt)[["time"]])
@@ -26,14 +33,14 @@ prepare_genecycle <- function(cd, grp) {
 
     ls_meds <- lapply(t_split, function(df) {
       sample_IDs <- rownames(df)
-      df_vals <- dataset(cd_filt)[, sample_IDs]
+      df_vals <- dset[, sample_IDs]
       apply(df_vals, 1, median)
     })
 
     # Prepare data
     df_dat <- t(data.frame(ls_meds))
   } else {
-    df_dat <- t(dataset(cd_filt))
+    df_dat <- t(dset)
     timepoints <- metadata(cd_filt)[["time"]]
   }
 

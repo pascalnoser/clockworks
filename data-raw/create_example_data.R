@@ -2,11 +2,8 @@
 
 # Load example data and metadata from raw file
 cw_data <- as.matrix(read.table("data-raw/data_example.txt.gz"))
+cw_data_counts <- as.matrix(read.table("data-raw/data_example_counts.txt.gz"))
 cw_metadata <- read.csv("data-raw/metadata_example.txt.gz", sep = "\t")
-
-# Make sure columns are in wanted order (required columns first)
-cw_metadata <- cw_metadata[, c("Sample_ID", "Time", "Group", "Subject_ID")]
-
 
 # Create example CD objects for internal use ----
 ## 1) 2 Groups, 2 replicates each, repeated measures ----
@@ -187,7 +184,28 @@ cd_min <- add_experiment_info(
 cd_min <- estimate_wave_params(cd_min)
 
 
+## 9) 2 Groups, 2 replicates each, repeated measures, count data ----
+cd_full_counts <- CircadianData(
+  dataset = cw_data_counts,
+  metadata = cw_metadata,
+  colname_sample = "Sample_ID",
+  colname_time = "Time",
+  colname_group = "Group",
+  colname_subject = "Subject_ID"
+)
+
+cd_full_counts <- add_experiment_info(
+  cd_obj = cd_full_counts,
+  period = 24,
+  data_type = "count",
+  log_transformed = FALSE
+)
+
+cd_full_counts <- estimate_wave_params(cd_full_counts)
+
+
 # Save objects ----
 usethis::use_data(cw_data, overwrite = TRUE)
+usethis::use_data(cw_data_counts, overwrite = TRUE)
 usethis::use_data(cw_metadata, overwrite = TRUE)
-usethis::use_data(cd_full, cd_rpl_rpt, cd_grp_rpt, cd_rpt, cd_grp_rpl, cd_rpl, cd_grp, cd_min, overwrite = TRUE, internal = TRUE)
+usethis::use_data(cd_full, cd_rpl_rpt, cd_grp_rpt, cd_rpt, cd_grp_rpl, cd_rpl, cd_grp, cd_min, cd_full_counts, overwrite = TRUE, internal = TRUE)
