@@ -1054,8 +1054,7 @@ setMethod("$<-", "CircadianData",
 #' AMPLITUDE!
 #'
 #'
-#' @returns The `CircadianData` object frame with estimated sine wave parameters
-#'   for every feature.
+#' @returns A data frame with estimated sine wave parameters for every feature.
 estimate_wave_params <- function(cd_obj) {
   if (!inherits(cd_obj, "CircadianData")) stop("Input must be a CircadianData object.")
 
@@ -1158,14 +1157,10 @@ estimate_wave_params <- function(cd_obj) {
     return(df_res)
   })
 
-  # Add estiamted parameters to cd object
+  # Bind into data frame and return
   df_params <- do.call(rbind, ls_params)
-  wave_params(cd_obj) <- df_params
 
-  # Add original metadata back
-  metadata(cd_obj) <- mdata_orig
-
-  return(cd_obj)
+  return(df_params)
 }
 
 
