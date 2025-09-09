@@ -24,7 +24,7 @@ format_limorhyde <- function(res_original, w_params, period) {
     mesor_estimate = mesor_estimate,
     amplitude_estimate = amplitude_estimate,
     pval = res_original$P.Value,
-    qval = res_original$adj.P.Val,
+    pval_adj = res_original$adj.P.Val,
     method = "LimoRhyde"
   )
 
