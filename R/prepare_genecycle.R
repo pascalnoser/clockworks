@@ -15,7 +15,7 @@ prepare_genecycle <- function(cd, grp) {
   replicates <- ifelse(any(unlist(cd$n_replicates) > 1), TRUE, FALSE)
 
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, col = "group", value = grp)
+  cd_filt <- filter_samples(cd, group == grp)
 
   # Normalise if count data
   if (cd_filt$data_type == "count") {

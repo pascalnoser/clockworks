@@ -10,8 +10,7 @@ estimate_wave_params(cd_obj)
 \item{cd_obj}{A \code{CircadianData} object}
 }
 \value{
-The \code{CircadianData} object frame with estimated sine wave parameters
-for every feature.
+A data frame with estimated sine wave parameters for every feature.
 }
 \description{
 This function is used to get an estimate for the amplitude and phase using

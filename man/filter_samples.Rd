@@ -2,63 +2,51 @@
 % Please edit documentation in R/CircadianData.R
 \name{filter_samples}
 \alias{filter_samples}
-\alias{filter_samples,CircadianData-method}
-\title{Filter Samples by Matching Values in a Metadata Column}
+\title{Filter Samples in a CircadianData Object}
 \usage{
-filter_samples(x, col, value, ...)
-
-\S4method{filter_samples}{CircadianData}(x, col, value)
+filter_samples(cd_obj, filter_expr)
 }
 \arguments{
-\item{x}{A \code{CircadianData} object.}
+\item{cd_obj}{A \code{CircadianData} object.}
 
-\item{col}{A single character string specifying the column name in
-\code{metadata(x)} to filter by.}
-
-\item{value}{A vector of values to match against in the specified column.
-Samples where the column value is found in this vector will be kept.}
-
-\item{...}{Additional arguments (currently unused).}
+\item{filter_expr}{An expression that evaluates to a logical vector within
+the context of the object's metadata. Use column names from
+\code{metadata(cd_obj)} directly in the expression.}
 }
 \value{
-A new \code{CircadianData} object containing only the samples
-that satisfy the filter condition.
+A new \code{CircadianData} object containing only the samples that
+satisfy the \code{filter_expr}.
 }
 \description{
-Subsets a \code{CircadianData} object, keeping only samples where the value
-in a specified metadata column matches one of the provided values.
+Subsets a \code{CircadianData} object by rows of its metadata using a flexible
+filtering expression, similar to \code{dplyr::filter()}.
 }
 \examples{
-# Create minimal reproducible data
-set.seed(789)
-counts <- matrix(rpois(80, lambda = 50), nrow = 10, ncol = 8,
-                 dimnames = list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
-meta <- data.frame(
-  row.names = paste0("Sample", 1:8),
+# --- Setup ----
+counts <- matrix(rpois(80, 50), nrow=10, ncol=8,
+                 dimnames=list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
+meta_df <- data.frame(
+  sample_id = paste0("Sample", 1:8),
   time = rep(c(0, 6, 12, 18), each = 2),
-  subject_ID = paste0("S", rep(1:4, 2)),
   group = rep(c("Control", "Treated"), 4)
 )
 cd_obj <- CircadianData(
-  dataset = counts,
-  metadata = meta,
-  colname_sample = "rownames",
-  colname_time = "time",
-  colname_group = "group",
-  colname_subject = "subject_ID"
+  dataset = counts, metadata = meta_df,
+  colname_sample = "sample_id", colname_time = "time", colname_group = "group"
 )
-cd_obj <- add_experiment_info(cd_obj)
 
-# Filter samples belonging to the "Control" group
-cd_control <- filter_samples(cd_obj, col = "group", value = "Control")
+# --- Filtering Examples ---
+
+# Filter for a single group
+cd_control <- filter_samples(cd_obj, group == "Control")
 print(metadata(cd_control))
 
-# Filter samples from subject S1 or S3
-cd_s1_s3 <- filter_samples(cd_obj, col = "subject_ID", value = c("S1", "S3"))
-print(metadata(cd_s1_s3))
+# Filter for a time range
+cd_late <- filter_samples(cd_obj, time >= 12)
+print(metadata(cd_late))
 
-# Filter samples collected at time 0 or 6
-cd_t0_t6 <- filter_samples(cd_obj, col = "time", value = c(0, 6))
-print(metadata(cd_t0_t6))
+# Combine conditions
+cd_filtered <- filter_samples(cd_obj, group == "Treated" & time < 12)
+print(metadata(cd_filtered))
 
 }

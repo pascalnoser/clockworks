@@ -10,7 +10,7 @@
 #' @returns A list with inputs for `execute_rain()`
 prepare_rain <- function(cd, grp) {
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, col = "group", value = grp)
+  cd_filt <- filter_samples(cd, group == grp)
 
   # Create list with inputs for execute method
   inputs <- list(

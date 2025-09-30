@@ -10,7 +10,7 @@
 #' @returns A list with inputs for `execute_dryr()`
 prepare_dryr <- function(cd, grp) {
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, col = "group", value = grp)
+  cd_filt <- filter_samples(cd, group == grp)
 
   if (cd_filt$data_type == "norm") {
     # Data will be analysed by `f_24()`

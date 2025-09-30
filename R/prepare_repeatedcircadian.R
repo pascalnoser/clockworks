@@ -10,7 +10,7 @@
 #' @returns A list with inputs for `execute_repeatedcircadian()`
 prepare_repeatedcircadian <- function(cd, grp) {
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, col = "group", value = grp)
+  cd_filt <- filter_samples(cd, group == grp)
 
   # Normalise if count data
   if (cd_filt$data_type == "count") {

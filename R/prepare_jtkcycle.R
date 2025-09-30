@@ -12,7 +12,7 @@ prepare_jtkcycle <- function(cd, grp) {
   # TODO: Figure out what to do about `parallelize` and `nCores`
 
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, col = "group", value = grp)
+  cd_filt <- filter_samples(cd, group == grp)
 
   # Normalise if count data
   if (cd_filt$data_type == "count") {

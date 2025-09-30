@@ -1293,101 +1293,90 @@ setMethod("order_samples", "CircadianData",
 
 
 # ---- Filtering ----
-# TODO: Remove `...` param after checking that it doesn't break anything?
-#' Filter Samples by Matching Values in a Metadata Column
+#' Filter Samples in a CircadianData Object
 #'
-#' Subsets a \code{CircadianData} object, keeping only samples where the value
-#' in a specified metadata column matches one of the provided values.
+#' Subsets a `CircadianData` object by rows of its metadata using a flexible
+#' filtering expression, similar to `dplyr::filter()`.
 #'
-#' @param x A \code{CircadianData} object.
-#' @param col A single character string specifying the column name in
-#'   `metadata(x)` to filter by.
-#' @param value A vector of values to match against in the specified column.
-#'   Samples where the column value is found in this vector will be kept.
-#' @param ... Additional arguments (currently unused).
+#' @param cd_obj A \code{CircadianData} object.
+#' @param filter_expr An expression that evaluates to a logical vector within
+#'   the context of the object's metadata. Use column names from
+#'   `metadata(cd_obj)` directly in the expression.
 #'
-#' @return A new \code{CircadianData} object containing only the samples
-#'   that satisfy the filter condition.
+#' @return A new \code{CircadianData} object containing only the samples that
+#'   satisfy the `filter_expr`.
+#'
+#' @importFrom rlang enquo eval_tidy quo_text
 #' @export
-#' @rdname filter_samples
 #' @examples
-#' # Create minimal reproducible data
-#' set.seed(789)
-#' counts <- matrix(rpois(80, lambda = 50), nrow = 10, ncol = 8,
-#'                  dimnames = list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
-#' meta <- data.frame(
-#'   row.names = paste0("Sample", 1:8),
+#' # --- Setup ----
+#' counts <- matrix(rpois(80, 50), nrow=10, ncol=8,
+#'                  dimnames=list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
+#' meta_df <- data.frame(
+#'   sample_id = paste0("Sample", 1:8),
 #'   time = rep(c(0, 6, 12, 18), each = 2),
-#'   subject_ID = paste0("S", rep(1:4, 2)),
 #'   group = rep(c("Control", "Treated"), 4)
 #' )
 #' cd_obj <- CircadianData(
-#'   dataset = counts,
-#'   metadata = meta,
-#'   colname_sample = "rownames",
-#'   colname_time = "time",
-#'   colname_group = "group",
-#'   colname_subject = "subject_ID"
+#'   dataset = counts, metadata = meta_df,
+#'   colname_sample = "sample_id", colname_time = "time", colname_group = "group"
 #' )
-#' cd_obj <- add_experiment_info(cd_obj)
 #'
-#' # Filter samples belonging to the "Control" group
-#' cd_control <- filter_samples(cd_obj, col = "group", value = "Control")
+#' # --- Filtering Examples ---
+#'
+#' # Filter for a single group
+#' cd_control <- filter_samples(cd_obj, group == "Control")
 #' print(metadata(cd_control))
 #'
-#' # Filter samples from subject S1 or S3
-#' cd_s1_s3 <- filter_samples(cd_obj, col = "subject_ID", value = c("S1", "S3"))
-#' print(metadata(cd_s1_s3))
+#' # Filter for a time range
+#' cd_late <- filter_samples(cd_obj, time >= 12)
+#' print(metadata(cd_late))
 #'
-#' # Filter samples collected at time 0 or 6
-#' cd_t0_t6 <- filter_samples(cd_obj, col = "time", value = c(0, 6))
-#' print(metadata(cd_t0_t6))
+#' # Combine conditions
+#' cd_filtered <- filter_samples(cd_obj, group == "Treated" & time < 12)
+#' print(metadata(cd_filtered))
 #'
-setGeneric("filter_samples", function(x, col, value, ...) standardGeneric("filter_samples"))
+filter_samples <- function(cd_obj, filter_expr) {
+  # --- 1. Manual Type Check ---
+  # Check that cd_obj is a CircadianData object
+  if (!inherits(cd_obj, "CircadianData")) {
+    stop("'cd_obj' must be an object of class CircadianData.", call. = FALSE)
+  }
 
-#' @rdname filter_samples
-setMethod("filter_samples", "CircadianData",
-          function(x, col, value) {
+  mdata <- metadata(cd_obj)
+  if (ncol(cd_obj) == 0) return(cd_obj)
 
-            # --- Input Validation ---
-            if (missing(col) || !is.character(col) || length(col) != 1) {
-              stop("'col' must be a single character string.")
-            }
-            if (missing(value)) {
-              stop("'value' argument is missing.")
-            }
+  # --- 2. Capture and Evaluate the Expression (using rlang) ---
+  quo_filter <- rlang::enquo(filter_expr)
 
-            mdata <- metadata(x)
+  logical_vector <- tryCatch({
+    rlang::eval_tidy(quo_filter, data = mdata)
+  }, error = function(err) {
+    stop("Error evaluating 'filter_expr': ", err$message,
+         "\n  Expression was: ", rlang::quo_text(quo_filter),
+         "\n  Check that variables exist as column names in metadata.", call. = FALSE)
+  })
 
-            if (!(col %in% colnames(mdata))) {
-              stop("Column '", col, "' not found in metadata.")
-            }
+  # --- 3. Validate the Result ---
+  if (!is.logical(logical_vector)) {
+    stop("'filter_expr' did not evaluate to a logical vector.")
+  }
+  if (length(logical_vector) != nrow(mdata)) {
+    stop("Result of 'filter_expr' does not match the number of samples.")
+  }
+  logical_vector[is.na(logical_vector)] <- FALSE
 
-            # Handle case with no samples
-            if (ncol(x) == 0) {
-              warning("Object has 0 samples, returning unchanged.")
-              return(x)
-            }
+  # --- 4. Subset the Object ---
+  # We leverage the existing S4 subsetting method `[`
+  filtered_obj <- cd_obj[, logical_vector, drop = FALSE]
 
-            # --- Perform Filtering ---
-            # Use %in% for flexibility (handles single or multiple values in 'value')
-            keep_logical <- mdata[[col]] %in% value
+  # --- 5. Update experiment info ---
+  # Update e.g. number of groups and replicates. Don't accidentally
+  # change sampling interval
+  filtered_obj <- add_experiment_info(filtered_obj, estimate_delta_t = FALSE)
 
-            # Ensure NAs are FALSE
-            keep_logical[is.na(keep_logical)] <- FALSE
-
-            # --- Subset the Object ---
-            # Leverage the existing synchronized subsetting method
-            filtered_obj <- x[, keep_logical, drop = FALSE]
-
-            # --- Update experiment info ---
-            # Update e.g. number of groups and replicates. Don't accidentally
-            # change sampling interval
-            filtered_obj <- add_experiment_info(filtered_obj, estimate_delta_t = FALSE)
-
-            return(filtered_obj)
-          }
-)
+  return(filtered_obj)
+}
 
 
 # ---- Show Method ----
