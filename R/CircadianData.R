@@ -1077,7 +1077,7 @@ estimate_wave_params <- function(cd_obj) {
   # Run harmonic regression for each group separately
   ls_params <- lapply(groups, function(grp) {
     # Filter cd object
-    cd_filt <- filter_samples(cd_obj, col = "group", value =  grp)
+    cd_filt <- filter_samples(cd_obj, group == grp)
 
     # Get period
     per <- mean(cd_filt$period)
