@@ -664,7 +664,7 @@ setReplaceMethod("colnames", "CircadianData", function(x, value) {
 #' @description
 #' Subsets the object by features (rows) and/or samples (columns) using the `[`
 #' operator. This method ensures that the `dataset` and `metadata` slots remain
-#' synchronized after subsetting.
+#' synchronized after subsetting. Also updates the experiment info.
 #'
 #' @param x A \code{CircadianData} object.
 #' @param i Row indices or names (features).
@@ -730,9 +730,6 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
             # use drop = FALSE to keep data.frame structure
             new_metadata <- x@metadata[j, , drop = FALSE]
 
-            # Keep experiment_info as is (subsetting doesn't naturally apply)
-            new_experiment_info <- x@experiment_info
-
             # Only keep wave parameters for the selected features (i)
             new_wave_params <- wave_params(x)
             if (nrow(new_wave_params) > 0) {
@@ -745,15 +742,19 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
             # TODO: Only keep results of selected features
             # ...
 
-            # Create and return the new object
-            new(
+            # Create the new object
+            x_new = new(
               "CircadianData",
               dataset = new_dataset,
               metadata = new_metadata,
-              experiment_info = new_experiment_info,
               wave_params = new_wave_params,
               results = results(x)
             )
+
+            # Add experiment info
+            x_new = add_experiment_info(x_new, estimate_delta_t = TRUE)
+
+            return(x_new)
           })
 
 

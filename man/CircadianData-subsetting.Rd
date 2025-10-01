@@ -25,7 +25,7 @@ A new, subsetted \code{CircadianData} object.
 \description{
 Subsets the object by features (rows) and/or samples (columns) using the \code{[}
 operator. This method ensures that the \code{dataset} and \code{metadata} slots remain
-synchronized after subsetting.
+synchronized after subsetting. Also updates the experiment info.
 }
 \examples{
 # Sample Data
