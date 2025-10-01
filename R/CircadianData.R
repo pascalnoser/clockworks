@@ -1302,6 +1302,9 @@ setMethod("order_samples", "CircadianData",
 #' @param filter_expr An expression that evaluates to a logical vector within
 #'   the context of the object's metadata. Use column names from
 #'   `metadata(cd_obj)` directly in the expression.
+#' @param recalc_delta_t A logical value. If `TRUE`, the sampling interval
+#'   (`delta_t`) will be re-estimated from the remaining time points after
+#'   filtering. Defaults to `FALSE`.
 #'
 #' @return A new \code{CircadianData} object containing only the samples that
 #'   satisfy the `filter_expr`.
@@ -1336,7 +1339,7 @@ setMethod("order_samples", "CircadianData",
 #' cd_filtered <- filter_samples(cd_obj, group == "Treated" & time < 12)
 #' print(metadata(cd_filtered))
 #'
-filter_samples <- function(cd_obj, filter_expr) {
+filter_samples <- function(cd_obj, filter_expr, recalc_delta_t = FALSE) {
   # --- 1. Manual Type Check ---
   # Check that cd_obj is a CircadianData object
   if (!inherits(cd_obj, "CircadianData")) {
@@ -1345,6 +1348,11 @@ filter_samples <- function(cd_obj, filter_expr) {
 
   mdata <- metadata(cd_obj)
   if (ncol(cd_obj) == 0) return(cd_obj)
+
+  # Check that recalc_delta_t is logical
+  if (!is.logical(recalc_delta_t)) {
+    stop("'recalc_delta_t' must be of type logcial, not '", class(recalc_delta_t), "'.")
+  }
 
   # --- 2. Capture and Evaluate the Expression (using rlang) ---
   quo_filter <- rlang::enquo(filter_expr)
@@ -1367,13 +1375,13 @@ filter_samples <- function(cd_obj, filter_expr) {
   logical_vector[is.na(logical_vector)] <- FALSE
 
   # --- 4. Subset the Object ---
-  # We leverage the existing S4 subsetting method `[`
+  # Use the existing S4 subsetting method `[`
   filtered_obj <- cd_obj[, logical_vector, drop = FALSE]
 
   # --- 5. Update experiment info ---
-  # Update e.g. number of groups and replicates. Don't accidentally
-  # change sampling interval
-  filtered_obj <- add_experiment_info(filtered_obj, estimate_delta_t = FALSE)
+  # Update the inferred details like groups and replicates. Optionally update
+  # delta t as well.
+  filtered_obj <- add_experiment_info(filtered_obj, estimate_delta_t = recalc_delta_t)
 
   return(filtered_obj)
 }
