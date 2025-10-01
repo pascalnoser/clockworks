@@ -751,8 +751,16 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
               results = results(x)
             )
 
-            # Add experiment info
-            x_new = add_experiment_info(x_new, estimate_delta_t = TRUE)
+            # Recalculate delta t and update replicate numbers, but keep the rest
+            exp_info_old = x@experiment_info
+            x_new = add_experiment_info(
+              cd_obj = x_new,
+              period = exp_info_old$period,
+              data_type = exp_info_old$data_type,
+              log_transformed = exp_info_old$log_transformed,
+              log_base = exp_info_old$log_base,
+              estimate_delta_t = TRUE
+            )
 
             return(x_new)
           })
@@ -1305,7 +1313,7 @@ setMethod("order_samples", "CircadianData",
 #'   `metadata(cd_obj)` directly in the expression.
 #' @param recalc_delta_t A logical value. If `TRUE`, the sampling interval
 #'   (`delta_t`) will be re-estimated from the remaining time points after
-#'   filtering. Defaults to `FALSE`.
+#'   filtering. Defaults to `TRUE`.
 #'
 #' @return A new \code{CircadianData} object containing only the samples that
 #'   satisfy the `filter_expr`.
@@ -1340,7 +1348,7 @@ setMethod("order_samples", "CircadianData",
 #' cd_filtered <- filter_samples(cd_obj, group == "Treated" & time < 12)
 #' print(metadata(cd_filtered))
 #'
-filter_samples <- function(cd_obj, filter_expr, recalc_delta_t = FALSE) {
+filter_samples <- function(cd_obj, filter_expr, recalc_delta_t = TRUE) {
   # --- 1. Manual Type Check ---
   # Check that cd_obj is a CircadianData object
   if (!inherits(cd_obj, "CircadianData")) {
@@ -1376,13 +1384,15 @@ filter_samples <- function(cd_obj, filter_expr, recalc_delta_t = FALSE) {
   logical_vector[is.na(logical_vector)] <- FALSE
 
   # --- 4. Subset the Object ---
+  # Store old experiment info
+  exp_info_old <- experiment_info(cd_obj)
+
   # Use the existing S4 subsetting method `[`
+  # Note: This updates the experiment info, including delta t
   filtered_obj <- cd_obj[, logical_vector, drop = FALSE]
 
-  # --- 5. Update experiment info ---
-  # Update the inferred details like groups and replicates. Optionally update
-  # delta t as well.
-  filtered_obj <- add_experiment_info(filtered_obj, estimate_delta_t = recalc_delta_t)
+  # Optionally restore original delta t
+  experiment_info(filtered_obj)$delta_t = exp_info_old$delta_t
 
   return(filtered_obj)
 }

@@ -4,7 +4,7 @@
 \alias{filter_samples}
 \title{Filter Samples in a CircadianData Object}
 \usage{
-filter_samples(cd_obj, filter_expr, recalc_delta_t = FALSE)
+filter_samples(cd_obj, filter_expr, recalc_delta_t = TRUE)
 }
 \arguments{
 \item{cd_obj}{A \code{CircadianData} object.}
@@ -15,7 +15,7 @@ the context of the object's metadata. Use column names from
 
 \item{recalc_delta_t}{A logical value. If \code{TRUE}, the sampling interval
 (\code{delta_t}) will be re-estimated from the remaining time points after
-filtering. Defaults to \code{FALSE}.}
+filtering. Defaults to \code{TRUE}.}
 }
 \value{
 A new \code{CircadianData} object containing only the samples that
