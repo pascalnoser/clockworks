@@ -29,12 +29,20 @@ execute_limorhyde <- function(inputs, groups, method_args = list()) {
   }
 
   # Extract results
-  if (is.null(groups)) {
+  if (is.null(groups) | length(groups) == 1) {
     # Get columns
     relev_cols <- grep("time_", colnames(inputs$design), value = TRUE)
 
     # Extract statistics
     df_res <- limma::topTable(fit, coef = relev_cols, number = Inf, sort.by = "none")
+
+    # If a single group is present, add it
+    if (length(groups) == 1) {
+      df_res <- data.frame(
+        group = groups,
+        df_res
+      )
+    }
 
     # Add feature names
     df_res <- data.frame(

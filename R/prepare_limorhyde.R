@@ -13,7 +13,9 @@ prepare_limorhyde <- function(cd) {
   cd_local <- cd
 
   # Define model ----
-  if (!is.na(cd_local$n_groups)) {
+  # Include group in the model only if there are groups in the first place, and
+  # only if there is more than one
+  if (!(is.na(cd_local$n_groups) | cd_local$n_groups == 1)) {
     # Note: Add "0" to model to prevent the first group from being the
     # reference. In this case this is preferable because we are not interested
     # in differences between groups and this makes it easier to extract the
@@ -58,7 +60,7 @@ prepare_limorhyde <- function(cd) {
   # Add blocking variable ----
   if (cd_local$repeated_measures == TRUE) {
     # If we have groups, add subject ID as blocking variable
-    if (!is.na(cd_local$n_groups)) {
+    if (!(is.na(cd_local$n_groups) | cd_local$n_groups == 1)) {
       inputs$block <- metadata(cd_local)[["subject_ID"]]
     }
 

@@ -730,7 +730,22 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
             # use drop = FALSE to keep data.frame structure
             new_metadata <- x@metadata[j, , drop = FALSE]
 
+            # Reset levels for group and subject ID to prevent empty levels
+            if ("group" %in% colnames(new_metadata)) {
+              new_metadata$group = factor(new_metadata$group)
+            }
+            if ("subject_ID" %in% colnames(new_metadata)) {
+              new_metadata$subject_ID = factor(new_metadata$subject_ID)
+            }
+
             # Only keep wave parameters for the selected features (i)
+
+            # TODO: IN THE FILTERING FUNCTION I'M JUST RECALCULATING THE WAVE
+            # PARAMETERS IN THE END SO THIS PART IS KIND OF REDUNDANT. I CAN'T
+            # RECALCULATE THE WAVE PARAMS IN THIS FUNCTION, BECAUSE THAT
+            # FUNCTION CALLS THIS ONE SO AN ENDLESS LOOP IS CREATED. I COULD
+            # ALSO JUST EXPAND THE CODE BELOW TO NOT ONLY REMOVE FILTERED
+            # FEATURES BUT ALSO REMOVE UNUSED GROUPS.
             new_wave_params <- wave_params(x)
             if (nrow(new_wave_params) > 0) {
               # Note: `i` can be logical, numeric, or character. This works for all.
@@ -1086,7 +1101,12 @@ estimate_wave_params <- function(cd_obj) {
   # Run harmonic regression for each group separately
   ls_params <- lapply(groups, function(grp) {
     # Filter cd object
-    cd_filt <- filter_samples(cd_obj, group == grp)
+
+    # Note: Don't use `filter_samples()` here because that function calls this
+    # one, so an endless loop would be created
+    mdata <- metadata(cd_obj)
+    sample_filt <- rownames(mdata[mdata$group == grp, ])
+    cd_filt <- cd_obj[, sample_filt]
 
     # Get period
     per <- mean(cd_filt$period)
@@ -1393,6 +1413,9 @@ filter_samples <- function(cd_obj, filter_expr, recalc_delta_t = TRUE) {
 
   # Optionally restore original delta t
   experiment_info(filtered_obj)$delta_t = exp_info_old$delta_t
+
+  # --- 5. Recalculate wave params ---
+  wave_params(filtered_obj) <- estimate_wave_params(filtered_obj)
 
   return(filtered_obj)
 }
