@@ -10,7 +10,7 @@
 [![](https://img.shields.io/github/languages/code-size/pascalnoser/clockworks.svg)](https://github.com/pascalnoser/clockworks)
 <!-- badges: end -->
 
-<img src="man/figures/clockworks_logo_v2.png" width="200" align="right"/>
+<img src="man/figures/clockworks_logo_v2.png" width="180" align="right"/>
 
 > clockworks is an R package for streamlined rhythmicity detection in
 > time-series data. It serves as a wrapper for several popular analysis
