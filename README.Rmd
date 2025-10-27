@@ -22,7 +22,7 @@ library(badger)
 `r badge_code_size("pascalnoser/clockworks")`
 <!-- badges: end -->
 
-<img src="man/figures/clockworks_logo_v1.png" width="200" align="right"/>
+<img src="man/figures/clockworks_logo_v2.png" width="200" align="right"/>
 
 > clockworks is an R package for streamlined rhythmicity detection in time-series data. It serves as a wrapper for several popular analysis tools, eliminating the need to wrangle data into tool-specific formats or learn each method’s quirks. With simple, consistent inputs, clockworks can automatically adjust parameters based on the input data and prevent the use of methods not suited to a given dataset. In just a few lines of code, the user can easily run multiple methods, compare results, and generate basic visualizations.
 
