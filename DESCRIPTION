@@ -1,7 +1,7 @@
 Package: clockworks
 Type: Package
 Title: Rhythmicity Detection in Time Series Data
-Version: 0.2.19
+Version: 0.2.20
 Authors@R: c(
     person(
       "Pascal", "Noser",
@@ -42,7 +42,10 @@ Imports:
     HarmonicRegression,
     dryR,
     DESeq2,
-    rlang
+    rlang,
+    ggplot2,
+    dplyr,
+    tidyr
 Remotes:
     AndreaRP/CircaN,
     cran/HarmonicRegression,
