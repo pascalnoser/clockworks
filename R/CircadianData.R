@@ -1593,7 +1593,8 @@ setMethod("show", "CircadianData", function(object) {
 #' @importFrom ggplot2 scale_y_continuous labs theme_minimal theme
 #' @export
 #' @examples
-#' # TOOD: PROVIDE AN EXAMPLE
+# TODO: PROVIDE AN EXAMPLE
+# TODO: Update documentation
 plot_phase_estimates <- function(cd,
                                  n_bins = 24,
                                  n_labels = 4,
@@ -1602,7 +1603,15 @@ plot_phase_estimates <- function(cd,
                                  initial_offset = 5,
                                  step_size = 1.25,
                                  title = NULL,
+                                 add_border = TRUE,
+                                 alpha_range = c(0.05, 1),
                                  default_colour = "deepskyblue") {
+  # --- 0. Validation ---
+  # Check if 'add_border' is a single, non-NA, logical value (TRUE or FALSE)
+  if (!is.logical(add_border) || length(add_border) != 1 || is.na(add_border)) {
+    stop("The 'add_border' argument must be a single logical value (TRUE or FALSE).")
+  }
+
   # --- 1. Get harmonic regression params and period ---
   # Get params
   df_params <- wave_params(cd)
@@ -1701,57 +1710,63 @@ plot_phase_estimates <- function(cd,
   # -- Conditionally add layers and scales --
   if (has_group_col) {
     # If we have groups, MAP fill to the 'group' column
+    if (if add_border == TRUE) {
+      plt <- plt +
+        # Add coloured rings
+        geom_rect(
+          data = ring_background_df,
+          aes(ymin = ymin, ymax = ymax, fill = group),
+          xmin = -Inf,
+          xmax = Inf,
+          inherit.aes = FALSE
+        ) +
+        # Add slightly smaller white rings
+        geom_rect(
+          data = ring_background_df,
+          aes(ymin = ymin + tile_height * 0.025, ymax = ymax - tile_height * 0.025),
+          fill = "white",
+          xmin = -Inf,
+          xmax = Inf,
+          inherit.aes = FALSE
+        )
+    }
+    # Add tiles
     plt <- plt +
-      # Add coloured rings
-      geom_rect(
-        data = ring_background_df,
-        aes(ymin = ymin, ymax = ymax, fill = group),
-        xmin = -Inf,
-        xmax = Inf,
-        inherit.aes = FALSE
-      ) +
-      # Add slightly smaller white rings
-      geom_rect(
-        data = ring_background_df,
-        aes(ymin = ymin + tile_height * 0.025, ymax = ymax - tile_height * 0.025),
-        fill = "white",
-        xmin = -Inf,
-        xmax = Inf,
-        inherit.aes = FALSE
-      ) +
-      # Add tiles
       geom_tile(aes(fill = group, alpha = density), height = tile_height) +
       scale_fill_discrete(name = "Group")
 
   } else {
     # If no groups, SET fill to a static, default colour
+    if (if add_border == TRUE) {
+      plt <- plt +
+        # Add coloured rings
+        geom_rect(
+          data = ring_background_df,
+          aes(ymin = ymin, ymax = ymax),
+          fill = default_colour,
+          xmin = -Inf,
+          xmax = Inf,
+          inherit.aes = FALSE
+        ) +
+        # Add slightly smaller white rings
+        geom_rect(
+          data = ring_background_df,
+          aes(ymin = ymin + tile_height * 0.025, ymax = ymax - tile_height * 0.025),
+          fill = "white",
+          xmin = -Inf,
+          xmax = Inf,
+          inherit.aes = FALSE
+        )
+    }
+    # Add tiles
     plt <- plt +
-      # Add coloured rings
-      geom_rect(
-        data = ring_background_df,
-        aes(ymin = ymin, ymax = ymax),
-        fill = default_colour,
-        xmin = -Inf,
-        xmax = Inf,
-        inherit.aes = FALSE
-      ) +
-      # Add slightly smaller white rings
-      geom_rect(
-        data = ring_background_df,
-        aes(ymin = ymin + tile_height * 0.025, ymax = ymax - tile_height * 0.025),
-        fill = "white",
-        xmin = -Inf,
-        xmax = Inf,
-        inherit.aes = FALSE
-      ) +
-      # Add tiles
       geom_tile(aes(alpha = density), fill = default_colour, height = tile_height)
   }
 
   # --- 6. Add the common plot components that apply to both cases ---
   plt <- plt +
     coord_polar(start = -pi / n_bins) +
-    scale_alpha_continuous(range = c(0.02, 1), guide = "none") +
+    scale_alpha_continuous(range = alpha_range, guide = "none") +
     # Handle axes
     scale_x_continuous(
       breaks = plot_breaks,
