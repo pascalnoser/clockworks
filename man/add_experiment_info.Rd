@@ -16,14 +16,14 @@ add_experiment_info(
 \arguments{
 \item{cd_obj}{A \code{CircadianData} object.}
 
-\item{period}{An optional numeric vector of length 1 or 2. Defaults to 24
-if not already set.}
+\item{period}{An optional numeric vector of length 1 or 2. Defaults to 24 if
+not already set.}
 
-\item{data_type}{An optional character string specifying the data type. Must be
-one of "count" or "norm". Defaults to "norm" if not already set.}
+\item{data_type}{An optional character string specifying the data type. Must
+be one of "count" or "norm". Defaults to "norm" if not already set.}
 
-\item{log_transformed}{An optional logical value (\code{TRUE}/\code{FALSE}). Defaults to
-\code{FALSE} if not already set.}
+\item{log_transformed}{An optional logical value (\code{TRUE}/\code{FALSE}). Defaults
+to \code{FALSE} if not already set.}
 
 \item{log_base}{An optional single numeric value specifying the base of the
 logarithm. Defaults to 2 if \code{log_transformed} is \code{TRUE} and no base is set.}
@@ -39,29 +39,8 @@ This function populates or updates the \code{experiment_info} slot of a
 \code{CircadianData} object with parameters required for downstream analysis.
 }
 \details{
-On the first call, core parameters can be omitted to use sensible defaults
-(e.g., \code{period = 24}, \code{data_type = "norm"}). Subsequent calls will use values
-already stored in the object unless explicitly provided again to be overwritten.
-}
-\examples{
-# --- Setup ----
-counts <- matrix(rpois(80, 50), nrow=10, ncol=8,
-                 dimnames=list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
-meta_df <- data.frame(
-  sample_id = paste0("Sample", 1:8),
-  time = rep(c(0,6,12,18), each=2)
-)
-cd_obj <- CircadianData(
-  dataset = counts, metadata = meta_df,
-  colname_sample = "sample_id", colname_time = "time"
-)
-
-# --- Configuration using defaults ----
-# We only need to provide the required 'cd_obj' argument.
-cd_configured <- add_experiment_info(cd_obj)
-
-# Check the configured values
-experiment_info(cd_configured)$period # Should be 24
-experiment_info(cd_configured)$log_transformed # Should be FALSE
-experiment_info(cd_configured)$data_type # Should be "norm"
+On the first call, core parameters can be omitted to use sensible
+defaults (e.g., \code{period = 24}, \code{data_type = "norm"}). Subsequent calls will
+use values already stored in the object unless explicitly provided again to
+be overwritten.
 }

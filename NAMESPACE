@@ -3,7 +3,6 @@
 export("cd_results<-")
 export("experiment_info<-")
 export(CircadianData)
-export(add_experiment_info)
 export(cd_results)
 export(check_dataset)
 export(check_metadata)

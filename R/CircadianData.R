@@ -1,3 +1,6 @@
+# TODO: Change most S4 functions to regular functions
+
+
 # ---- Class definition ----
 
 #' Define the CircadianData Class
@@ -138,6 +141,18 @@ setValidity("CircadianData", function(object) {
 #' @param colname_subject An optional character string specifying the name of
 #'   the column in `metadata` containing subject IDs for repeated measures
 #'   designs.
+#' @param period A numeric vector of length 1 or 2 specifying the period range
+#'   of interest. If `clockworks()` is ran with a method that requires a single
+#'   value and `period` is a vector of length 2, the mean value will be used.
+#'   Defaults to 24.
+#' @param data_type A character string specifying the data type. Must be one of
+#'   "count" or "norm". Defaults to "norm" if not already set.
+#' @param log_transformed A logical value specifying if the input data is
+#'   log-transformed. This has no influence on the rhythmicity analysis itself
+#'   but is used to calculate the relative amplitude in the original scale of
+#'   the data. Defaults to `FALSE`.
+#' @param log_base A single numeric value specifying the base of the logarithm.
+#'   Defaults to 2 if `log_transformed` is `TRUE` and no base is specified.
 #'
 #' @return A valid `CircadianData` object.
 #' @export
@@ -170,7 +185,11 @@ CircadianData <- function(dataset,
                           colname_sample,
                           colname_time,
                           colname_group = NULL,
-                          colname_subject = NULL) {
+                          colname_subject = NULL,
+                          period = 24,
+                          data_type = "norm",
+                          log_transformed = FALSE,
+                          log_base = NULL) {
 
   # === 1. Metadata Processing and Validation ===
   ## -- 1.1 Check if metadata is a data.frame --
@@ -375,6 +394,20 @@ CircadianData <- function(dataset,
     stop("Failed to create CircadianData object. Please check the following error(s):\n",
          e, call. = FALSE)
   })
+
+  # === 5. Add Experiment Info ===
+  cd_obj <- add_experiment_info(
+    cd_obj = cd_obj,
+    period = period,
+    data_type = data_type,
+    log_transformed = log_transformed,
+    log_base = log_base,
+    estimate_delta_t = TRUE
+  )
+
+  # Validate info
+  # TODO: Should I run this here or just in `clockworks()`?
+  validate_exp_info(cd_obj)
 
   return(cd_obj)
 }
@@ -807,46 +840,24 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
 #' This function populates or updates the `experiment_info` slot of a
 #' `CircadianData` object with parameters required for downstream analysis.
 #'
-#' @details
-#' On the first call, core parameters can be omitted to use sensible defaults
-#' (e.g., `period = 24`, `data_type = "norm"`). Subsequent calls will use values
-#' already stored in the object unless explicitly provided again to be overwritten.
+#' @details On the first call, core parameters can be omitted to use sensible
+#' defaults (e.g., `period = 24`, `data_type = "norm"`). Subsequent calls will
+#' use values already stored in the object unless explicitly provided again to
+#' be overwritten.
 #'
 #' @param cd_obj A \code{CircadianData} object.
-#' @param period An optional numeric vector of length 1 or 2. Defaults to 24
-#'   if not already set.
-#' @param data_type An optional character string specifying the data type. Must be
-#'   one of "count" or "norm". Defaults to "norm" if not already set.
-#' @param log_transformed An optional logical value (`TRUE`/`FALSE`). Defaults to
-#'   `FALSE` if not already set.
+#' @param period An optional numeric vector of length 1 or 2. Defaults to 24 if
+#'   not already set.
+#' @param data_type An optional character string specifying the data type. Must
+#'   be one of "count" or "norm". Defaults to "norm" if not already set.
+#' @param log_transformed An optional logical value (`TRUE`/`FALSE`). Defaults
+#'   to `FALSE` if not already set.
 #' @param log_base An optional single numeric value specifying the base of the
 #'   logarithm. Defaults to 2 if `log_transformed` is `TRUE` and no base is set.
 #' @param estimate_delta_t A logical value. If `TRUE` (default), the sampling
 #'   interval (`delta_t`) will be automatically estimated.
 #'
 #' @return A \code{CircadianData} object with an updated `experiment_info` slot.
-#' @export
-#' @examples
-#' # --- Setup ----
-#' counts <- matrix(rpois(80, 50), nrow=10, ncol=8,
-#'                  dimnames=list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
-#' meta_df <- data.frame(
-#'   sample_id = paste0("Sample", 1:8),
-#'   time = rep(c(0,6,12,18), each=2)
-#' )
-#' cd_obj <- CircadianData(
-#'   dataset = counts, metadata = meta_df,
-#'   colname_sample = "sample_id", colname_time = "time"
-#' )
-#'
-#' # --- Configuration using defaults ----
-#' # We only need to provide the required 'cd_obj' argument.
-#' cd_configured <- add_experiment_info(cd_obj)
-#'
-#' # Check the configured values
-#' experiment_info(cd_configured)$period # Should be 24
-#' experiment_info(cd_configured)$log_transformed # Should be FALSE
-#' experiment_info(cd_configured)$data_type # Should be "norm"
 add_experiment_info <- function(cd_obj, period = NULL, data_type = NULL,
                                 log_transformed = NULL, log_base = NULL,
                                 estimate_delta_t = TRUE) {
@@ -1095,8 +1106,8 @@ setMethod("$<-", "CircadianData",
 #'
 #' @details
 #' The returned parameters correspond to the model \deqn{y = M + A
-#' cos(\frac{2\pi}{T} (t - \phi))} With \eqn{M} the mesor, \eqn{A} the
-#' amplitude, \eqn{T} the period, \eqn{t} the time and \eqn{\phi} the phase in
+#' cos(\frac{2\pi}{T} (t - \varphi))} With \eqn{M} the mesor, \eqn{A} the
+#' amplitude, \eqn{T} the period, \eqn{t} the time and \eqn{\varphi} the phase in
 #' the same units as \eqn{t} (e.g. hours).
 #'
 #' @returns A data frame with estimated sine wave parameters for every feature.

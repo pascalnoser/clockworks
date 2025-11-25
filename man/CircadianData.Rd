@@ -10,7 +10,11 @@ CircadianData(
   colname_sample,
   colname_time,
   colname_group = NULL,
-  colname_subject = NULL
+  colname_subject = NULL,
+  period = 24,
+  data_type = "norm",
+  log_transformed = FALSE,
+  log_base = NULL
 )
 }
 \arguments{
@@ -34,6 +38,22 @@ column in \code{metadata} that contains group information.}
 \item{colname_subject}{An optional character string specifying the name of
 the column in \code{metadata} containing subject IDs for repeated measures
 designs.}
+
+\item{period}{A numeric vector of length 1 or 2 specifying the period range
+of interest. If \code{clockworks()} is ran with a method that requires a single
+value and \code{period} is a vector of length 2, the mean value will be used.
+Defaults to 24.}
+
+\item{data_type}{A character string specifying the data type. Must be one of
+"count" or "norm". Defaults to "norm" if not already set.}
+
+\item{log_transformed}{A logical value specifying if the input data is
+log-transformed. This has no influence on the rhythmicity analysis itself
+but is used to calculate the relative amplitude in the original scale of
+the data. Defaults to \code{FALSE}.}
+
+\item{log_base}{A single numeric value specifying the base of the logarithm.
+Defaults to 2 if \code{log_transformed} is \code{TRUE} and no base is specified.}
 }
 \value{
 A valid \code{CircadianData} object.

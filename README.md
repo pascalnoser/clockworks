@@ -6,11 +6,11 @@
 <!-- badges: start -->
 
 [![](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![](https://img.shields.io/badge/devel%20version-0.2.20-blue.svg)](https://github.com/pascalnoser/clockworks)
+[![](https://img.shields.io/badge/devel%20version-0.2.21-blue.svg)](https://github.com/pascalnoser/clockworks)
 [![](https://img.shields.io/github/languages/code-size/pascalnoser/clockworks.svg)](https://github.com/pascalnoser/clockworks)
 <!-- badges: end -->
 
-<img src="man/figures/clockworks_logo_v2.png" width="180" align="right"/>
+<img src="man/figures/clockworks_logo_v2.png" width="150" align="right"/>
 
 > clockworks is an R package for streamlined rhythmicity detection in
 > time-series data. It serves as a wrapper for several popular analysis
@@ -51,22 +51,37 @@ library(clockworks)
 data("cw_data")
 data("cw_metadata")
 
+# The input data is a matrix or data frame with feature IDs as row names
+print(cw_data[1:5, 1:5])
+#>          CT00_S1  CT00_S2  CT00_S3  CT00_S4  CT02_S1
+#> Gene_01 3.541119 3.632892 3.650497 3.639091 3.726633
+#> Gene_02 4.450808 4.317536 4.467017 4.353382 5.404408
+#> Gene_03 4.984153 8.497662 4.629792 6.002132 6.263176
+#> Gene_04 6.411975 6.667066 6.987838 5.369700 5.014173
+#> Gene_05 5.618924 6.541327 7.519745 5.659031 3.111079
+
+# The meta data requires a column with sample IDs corresponding to 
+# the row names of the data and a column containing the time
+print(head(cw_metadata))
+#>   Sample_ID Time Group Subject_ID
+#> 1   CT00_S1    0     A         S1
+#> 2   CT00_S2    0     A         S2
+#> 3   CT00_S3    0     B         S3
+#> 4   CT00_S4    0     B         S4
+#> 5   CT02_S1    2     A         S1
+#> 6   CT02_S2    2     A         S2
+
 # Create CircadianData object
 cd_obj = CircadianData(
   dataset = cw_data,
   metadata = cw_metadata,
   colname_sample = "Sample_ID",
   colname_time = "Time",
-  colname_group = "Group"
+  colname_group = "Group",
+  period = 24
 )
 #> 
 #> The following columns in `metadata` will be ignored: Subject_ID
-
-# Add necessary experiment info. Using default values
-cd_obj = add_experiment_info(cd_obj)
-#> `period` not provided. Using default value of 24.
-#> `data_type` not provided. Using default value of 'norm'.
-#> `log_transformed` not provided. Using default value of FALSE.
 
 # Look at object before running analysis
 print(cd_obj)
@@ -184,6 +199,8 @@ methods. Furthermore, the results of a harmonic regression are also
 included in this output, allowing for a quick comparison of the
 estimated parameters to those of a simple sine wave fit. The harmonic
 regression used is equivalent to the model
-$y = M + A \sin(\frac{2 \pi}{P}(t + \phi))$ with $M$ the mesor, $A$ the
-amplitude, $t$ the time (e.g. in hours), and $P$ and $\phi$ the period
-and phase in the same units as $t$.
+$y = M + A \cos(\frac{2 \pi}{T}(t - \varphi))$ with $M$ the mesor, $A$
+the amplitude, $t$ the time (e.g. in hours), and $T$ and $\phi$ the
+period and phase in the same units as $t$. This model was chosen because
+the value of $\varphi$ corresponds to the time point of the peak of the
+fitted wave.

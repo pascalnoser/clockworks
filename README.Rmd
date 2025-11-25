@@ -22,7 +22,7 @@ library(badger)
 `r badge_code_size("pascalnoser/clockworks")`
 <!-- badges: end -->
 
-<img src="man/figures/clockworks_logo_v2.png" width="180" align="right"/>
+<img src="man/figures/clockworks_logo_v2.png" width="150" align="right"/>
 
 > clockworks is an R package for streamlined rhythmicity detection in time-series data. It serves as a wrapper for several popular analysis tools, eliminating the need to wrangle data into tool-specific formats or learn each method’s quirks. With simple, consistent inputs, clockworks can automatically adjust parameters based on the input data and prevent the use of methods not suited to a given dataset. In just a few lines of code, the user can easily run multiple methods, compare results, and generate basic visualizations.
 
@@ -48,17 +48,22 @@ library(clockworks)
 data("cw_data")
 data("cw_metadata")
 
+# The input data is a matrix or data frame with feature IDs as row names
+print(cw_data[1:5, 1:5])
+
+# The meta data requires a column with sample IDs corresponding to 
+# the row names of the data and a column containing the time
+print(head(cw_metadata))
+
 # Create CircadianData object
 cd_obj = CircadianData(
   dataset = cw_data,
   metadata = cw_metadata,
   colname_sample = "Sample_ID",
   colname_time = "Time",
-  colname_group = "Group"
+  colname_group = "Group",
+  period = 24
 )
-
-# Add necessary experiment info. Using default values
-cd_obj = add_experiment_info(cd_obj)
 
 # Look at object before running analysis
 print(cd_obj)
@@ -74,4 +79,4 @@ head(res$RAIN$res_formatted)
 head(res$JTK_CYCLE$res_formatted)
 ```
 
-The column names in the formatted output follow the same pattern for all methods. Furthermore, the results of a harmonic regression are also included in this output, allowing for a quick comparison of the estimated parameters to those of a simple sine wave fit. The harmonic regression used is equivalent to the model $y = M + A \sin(\frac{2 \pi}{P}(t + \phi))$ with $M$ the mesor, $A$ the amplitude, $t$ the time (e.g. in hours), and $P$ and $\phi$ the period and phase in the same units as $t$.
+The column names in the formatted output follow the same pattern for all methods. Furthermore, the results of a harmonic regression are also included in this output, allowing for a quick comparison of the estimated parameters to those of a simple sine wave fit. The harmonic regression used is equivalent to the model $y = M + A \cos(\frac{2 \pi}{T}(t - \varphi))$ with $M$ the mesor, $A$ the amplitude, $t$ the time (e.g. in hours), and $T$ and $\phi$ the period and phase in the same units as $t$. This model was chosen because the value of $\varphi$ corresponds to the time point of the peak of the fitted wave.
