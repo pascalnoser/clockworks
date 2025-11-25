@@ -75,7 +75,7 @@ clockworks <- function(cd,
   rhythmicity_results <- analyze_fn(cd, method_args)
 
   # Add to CD object
-  results(cd)[[method]] <- rhythmicity_results
+  cd_results(cd)[[method]] <- rhythmicity_results
 
   return(cd)
 }

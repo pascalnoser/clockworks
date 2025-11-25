@@ -7,7 +7,7 @@
 #'   `dryR::dryseq_single`
 #'
 #' @importFrom dryR f_24 dryseq_single
-#' @importFrom DESeq2 DESeqDataSetFromMatrix DESeq
+#' @importFrom DESeq2 DESeqDataSetFromMatrix DESeq results counts
 #'
 #' @returns A data frame
 execute_dryr <- function(inputs, grp, method_args = list()) {

@@ -69,7 +69,7 @@ cd_obj = clockworks(cd_obj, method = "RAIN")
 cd_obj = clockworks(cd_obj, method = "JTK_CYCLE")
 
 # Show results
-res = results(cd_obj)
+res = cd_results(cd_obj)
 head(res$RAIN$res_formatted)
 head(res$JTK_CYCLE$res_formatted)
 ```

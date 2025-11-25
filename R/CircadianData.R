@@ -400,7 +400,7 @@ CircadianData <- function(dataset,
 #'   \item \code{metadata()}: Retrieves the sample x attribute data.frame.
 #'   \item \code{experiment_info()}: Retrieves the list of experiment-level details.
 #'   \item \code{wave_params()}: Retrieves the list of estimated sine wave parameters.
-#'   \item \code{results()}: Retrieves the list of analysis results.
+#'   \item \code{cd_results()}: Retrieves the list of analysis results.
 #' }
 #'
 #' @return The requested component (for accessors) or the modified
@@ -478,24 +478,43 @@ setReplaceMethod("experiment_info", "CircadianData", function(x, value) {
 
 ## ---- Results Accessor/Replacement ----
 
-#' @rdname CircadianData-accessors
+# TODO: Get rid of this S4 generic version once I'm sure it's safe
+#' #' @rdname CircadianData-accessors
+#' #' @export
+#' setGeneric("results", function(x) standardGeneric("results"))
+#'
+#' #' @rdname CircadianData-accessors
+#' setMethod("results", "CircadianData", function(x) x@results)
+#'
+#' #' @rdname CircadianData-accessors
+#' #' @export
+#' setGeneric("results<-", function(x, value) standardGeneric("results<-"))
+#'
+#' #' @rdname CircadianData-accessors
+#' setReplaceMethod("results", "CircadianData", function(x, value) {
+#'   if (!is.list(value)) stop("'value' must be a list.")
+#'   x@results <- value
+#'   validObject(x)
+#'   x
+#' })
+
+#' Access or modify the results of a CircadianData object
+#'
+#' @param x A `CircadianData` object.
+#' @param value A list to assign as results.
+#'
+#' @return A list (`cd_results`) or a modified `CircadianData` object (`cd_results<-`).
 #' @export
-setGeneric("results", function(x) standardGeneric("results"))
+cd_results <- function(x) x@results
 
-#' @rdname CircadianData-accessors
-setMethod("results", "CircadianData", function(x) x@results)
-
-#' @rdname CircadianData-accessors
+#' @rdname cd_results
 #' @export
-setGeneric("results<-", function(x, value) standardGeneric("results<-"))
-
-#' @rdname CircadianData-accessors
-setReplaceMethod("results", "CircadianData", function(x, value) {
+`cd_results<-` <- function(x, value) {
   if (!is.list(value)) stop("'value' must be a list.")
   x@results <- value
   validObject(x)
   x
-})
+}
 
 
 ## ---- Wave params Accessor/Replacement ----
@@ -763,7 +782,7 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
               dataset = new_dataset,
               metadata = new_metadata,
               wave_params = new_wave_params,
-              results = results(x)
+              results = cd_results(x)
             )
 
             # Recalculate delta t and update replicate numbers, but keep the rest
@@ -1063,6 +1082,7 @@ setMethod("$<-", "CircadianData",
 
 # TODO: Probably export this function in case someone doesn't want to use the
 # package for rhythmicity detection but just for plotting
+# TODO: Explain stuff about relative amplitude
 
 #' Estimating sine Wave Parameters
 #'
@@ -1075,11 +1095,9 @@ setMethod("$<-", "CircadianData",
 #'
 #' @details
 #' The returned parameters correspond to the model \deqn{y = M + A
-#' sin(\frac{2\pi}{p} (t + \phi))} With \eqn{M} the mesor, \eqn{A} the
-#' amplitude, \eqn{p} the period, \eqn{t} the time and \eqn{\phi} the phase in
-#' the same units as \eqn{t} (e.g. hours). EXPLAIN STUFF ABOUT RELATIVE
-#' AMPLITUDE!
-#'
+#' cos(\frac{2\pi}{T} (t - \phi))} With \eqn{M} the mesor, \eqn{A} the
+#' amplitude, \eqn{T} the period, \eqn{t} the time and \eqn{\phi} the phase in
+#' the same units as \eqn{t} (e.g. hours).
 #'
 #' @returns A data frame with estimated sine wave parameters for every feature.
 estimate_wave_params <- function(cd_obj) {
@@ -1124,10 +1142,15 @@ estimate_wave_params <- function(cd_obj) {
       trend.degree = 1  # TODO: make this a variable
     )
 
-    # Get phase estimate in hours.`harmonic.regression()` uses a cosine, but I
-    # tend to think of sine waves. Amplitude and mesor stay the same, but the
-    # phase is shifted by -pi/2 in radians, so by -period/4 in hours. Using the
-    # modulo operator negative phase values "wrap" around and become positive.
+    # Get phase estimate in hours.`harmonic.regression()` uses a cosine, but the
+    # phase estimate can easily be converted to that of a sine function.
+    # Amplitude and mesor stay the same, but the phase is shifted by -pi/2 in
+    # radians, so by -period/4 in hours. Using the modulo operator negative
+    # phase values "wrap" around and become positive. Note that the resulting
+    # phase estimates in hours result in identical for the two following models
+    # (note the difference in - and +)
+    # y = M + A * cos(2 * pi / T * (t - phi))
+    # y = M + A * sin(2 * pi / T * (t + phi))
     phase_estimate_rad <- res_harm$pars$phi
     phase_estimate_h_cos <- phase_estimate_rad * per / (2 * pi)
     phase_estimate_h_sin <- (-1 * (phase_estimate_h_cos - per / 4)) %% per
@@ -1136,7 +1159,7 @@ estimate_wave_params <- function(cd_obj) {
     df_res = data.frame(
       feature = row.names(res_harm$pars),
       period = per,
-      phase_estimate = phase_estimate_h_sin
+      phase_estimate = phase_estimate_h_cos
     )
 
     # Add mesor and amplitude estimates
@@ -1318,7 +1341,7 @@ setMethod("order_samples", "CircadianData",
                 metadata = new_metadata,
                 experiment_info = experiment_info(x),
                 wave_params = wave_params(x),
-                results = results(x)
+                results = cd_results(x)
             )
           }
 )
@@ -1526,7 +1549,7 @@ setMethod("show", "CircadianData", function(object) {
 
   # --- Results Info ---
   cat("\nResults:\n")
-  res <- results(object)
+  res <- cd_results(object)
   if (length(res) > 0) {
     cat(" Stored results for:", paste(names(res), collapse=", "), "\n")
   } else {
@@ -1592,7 +1615,6 @@ setMethod("show", "CircadianData", function(object) {
 #' @importFrom ggplot2 coord_polar scale_alpha_continuous scale_x_continuous
 #' @importFrom ggplot2 scale_y_continuous labs theme_minimal theme
 #' @export
-#' @examples
 # TODO: PROVIDE AN EXAMPLE
 # TODO: Update documentation
 plot_phase_estimates <- function(cd,
@@ -1624,7 +1646,7 @@ plot_phase_estimates <- function(cd,
   }
 
   # --- 2. p-value filtering ---
-  res_methods <- names(results(cd))
+  res_methods <- names(cd_results(cd))
 
   if (pval_adj_cutoff < 1 & is.na(method)) {
     if (length(res_methods) == 1) {
@@ -1644,7 +1666,7 @@ plot_phase_estimates <- function(cd,
       message("Method ", method, " not in results. Ignoring significance cutoff.")
     } else {
       # Get results
-      df_res <- results(cd)[[method]]$res_formatted
+      df_res <- cd_results(cd)[[method]]$res_formatted
       # Filter by adjusted p-value
       df_res <- df_res[df_res$pval_adj < pval_adj_cutoff, ]
       # Filter wave params data frame
@@ -1710,7 +1732,7 @@ plot_phase_estimates <- function(cd,
   # -- Conditionally add layers and scales --
   if (has_group_col) {
     # If we have groups, MAP fill to the 'group' column
-    if (if add_border == TRUE) {
+    if (add_border == TRUE) {
       plt <- plt +
         # Add coloured rings
         geom_rect(
@@ -1737,7 +1759,7 @@ plot_phase_estimates <- function(cd,
 
   } else {
     # If no groups, SET fill to a static, default colour
-    if (if add_border == TRUE) {
+    if (add_border == TRUE) {
       plt <- plt +
         # Add coloured rings
         geom_rect(
@@ -2018,7 +2040,7 @@ setMethod("plot_feature", "CircadianData",
                   mesor <- w_params_grp$mesor_estimate
                   amp <- w_params_grp$amplitude_estimate
 
-                  wave_vals <- mesor + amp * sin((2*pi/per) * (wave_time + phase))
+                  wave_vals <- mesor + amp * cos((2*pi/per) * (wave_time - phase))
 
                   # Add the line to the plot
                   graphics::lines(wave_time, wave_vals, col = bgs[[grp]])
@@ -2035,7 +2057,7 @@ setMethod("plot_feature", "CircadianData",
                 mesor <- w_params$mesor_estimate
                 amp <- w_params$amplitude_estimate
 
-                wave_vals <- mesor + amp * sin((2*pi/per) * (wave_time + phase))
+                wave_vals <- mesor + amp * cos((2*pi/per) * (wave_time - phase))
 
                 # Add the line to the plot
                 graphics::lines(wave_time, wave_vals, col = final_args$bg)

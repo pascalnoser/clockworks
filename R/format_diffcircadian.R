@@ -29,6 +29,9 @@ format_diffcircadian <- function(res_original,
       p.adjust(p, method = "BH")
   )
 
+  # Convert phase estimate to cosine parametrisation
+  phase_cos <- (-1 * res_original$phase + period / 4) %% period
+
   # # Get relative amplitude. If data is log-transformed, calculate relative
   # # amplitude in linear scale
   # if (log_transformed == FALSE) {
@@ -43,7 +46,7 @@ format_diffcircadian <- function(res_original,
     feature = res_original$feature,
     group = res_original$group,
     period_estimate = period,
-    phase_estimate = res_original$phase,
+    phase_estimate = phase_cos,
     mesor_estimate = res_original$offset,
     amplitude_estimate = res_original$amp,
     # relative_amplitude_estimate = rel_amp,

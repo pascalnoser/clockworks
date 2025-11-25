@@ -18,8 +18,6 @@
 \alias{metadata<-,CircadianData-method}
 \alias{experiment_info,CircadianData-method}
 \alias{experiment_info<-,CircadianData-method}
-\alias{results,CircadianData-method}
-\alias{results<-,CircadianData-method}
 \alias{wave_params,CircadianData-method}
 \alias{wave_params<-,CircadianData-method}
 \title{Access or Replace Object Components}
@@ -47,14 +45,6 @@ experiment_info(x)
 experiment_info(x) <- value
 
 \S4method{experiment_info}{CircadianData}(x) <- value
-
-results(x)
-
-\S4method{results}{CircadianData}(x)
-
-results(x) <- value
-
-\S4method{results}{CircadianData}(x) <- value
 
 wave_params(x)
 
@@ -86,6 +76,6 @@ data.frame, experiment_info list, and results list.
 \item \code{metadata()}: Retrieves the sample x attribute data.frame.
 \item \code{experiment_info()}: Retrieves the list of experiment-level details.
 \item \code{wave_params()}: Retrieves the list of estimated sine wave parameters.
-\item \code{results()}: Retrieves the list of analysis results.
+\item \code{cd_results()}: Retrieves the list of analysis results.
 }
 }

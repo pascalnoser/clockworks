@@ -24,7 +24,7 @@ cd_full <- add_experiment_info(
   log_base = 2
 )
 
-cd_full <- estimate_wave_params(cd_full)
+wave_params(cd_full) <- estimate_wave_params(cd_full)
 
 
 ## 2) No groups, 2 replicates, repeated measures ----
@@ -47,7 +47,7 @@ cd_rpl_rpt <- add_experiment_info(
   log_base = 2
 )
 
-cd_rpl_rpt <- estimate_wave_params(cd_rpl_rpt)
+wave_params(cd_rpl_rpt) <- estimate_wave_params(cd_rpl_rpt)
 
 
 ## 3) 2 Groups, no replicates, repeated measures ----
@@ -71,7 +71,7 @@ cd_grp_rpt <- add_experiment_info(
   log_base = 2
 )
 
-cd_grp_rpt <- estimate_wave_params(cd_grp_rpt)
+wave_params(cd_grp_rpt) <- estimate_wave_params(cd_grp_rpt)
 
 
 ## 4) No Groups, no replicates, repeated measures ----
@@ -94,7 +94,7 @@ cd_rpt <- add_experiment_info(
   log_base = 2
 )
 
-cd_rpt <- estimate_wave_params(cd_rpt)
+wave_params(cd_rpt) <- estimate_wave_params(cd_rpt)
 
 
 ## 5) 2 Groups, 2 replicates each, no repeated measures ----
@@ -114,7 +114,7 @@ cd_grp_rpl <- add_experiment_info(
   log_base = 2
 )
 
-cd_grp_rpl <- estimate_wave_params(cd_grp_rpl)
+wave_params(cd_grp_rpl) <- estimate_wave_params(cd_grp_rpl)
 
 
 ## 6) No groups, 2 replicates, no repeated measures ----
@@ -136,7 +136,7 @@ cd_rpl <- add_experiment_info(
   log_base = 2
 )
 
-cd_rpl <- estimate_wave_params(cd_rpl)
+wave_params(cd_rpl) <- estimate_wave_params(cd_rpl)
 
 
 ## 7) 2 groups, no replicates, no repeated measures ----
@@ -159,7 +159,7 @@ cd_grp <- add_experiment_info(
   log_base = 2
 )
 
-cd_grp <- estimate_wave_params(cd_grp)
+wave_params(cd_grp) <- estimate_wave_params(cd_grp)
 
 
 ## 8) No groups, no replicates, no repeated measures ----
@@ -181,7 +181,7 @@ cd_min <- add_experiment_info(
   log_base = 2
 )
 
-cd_min <- estimate_wave_params(cd_min)
+wave_params(cd_min) <- estimate_wave_params(cd_min)
 
 
 ## 9) 2 Groups, 2 replicates each, repeated measures, count data ----
@@ -201,7 +201,7 @@ cd_full_counts <- add_experiment_info(
   log_transformed = FALSE
 )
 
-cd_full_counts <- estimate_wave_params(cd_full_counts)
+wave_params(cd_full_counts) <- estimate_wave_params(cd_full_counts)
 
 
 # Save objects ----

@@ -49,7 +49,7 @@ format_ls <- function(ls_res_groups,
     feature = df_ls$CycID,
     group = df_ls$group,
     period_estimate = df_meta$LS_period,
-    phase_estimate = df_meta$LS_adjphase,
+    phase_estimate = df_meta$LS_adjphase,  # Just original value modulo period
     # mesor_estimate = df_meta$meta2d_Base,
     # amplitude_estimate = df_meta$meta2d_AMP,  # Note: The LS_amplitude seems to be influenced by both the mesor and amplitude
     # relative_amplitude_estimate = rel_amp,

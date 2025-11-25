@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 [![](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![](https://img.shields.io/badge/devel%20version-0.2.18-blue.svg)](https://github.com/pascalnoser/clockworks)
+[![](https://img.shields.io/badge/devel%20version-0.2.20-blue.svg)](https://github.com/pascalnoser/clockworks)
 [![](https://img.shields.io/github/languages/code-size/pascalnoser/clockworks.svg)](https://github.com/pascalnoser/clockworks)
 <!-- badges: end -->
 
@@ -132,7 +132,7 @@ cd_obj = clockworks(cd_obj, method = "RAIN")
 cd_obj = clockworks(cd_obj, method = "JTK_CYCLE")
 
 # Show results
-res = results(cd_obj)
+res = cd_results(cd_obj)
 head(res$RAIN$res_formatted)
 #>   feature group period_estimate         pval     pval_adj method hr_period
 #> 1 Gene_01     A              24 5.280247e-32 5.280247e-31   RAIN        24
@@ -142,12 +142,12 @@ head(res$RAIN$res_formatted)
 #> 5 Gene_05     A              24 8.537546e-01 8.537546e-01   RAIN        24
 #> 6 Gene_06     A              24 2.138942e-02 7.129806e-02   RAIN        24
 #>   hr_phase_estimate hr_mesor_estimate hr_amplitude_estimate
-#> 1         18.590995          4.301432             0.7053057
-#> 2         23.538206          4.576863             1.4168445
-#> 3         16.080008          5.886923             0.4085035
-#> 4          5.517804          6.297386             0.4843375
-#> 5         16.694614          6.056194             0.1668934
-#> 6         23.679859          6.025998             0.3418065
+#> 1        11.4090051          4.301432             0.7053057
+#> 2         6.4617936          4.576863             1.4168445
+#> 3        13.9199917          5.886923             0.4085035
+#> 4         0.4821957          6.297386             0.4843375
+#> 5        13.3053857          6.056194             0.1668934
+#> 6         6.3201412          6.025998             0.3418065
 #>   hr_relative_amplitude_estimate
 #> 1                     0.16396996
 #> 2                     0.30956671
@@ -164,12 +164,12 @@ head(res$JTK_CYCLE$res_formatted)
 #> 5 Gene_05     A              24             12          0.2693553 1.000000e+00
 #> 6 Gene_06     A              24              7          0.2975580 5.159350e-01
 #>       pval_adj    method hr_period hr_phase_estimate hr_mesor_estimate
-#> 1 1.096605e-29 JTK_CYCLE        24         18.590995          4.301432
-#> 2 2.546176e-26 JTK_CYCLE        24         23.538206          4.576863
-#> 3 1.000000e+00 JTK_CYCLE        24         16.080008          5.886923
-#> 4 1.000000e+00 JTK_CYCLE        24          5.517804          6.297386
-#> 5 1.000000e+00 JTK_CYCLE        24         16.694614          6.056194
-#> 6 1.000000e+00 JTK_CYCLE        24         23.679859          6.025998
+#> 1 1.096605e-29 JTK_CYCLE        24        11.4090051          4.301432
+#> 2 2.546176e-26 JTK_CYCLE        24         6.4617936          4.576863
+#> 3 1.000000e+00 JTK_CYCLE        24        13.9199917          5.886923
+#> 4 1.000000e+00 JTK_CYCLE        24         0.4821957          6.297386
+#> 5 1.000000e+00 JTK_CYCLE        24        13.3053857          6.056194
+#> 6 1.000000e+00 JTK_CYCLE        24         6.3201412          6.025998
 #>   hr_amplitude_estimate hr_relative_amplitude_estimate
 #> 1             0.7053057                     0.16396996
 #> 2             1.4168445                     0.30956671

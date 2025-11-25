@@ -13,6 +13,8 @@ plot_phase_estimates(
   initial_offset = 5,
   step_size = 1.25,
   title = NULL,
+  add_border = TRUE,
+  alpha_range = c(0.05, 1),
   default_colour = "deepskyblue"
 )
 }
@@ -69,7 +71,4 @@ analysis stored in the \code{results} slot of the object.
 
 The plot is built using \code{ggplot2}, and the returned object can be further
 customized with standard \code{ggplot2} functions.
-}
-\examples{
-# TOOD: PROVIDE AN EXAMPLE
 }

@@ -19,12 +19,19 @@ format_dryr <- function(ls_res_groups,
       df <- ls_res_groups[[x]]$results
       df$group <- x
       df$period <- ls_res_groups[[x]]$period
-      df
+      df$feature <- row.names(ls_res_groups[[x]]$results)
+      df[, c("feature", "pvalue", "padj", "Intercept", "phase", "amp", "group", "period")]
     }))
 
     # Create formatted results
+    # TODO: FIGURE OUT SCALE OF INTERCEPT AND AMPLITUDE AND WHAT PHASE IS EXACTLY
+    # TODO: FIGURE OUT SCALE OF INTERCEPT AND AMPLITUDE AND WHAT PHASE IS EXACTLY
+    # TODO: FIGURE OUT SCALE OF INTERCEPT AND AMPLITUDE AND WHAT PHASE IS EXACTLY
+    # TODO: FIGURE OUT SCALE OF INTERCEPT AND AMPLITUDE AND WHAT PHASE IS EXACTLY
+    # TODO: FIGURE OUT SCALE OF INTERCEPT AND AMPLITUDE AND WHAT PHASE IS EXACTLY
+    # TODO: FIGURE OUT SCALE OF INTERCEPT AND AMPLITUDE AND WHAT PHASE IS EXACTLY
     res_formatted <- data.frame(
-      feature = row.names(df_combined),
+      feature = df_combined$feature,
       group = df_combined$group,
       period_estimate = df_combined$period,
       phase_estimate = df_combined$phase,
@@ -41,12 +48,13 @@ format_dryr <- function(ls_res_groups,
       df <- as.data.frame(ls_res_groups[[x]]$parameters)
       df$group <- x
       df$period <- ls_res_groups[[x]]$period
+      df$feature <- row.names(ls_res_groups[[x]]$results)
       df
     }))
 
     # Create formatted results
     res_formatted <- data.frame(
-      feature = row.names(df_combined),
+      feature = df_combined$feature,
       group = df_combined$group,
       period_estimate = df_combined$period,
       phase_estimate = df_combined$phase,

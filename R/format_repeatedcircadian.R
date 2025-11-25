@@ -32,6 +32,9 @@ format_repeatedcircadian <- function(ls_res_groups,
       p.adjust(p, method = "BH")
   )
 
+  # Convert phase estimate to cosine parametrisation
+  phase_cos <- (-1 * res_original$phi + period / 4) %% period
+
   # # Get relative amplitude. If data is log-transformed, calculate relative
   # # amplitude in linear scale
   # if (log_transformed == FALSE) {
@@ -48,7 +51,7 @@ format_repeatedcircadian <- function(ls_res_groups,
     feature = res_original$feature,
     group = res_original$group,
     period_estimate = res_original$period,
-    phase_estimate = res_original$phi,
+    phase_estimate = phase_cos,
     mesor_estimate = res_original$basal,
     amplitude_estimate = res_original$A,
     # relative_amplitude_estimate = rel_amp,

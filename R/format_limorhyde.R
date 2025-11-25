@@ -14,7 +14,11 @@ format_limorhyde <- function(res_original, w_params, period) {
   beta_2 <- res_original$time_cos
   mesor_estimate <- beta_0
   amplitude_estimate <- sqrt(beta_1^2 + beta_2^2)
-  phase_estimate <- atan2(beta_2, beta_1) * (period / (2 * pi))
+  # Phase estimates for the following two models. I'm going with cosine
+  # y = M + A * cos(2 * pi / T * (t - phi))
+  # phase_estimate <- (atan2(beta_2, beta_1) * period / (2 * pi)) %% period
+  # y = M + A * sin(2 * pi / T * (t + phi))
+  phase_estimate <- (atan2(beta_1, beta_2) * period / (2 * pi)) %% period
 
   # Create formatted results data frame
   res_formatted <- data.frame(
