@@ -433,7 +433,7 @@ CircadianData <- function(dataset,
 #'   \item \code{metadata()}: Retrieves the sample x attribute data.frame.
 #'   \item \code{experiment_info()}: Retrieves the list of experiment-level details.
 #'   \item \code{wave_params()}: Retrieves the list of estimated sine wave parameters.
-#'   \item \code{cd_results()}: Retrieves the list of analysis results.
+#'   \item \code{get_results()}: Retrieves the list of analysis results.
 #' }
 #'
 #' @return The requested component (for accessors) or the modified
@@ -510,44 +510,91 @@ setReplaceMethod("experiment_info", "CircadianData", function(x, value) {
 
 
 ## ---- Results Accessor/Replacement ----
-
-# TODO: Get rid of this S4 generic version once I'm sure it's safe
-#' #' @rdname CircadianData-accessors
-#' #' @export
-#' setGeneric("results", function(x) standardGeneric("results"))
+#' Extract Results From a CircadianData Object
 #'
-#' #' @rdname CircadianData-accessors
-#' setMethod("results", "CircadianData", function(x) x@results)
+#' `get_results()` retrieves standardised ("formatted") or original results for
+#' one or all rhythm detection methods contained in a `CircadianData` object.
 #'
-#' #' @rdname CircadianData-accessors
-#' #' @export
-#' setGeneric("results<-", function(x, value) standardGeneric("results<-"))
+#' @param cd A `CircadianData` object.
+#' @param method Character. Either `"all"` (default) to extract results for all
+#'   methods, or the name of a specific method.
+#' @param type Character. Type of results to return. One of:
+#'   \describe{
+#'     \item{`"formatted"`}{Return standardised result data frames (default).}
+#'     \item{`"original"`}{Return the original method outputs.}
+#'     \item{`"both"`}{Return both for each method.}
+#'   }
 #'
-#' #' @rdname CircadianData-accessors
-#' setReplaceMethod("results", "CircadianData", function(x, value) {
-#'   if (!is.list(value)) stop("'value' must be a list.")
-#'   x@results <- value
-#'   validObject(x)
-#'   x
-#' })
-
-#' Access or modify the results of a CircadianData object
+#' @return If a specific method is selected, returns either:
+#' \itemize{
+#'   \item a data frame (`type = "formatted"`),
+#'   \item a method-specific object (`type = "original"`), or
+#'   \item a list containing both (`type = "both"`).
+#' }
 #'
-#' @param x A `CircadianData` object.
-#' @param value A list to assign as results.
+#' If `method = "all"`, returns a named list containing the requested type of
+#' results for each method.
 #'
-#' @return A list (`cd_results`) or a modified `CircadianData` object (`cd_results<-`).
+#' @examples
+#' \dontrun{
+#' # Retrieve formatted results for all methods
+#' get_results(cd)
+#'
+#' # Get formatted results for one method
+#' get_results(cd, method = "RAIN")
+#'
+#' # Get original results for all methods
+#' get_results(cd, type = "original")
+#' }
+#'
 #' @export
-cd_results <- function(x) x@results
+get_results <- function(cd, method = "all", type = c("formatted", "original", "both")) {
 
-#' @rdname cd_results
-#' @export
-`cd_results<-` <- function(x, value) {
-  if (!is.list(value)) stop("'value' must be a list.")
-  x@results <- value
-  validObject(x)
-  x
+  # Match type argument
+  type <- match.arg(type)
+
+  # Extract available methods
+  methods_available <- names(cd@results)
+
+  # Throw error if no results available
+  if (length(methods_available) == 0) {
+    stop("No results stored in CircadianData object.")
+  }
+
+  # Check method validity
+  if (!identical(method, "all") && !method %in% methods_available) {
+    stop("Unknown method: ", method,
+         ". Available methods: ", paste(methods_available, collapse = ", "))
+  }
+
+  # Helper to extract for a single method
+  extract_one <- function(m) {
+    res <- cd@results[[m]]
+    switch(
+      type,
+      formatted = res$res_formatted,
+      original  = res$res_original,
+      both      = res
+    )
+  }
+
+  # If requesting a single method
+  if (method != "all") {
+    return(extract_one(method))
+  }
+
+  # If method = "all"
+  if (type == "both") {
+    # Return the whole slot
+    return(x@results)
+  }
+
+  # Otherwise return all formatted or all original results
+  out <- lapply(methods_available, extract_one)
+  names(out) <- methods_available
+  return(out)
 }
+
 
 
 ## ---- Wave params Accessor/Replacement ----
@@ -815,7 +862,7 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
               dataset = new_dataset,
               metadata = new_metadata,
               wave_params = new_wave_params,
-              results = cd_results(x)
+              results = x@results
             )
 
             # Recalculate delta t and update replicate numbers, but keep the rest
@@ -1352,7 +1399,7 @@ setMethod("order_samples", "CircadianData",
                 metadata = new_metadata,
                 experiment_info = experiment_info(x),
                 wave_params = wave_params(x),
-                results = cd_results(x)
+                results = x@results
             )
           }
 )
@@ -1560,7 +1607,7 @@ setMethod("show", "CircadianData", function(object) {
 
   # --- Results Info ---
   cat("\nResults:\n")
-  res <- cd_results(object)
+  res <- object@results
   if (length(res) > 0) {
     cat(" Stored results for:", paste(names(res), collapse=", "), "\n")
   } else {
@@ -1657,7 +1704,7 @@ plot_phase_estimates <- function(cd,
   }
 
   # --- 2. p-value filtering ---
-  res_methods <- names(cd_results(cd))
+  res_methods <- names(cd@results)
 
   if (pval_adj_cutoff < 1 & is.na(method)) {
     if (length(res_methods) == 1) {
@@ -1677,7 +1724,7 @@ plot_phase_estimates <- function(cd,
       message("Method ", method, " not in results. Ignoring significance cutoff.")
     } else {
       # Get results
-      df_res <- cd_results(cd)[[method]]$res_formatted
+      df_res <- get_results(cd, method, type = "formatted")
       # Filter by adjusted p-value
       df_res <- df_res[df_res$pval_adj < pval_adj_cutoff, ]
       # Filter wave params data frame

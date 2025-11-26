@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 [![](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![](https://img.shields.io/badge/devel%20version-0.2.21-blue.svg)](https://github.com/pascalnoser/clockworks)
+[![](https://img.shields.io/badge/devel%20version-0.2.22-blue.svg)](https://github.com/pascalnoser/clockworks)
 [![](https://img.shields.io/github/languages/code-size/pascalnoser/clockworks.svg)](https://github.com/pascalnoser/clockworks)
 <!-- badges: end -->
 
@@ -71,20 +71,19 @@ print(head(cw_metadata))
 #> 5   CT02_S1    2     A         S1
 #> 6   CT02_S2    2     A         S2
 
-# Create CircadianData object
-cd_obj = CircadianData(
+# Create CircadianData object with default period of 24 hours
+cd = CircadianData(
   dataset = cw_data,
   metadata = cw_metadata,
   colname_sample = "Sample_ID",
   colname_time = "Time",
-  colname_group = "Group",
-  period = 24
+  colname_group = "Group"
 )
 #> 
 #> The following columns in `metadata` will be ignored: Subject_ID
 
 # Look at object before running analysis
-print(cd_obj)
+print(cd)
 #> An object of class 'CircadianData'
 #>  Dimensions: 10 features, 96 samples
 #>  Feature names: Gene_01 Gene_02 Gene_03 ... Gene_09 Gene_10 
@@ -142,13 +141,13 @@ print(cd_obj)
 #>  [No results stored]
 
 # Run analysis using RAIN
-cd_obj = clockworks(cd_obj, method = "RAIN")
+cd = clockworks(cd, method = "RAIN")
 # Run analysis using JTK_CYCLE
-cd_obj = clockworks(cd_obj, method = "JTK_CYCLE")
+cd = clockworks(cd, method = "JTK_CYCLE")
 
-# Show results
-res = cd_results(cd_obj)
-head(res$RAIN$res_formatted)
+# Extract formatted (standardised) results
+res = get_results(cd)
+head(res$RAIN)
 #>   feature group period_estimate         pval     pval_adj method hr_period
 #> 1 Gene_01     A              24 5.280247e-32 5.280247e-31   RAIN        24
 #> 2 Gene_02     A              24 2.513425e-29 1.256713e-28   RAIN        24
@@ -170,7 +169,7 @@ head(res$RAIN$res_formatted)
 #> 4                     0.07691087
 #> 5                     0.02755747
 #> 6                     0.05672197
-head(res$JTK_CYCLE$res_formatted)
+head(res$JTK_CYCLE)
 #>   feature group period_estimate phase_estimate amplitude_estimate         pval
 #> 1 Gene_01     A              24             12          0.6508123 1.096605e-30
 #> 2 Gene_02     A              24              7          1.2826325 5.092351e-27

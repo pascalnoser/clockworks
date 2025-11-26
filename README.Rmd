@@ -55,28 +55,27 @@ print(cw_data[1:5, 1:5])
 # the row names of the data and a column containing the time
 print(head(cw_metadata))
 
-# Create CircadianData object
-cd_obj = CircadianData(
+# Create CircadianData object with default period of 24 hours
+cd = CircadianData(
   dataset = cw_data,
   metadata = cw_metadata,
   colname_sample = "Sample_ID",
   colname_time = "Time",
-  colname_group = "Group",
-  period = 24
+  colname_group = "Group"
 )
 
 # Look at object before running analysis
-print(cd_obj)
+print(cd)
 
 # Run analysis using RAIN
-cd_obj = clockworks(cd_obj, method = "RAIN")
+cd = clockworks(cd, method = "RAIN")
 # Run analysis using JTK_CYCLE
-cd_obj = clockworks(cd_obj, method = "JTK_CYCLE")
+cd = clockworks(cd, method = "JTK_CYCLE")
 
-# Show results
-res = cd_results(cd_obj)
-head(res$RAIN$res_formatted)
-head(res$JTK_CYCLE$res_formatted)
+# Extract formatted (standardised) results
+res = get_results(cd)
+head(res$RAIN)
+head(res$JTK_CYCLE)
 ```
 
 The column names in the formatted output follow the same pattern for all methods. Furthermore, the results of a harmonic regression are also included in this output, allowing for a quick comparison of the estimated parameters to those of a simple sine wave fit. The harmonic regression used is equivalent to the model $y = M + A \cos(\frac{2 \pi}{T}(t - \varphi))$ with $M$ the mesor, $A$ the amplitude, $t$ the time (e.g. in hours), and $T$ and $\phi$ the period and phase in the same units as $t$. This model was chosen because the value of $\varphi$ corresponds to the time point of the peak of the fitted wave.

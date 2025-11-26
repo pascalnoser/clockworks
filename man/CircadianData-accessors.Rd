@@ -76,6 +76,6 @@ data.frame, experiment_info list, and results list.
 \item \code{metadata()}: Retrieves the sample x attribute data.frame.
 \item \code{experiment_info()}: Retrieves the list of experiment-level details.
 \item \code{wave_params()}: Retrieves the list of estimated sine wave parameters.
-\item \code{cd_results()}: Retrieves the list of analysis results.
+\item \code{get_results()}: Retrieves the list of analysis results.
 }
 }
