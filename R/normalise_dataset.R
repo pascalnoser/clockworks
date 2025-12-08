@@ -1,23 +1,31 @@
 #' Turn RNA-seq counts to log2 CPM values
 #'
-#' @param counts A matrix with RNA-seq count data
-#' @param group A vector or factor giving the experimental group or treatment
-#'   condition for each sample
+#' @param cd A `CircadianData` object with count data in the `results` slot
 #' @param verbose Logical, whether a message should be printed
 #'
 #' @importFrom edgeR DGEList filterByExpr normLibSizes cpm
 #'
-#' @returns A matrix with log2 CPM values
+#' @returns The updated `CircadianData` object with log2 CPM values in the
+#'   `results` slot
 #'
-normalise_dataset <- function(counts, group = NULL, verbose = TRUE) {
+normalise_dataset <- function(cd, verbose = TRUE) {
   if (verbose == TRUE) {
     message("\nTransforming data to log2 CPM values")
   }
 
+  # Get counts and group
+  counts <- dataset(cd)
+  group <- metadata(cd)$group
+
+  # Filter, normalise, and turn to log CPM values
   dge <- edgeR::DGEList(counts = counts, group = group)
   keep = edgeR::filterByExpr(dge)
   dge = dge[keep, , keep.lib.sizes=FALSE]
   dge <- edgeR::normLibSizes(dge)
   logCPM <- edgeR::cpm(dge, log = TRUE)
-  return(logCPM)
+
+  # Add back to cd object
+  cd@dataset <- logCPM
+
+  return(cd)
 }

@@ -6,21 +6,6 @@
 #' @param method_args Additional parameters passed to `CircaN::circan()`
 #'
 #' @returns A data frame with the results of the CircaN analysis.
-#' @examples
-#' data(cw_data)
-#' data(cw_metadata)
-#' cd <- CircadianData(
-#'   dataset = cw_data,
-#'   metadata = cw_metadata,
-#'   colname_sample = "Sample_ID",
-#'   colname_time = "Time",
-#'   colname_group = "Group",
-#'   colname_subject = "Subject_ID"
-#' )
-#' cd <- clockworks:::add_experiment_info(cd)
-#' cd <- clockworks:::estimate_wave_params(cd)
-#' results <- clockworks:::analyze_circan(cd)
-#' head(results$res_original)
 analyze_circan <- function(cd, method_args = list()) {
   # Check if cd object contains necessary columns and add them if not
   cd_local <- check_circan(cd)

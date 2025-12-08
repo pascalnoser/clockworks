@@ -9,10 +9,13 @@
 #'
 #' @returns A `CircadianData` object
 check_rain <- function(cd) {
-  # TODO: Add a check to see if we have raw counts or normalised data
-
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
+
+  # Normalise if count data
+  if (cd_local$data_type == "count") {
+    cd_local <- normalise_dataset(cd_local)
+  }
 
   # If we have repeated measures, remove subject batch effect
   # TODO: Make this optional

@@ -19,11 +19,6 @@ format_arser <- function(ls_res_groups,
   # will likely only report the relative amplitude from the harmonic regression.
   # Alternatively, uncomment the relative amplitude calculation below.
 
-  # TODO: Note in the documentation that sometimes the phase estimates might
-  # differ between a method and the results of the harmonic regression (e. g.
-  # ARSER fits a cosine wave, whereas I adjusted the HarmonicRegression output
-  # to give the phase of a sine wave).
-
   # Turn list of lists into one list with one data frame per method
   method_names <- c("ARS", "meta")
   res_original <- lapply(method_names, function(x) {

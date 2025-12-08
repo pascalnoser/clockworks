@@ -12,15 +12,8 @@ prepare_circan <- function(cd, grp) {
   # Filter CD object by group
   cd_filt <- filter_samples(cd, group == grp)
 
-  # Normalise if count data
-  if (cd_filt$data_type == "count") {
-    dset <- normalise_dataset(dataset(cd_filt), group = metadata(cd_filt)$group)
-  } else {
-    dset <- dataset(cd_filt)
-  }
-
   # Prepare data (must be a data frame with features as first column)
-  df_data <- data.frame(feature = rownames(dset), dset, check.names = FALSE)
+  df_data <- data.frame(feature = rownames(cd_filt), dataset(cd_filt), check.names = FALSE)
 
   # Create list with inputs
   inputs <- list(

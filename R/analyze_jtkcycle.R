@@ -6,21 +6,6 @@
 #' @param method_args Additional parameters passed to `<method_function>`
 #'
 #' @returns A data frame with the results of the JTK_CYCLE analysis.
-#' @examples
-#' data(cw_data)
-#' data(cw_metadata)
-#' cd <- CircadianData(
-#'   dataset = cw_data,
-#'   metadata = cw_metadata,
-#'   colname_sample = "Sample_ID",
-#'   colname_time = "Time",
-#'   colname_group = "Group",
-#'   colname_subject = "Subject_ID"
-#' )
-#' cd <- clockworks:::add_experiment_info(cd)
-#' cd <- clockworks:::estimate_wave_params(cd)
-#' results <- clockworks:::analyze_jtkcycle(cd)
-#' head(results)
 analyze_jtkcycle <- function(cd, method_args = list()) {
   # Check if cd object contains necessary columns and add them if not
   cd_local <- check_jtkcycle(cd)
@@ -29,7 +14,7 @@ analyze_jtkcycle <- function(cd, method_args = list()) {
   added_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)
 
   # Create empty list for results
-  ls_res_groups = list()
+  ls_res_groups <- list()
 
   # Run rhythmicity detection for each group separately
   groups <- unique(metadata(cd_local)[["group"]])

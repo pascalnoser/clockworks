@@ -10,6 +10,11 @@ check_genecycle <- function(cd) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
+  # Normalise if count data
+  if (cd_local$data_type == "count") {
+    cd_local <- normalise_dataset(cd_local)
+  }
+
   # Add temporary group if there is no group column
   if (is.na(cd_local$n_groups)){
     df_meta_temp <- metadata(cd_local)

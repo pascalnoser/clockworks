@@ -6,21 +6,6 @@
 #' @param method_args Additional parameters passed to `GeneCycle:robust.g.test()`
 #'
 #' @returns A list with the original and formatted results of the GeneCycle analysis.
-#' @examples
-#' data(cw_data)
-#' data(cw_metadata)
-#' cd <- CircadianData(
-#'   dataset = cw_data,
-#'   metadata = cw_metadata,
-#'   colname_sample = "Sample_ID",
-#'   colname_time = "Time",
-#'   colname_group = "Group",
-#'   colname_subject = "Subject_ID"
-#' )
-#' cd <- clockworks:::add_experiment_info(cd)
-#' cd <- clockworks:::estimate_wave_params(cd)
-#' results <- clockworks:::analyze_genecycle(cd)
-#' head(results)
 analyze_genecycle <- function(cd, method_args = list()) {
   # Check if cd object contains necessary columns and add them if not
   cd_local <- check_genecycle(cd)
@@ -29,7 +14,7 @@ analyze_genecycle <- function(cd, method_args = list()) {
   added_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)
 
   # Create empty list for results
-  ls_res_groups = list()
+  ls_res_groups <- list()
 
   # Run rhythmicity detection for each group separately
   groups <- unique(metadata(cd_local)[["group"]])

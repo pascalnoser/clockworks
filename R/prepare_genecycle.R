@@ -17,13 +17,6 @@ prepare_genecycle <- function(cd, grp) {
   # Filter CD object by group
   cd_filt <- filter_samples(cd, group == grp)
 
-  # Normalise if count data
-  if (cd_filt$data_type == "count") {
-    dset <- normalise_dataset(dataset(cd_filt), group = metadata(cd_filt)$group)
-  } else {
-    dset <- dataset(cd_filt)
-  }
-
   # If there are replicates, take median
   if (replicates == TRUE) {
     t_split <- split(metadata(cd_filt), metadata(cd_filt)[["time"]])
@@ -33,14 +26,14 @@ prepare_genecycle <- function(cd, grp) {
 
     ls_meds <- lapply(t_split, function(df) {
       sample_IDs <- rownames(df)
-      df_vals <- dset[, sample_IDs]
+      df_vals <- dataset(cd_filt)[, sample_IDs]
       apply(df_vals, 1, median)
     })
 
     # Prepare data
     df_dat <- t(data.frame(ls_meds))
   } else {
-    df_dat <- t(dset)
+    df_dat <- t(dataset(cd_filt))
     timepoints <- metadata(cd_filt)[["time"]]
   }
 
@@ -67,9 +60,9 @@ prepare_genecycle <- function(cd, grp) {
   if (!is.na(n_cycles)) {
     # Note: Round because otherwise e.g. 1.9 will result in
     # GeneCycle::g.statistic() (which is called by GeneCycle::robust.g.test())
-    # just extracts index 1 on line 19, although index 2 would be much closer.
-    # It's just a quirk of indexing in R that vec[1.9] return the first element
-    # of vec rather than an error.
+    # extracting index 1 on line 19, although index 2 would be much closer to
+    # 1.9. It's just a quirk of indexing in R that vec[1.9] return the first
+    # element of vec rather than an error.
     inputs$gtest$index <- round(n_cycles*2 + 1)
   }
 

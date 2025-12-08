@@ -10,6 +10,11 @@ check_circan <- function(cd) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
+  # Normalise if count data
+  if (cd_local$data_type == "count") {
+    cd_local <- normalise_dataset(cd_local)
+  }
+
   # Extract meta data to add necessary columns
   df_meta_temp <- metadata(cd_local)
 

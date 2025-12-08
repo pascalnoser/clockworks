@@ -19,19 +19,3 @@ RepeatedCircadian analysis.
 \description{
 This function runs rhythmicity detection using RepeatedCircadian
 }
-\examples{
-data(cw_data)
-data(cw_metadata)
-cd <- CircadianData(
-  dataset = cw_data,
-  metadata = cw_metadata,
-  colname_sample = "Sample_ID",
-  colname_time = "Time",
-  colname_group = "Group",
-  colname_subject = "Subject_ID"
-)
-cd <- clockworks:::add_experiment_info(cd)
-cd <- clockworks:::estimate_wave_params(cd)
-results <- clockworks:::analyze_repeatedcircadian(cd)
-head(results$res_original)
-}

@@ -17,19 +17,3 @@ A data frame with the results of the meta2d analysis.
 \description{
 This function runs rhythmicity detection with meta2d
 }
-\examples{
-data(cw_data)
-data(cw_metadata)
-cd <- CircadianData(
-  dataset = cw_data,
-  metadata = cw_metadata,
-  colname_sample = "Sample_ID",
-  colname_time = "Time",
-  colname_group = "Group",
-  colname_subject = "Subject_ID"
-)
-cd <- clockworks:::add_experiment_info(cd)
-cd <- clockworks:::estimate_wave_params(cd)
-results <- clockworks:::analyze_meta2d(cd)
-head(results)
-}

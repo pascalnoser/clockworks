@@ -9,21 +9,6 @@
 #'
 #' @returns A list containing the original as and cleaned results of the
 #'   RepeatedCircadian analysis.
-#' @examples
-#' data(cw_data)
-#' data(cw_metadata)
-#' cd <- CircadianData(
-#'   dataset = cw_data,
-#'   metadata = cw_metadata,
-#'   colname_sample = "Sample_ID",
-#'   colname_time = "Time",
-#'   colname_group = "Group",
-#'   colname_subject = "Subject_ID"
-#' )
-#' cd <- clockworks:::add_experiment_info(cd)
-#' cd <- clockworks:::estimate_wave_params(cd)
-#' results <- clockworks:::analyze_repeatedcircadian(cd)
-#' head(results$res_original)
 analyze_repeatedcircadian <- function(cd, method_args = list()) {
   # TODO: DOUBLE CHECK WHAT THE OUTPUT COLUMNS ARE EXACTLY
   # TODO: DOUBLE CHECK WHAT THE OUTPUT COLUMNS ARE EXACTLY
@@ -48,7 +33,7 @@ analyze_repeatedcircadian <- function(cd, method_args = list()) {
   ### ----- ###
 
   # Create empty list for results
-  ls_res_groups = list()
+  ls_res_groups <- list()
 
   # Run rhythmicity detection for each group separately
   groups <- unique(metadata(cd_local)[["group"]])

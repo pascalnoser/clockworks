@@ -585,13 +585,22 @@ get_results <- function(cd, method = "all", type = c("formatted", "original", "b
 
   # If method = "all"
   if (type == "both") {
-    # Return the whole slot
-    return(x@results)
+    # If only one method, return as data frame instead of list of length 1
+    if (length(methods_available) == 1) {
+      return(extract_one(methods_available[1]))
+    } else {
+      # Return the whole slot
+      return(cd@results)
+    }
   }
 
   # Otherwise return all formatted or all original results
   out <- lapply(methods_available, extract_one)
   names(out) <- methods_available
+
+  # If only one method, return as data frame
+  if (length(out) == 1) out <- out[[1]]
+
   return(out)
 }
 
@@ -1164,6 +1173,12 @@ estimate_wave_params <- function(cd_obj) {
   # Get original meta data
   mdata_orig <- metadata(cd_obj)
 
+  # Get minimum value for time
+  t_min <- min(mdata_orig$time)
+
+  # Get period
+  per <- mean(cd_obj$period)
+
   # Add temporary group if there is no group column
   if (is.na(cd_obj$n_groups)){
     mdata_tmp <- mdata_orig
@@ -1187,9 +1202,6 @@ estimate_wave_params <- function(cd_obj) {
     sample_filt <- rownames(mdata[mdata$group == grp, ])
     cd_filt <- cd_obj[, sample_filt]
 
-    # Get period
-    per <- mean(cd_filt$period)
-
     # Run harmonic regression
     res_harm <- HarmonicRegression::harmonic.regression(
       inputts = t(dataset(cd_filt)),
@@ -1205,8 +1217,8 @@ estimate_wave_params <- function(cd_obj) {
     # Amplitude and mesor stay the same, but the phase is shifted by -pi/2 in
     # radians, so by -period/4 in hours. Using the modulo operator negative
     # phase values "wrap" around and become positive. Note that the resulting
-    # phase estimates in hours result in identical for the two following models
-    # (note the difference in - and +)
+    # phase estimates in hours result in identical curves for the two following
+    # models (note the difference in - and +)
     # y = M + A * cos(2 * pi / T * (t - phi))
     # y = M + A * sin(2 * pi / T * (t + phi))
     phase_estimate_rad <- res_harm$pars$phi
@@ -1219,6 +1231,15 @@ estimate_wave_params <- function(cd_obj) {
       period = per,
       phase_estimate = phase_estimate_h_cos
     )
+
+    # Add peak time
+    # Take phase estimates and shift them upward by repeated additions of the
+    # period until the values are greater than t_min. For example, if t_min is 18
+    # and one gene has a phase of 21 this remains unchanged, because the peak in
+    # the real data is at 21. If it has a phase of 5, the real peak is not at 5
+    # but at 29.
+    df_res$peak_time_estimate <- df_res$phase_estimate +
+      pmax(0, ceiling((t_min - df_res$phase_estimate) / per)) * per
 
     # Add mesor and amplitude estimates
     if (cd_obj$log_transformed == TRUE) {
@@ -1272,6 +1293,32 @@ estimate_wave_params <- function(cd_obj) {
 
   # Bind into data frame and return
   df_params <- do.call(rbind, ls_params)
+
+  ## -- Add peak time
+  # Take phase estimates and shift them upward by repeated additions of the
+  # period until the values are greater than t_min. For example, if t_min is 18
+  # and one gene has a phase of 21 this remains unchanged, because the peak in
+  # the real data is at 21. If it has a phase of 5, the real peak is not at 5
+  # but at 29.
+  df_params$peak_time_estimate <- df_params$phase_estimate +
+    pmax(0, ceiling((t_min - df_params$phase_estimate) / per)) * per
+
+  # Rearrange columns
+  cols <- intersect(
+    c(
+      "feature",
+      "group",
+      "period",
+      "phase_estimate",
+      "peak_time_estimate",
+      "mesor_estimate",
+      "amplitude_estimate",
+      "relative_amplitude_estimate"
+    ),
+    colnames(df_params)
+  )
+
+  df_params <- df_params[, cols]
 
   return(df_params)
 }

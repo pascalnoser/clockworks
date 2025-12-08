@@ -16,18 +16,24 @@ check_repeatedcircadian <- function(cd) {
     stop(
       "The selected method 'RepeatedCircadian' is designed for data ",
       "with repeated measures, but no 'colname_subject' has been defined. ",
-      "If your data does contain repeated measures, please define a ",
-      "'colname_subject'. If your data does not contain repeated measures, ",
-      "select a different method.",
+      "Please define a 'colname_subject' or select a different method.",
       call. = FALSE
     )
+  }
 
-    # Add column
-    df_meta_temp <- metadata(cd_local)
-    df_meta_temp[["subject_ID"]] <- paste0("S", 1:nrow(df_meta_temp))
+  # If there is only one subject throw an error because RepeatedCircadian needs
+  # multiple subjects.
+  if (!nlevels(metadata(cd_local)$subject_ID) > 1) {
+    stop(
+      "The 'colname_subject' column has only 1 level. RepeatedCircadian ",
+      "requires multiple subjects with repeated measures.",
+      call. = FALSE
+    )
+  }
 
-    # Add back to CD object
-    metadata(cd_local) <- df_meta_temp
+  # Normalise if count data
+  if (cd_local$data_type == "count") {
+    cd_local <- normalise_dataset(cd_local)
   }
 
   # Add temporary group if there is no group column

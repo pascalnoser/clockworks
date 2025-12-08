@@ -4,18 +4,16 @@
 \alias{normalise_dataset}
 \title{Turn RNA-seq counts to log2 CPM values}
 \usage{
-normalise_dataset(counts, group = NULL, verbose = TRUE)
+normalise_dataset(cd, verbose = TRUE)
 }
 \arguments{
-\item{counts}{A matrix with RNA-seq count data}
-
-\item{group}{A vector or factor giving the experimental group or treatment
-condition for each sample}
+\item{cd}{A \code{CircadianData} object with count data in the \code{results} slot}
 
 \item{verbose}{Logical, whether a message should be printed}
 }
 \value{
-A matrix with log2 CPM values
+The updated \code{CircadianData} object with log2 CPM values in the
+\code{results} slot
 }
 \description{
 Turn RNA-seq counts to log2 CPM values

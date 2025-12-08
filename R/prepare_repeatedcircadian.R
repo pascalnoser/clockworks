@@ -12,16 +12,9 @@ prepare_repeatedcircadian <- function(cd, grp) {
   # Filter CD object by group
   cd_filt <- filter_samples(cd, group == grp)
 
-  # Normalise if count data
-  if (cd_filt$data_type == "count") {
-    dset <- normalise_dataset(dataset(cd_filt), group = metadata(cd_filt)$group)
-  } else {
-    dset <- dataset(cd_filt)
-  }
-
   # Create named list to return
   inputs <- list(
-    dat = dset,
+    dat = dataset(cd_filt),
     tt = metadata(cd_filt)[["time"]],
     id = metadata(cd_filt)[["subject_ID"]],
     period = mean(cd_filt$period)
