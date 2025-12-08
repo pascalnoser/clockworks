@@ -13,10 +13,12 @@ prepare_rain <- function(cd, grp) {
   cd_filt <- filter_samples(cd, group == grp)
 
   # Create list with inputs for execute method
+  per <- cd_filt$period
   inputs <- list(
     x = t(dataset(cd_filt)),
     deltat = cd_filt$delta_t,
-    period = mean(cd_filt$period),
+    period = mean(per),
+    period.delta = max(per) - mean(per),
     measure.sequence = cd_filt$n_replicates[[grp]],
     method = ifelse(cd_filt$repeated_measures == TRUE, "longitudinal", "independent")
   )

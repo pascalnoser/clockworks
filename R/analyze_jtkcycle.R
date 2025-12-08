@@ -30,10 +30,12 @@ analyze_jtkcycle <- function(cd, method_args = list()) {
   }
 
   # Postprocessing
+  t_min <- min(metadata(cd_local)$time)
   ls_res <- format_jtkcycle(
     ls_res_groups = ls_res_groups,
     w_params = wave_params(cd_local),
     added_group = added_group,
+    t_min = t_min,
     log_transformed = cd_local$log_transformed,
     log_base = cd_local$log_base
   )

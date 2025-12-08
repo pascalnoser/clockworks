@@ -8,6 +8,7 @@ format_jtkcycle(
   ls_res_groups,
   w_params,
   added_group,
+  t_min,
   log_transformed = FALSE,
   log_base = 2
 )
@@ -20,6 +21,8 @@ analysis, split into groups.}
 analysis.}
 
 \item{added_group}{If TRUE the "group" column will be removed}
+
+\item{t_min}{Minimum value in time column, i.e. starting point of time-series}
 
 \item{log_transformed}{Logical, if the data is log-transformed}
 
