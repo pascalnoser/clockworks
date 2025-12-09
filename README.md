@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 [![](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![](https://img.shields.io/badge/devel%20version-0.2.24-blue.svg)](https://github.com/pascalnoser/clockworks)
+[![](https://img.shields.io/badge/devel%20version-0.2.25-blue.svg)](https://github.com/pascalnoser/clockworks)
 [![](https://img.shields.io/github/languages/code-size/pascalnoser/clockworks.svg)](https://github.com/pascalnoser/clockworks)
 <!-- badges: end -->
 
@@ -55,7 +55,8 @@ library(clockworks)
 data("cw_data")
 data("cw_metadata")
 
-# The input data is a matrix or data frame with feature IDs as row names
+# The input data is a matrix or data frame with feature IDs as row names and
+# sample IDs as column names
 print(cw_data[1:5, 1:5])
 #>          CT00_S1  CT00_S2  CT00_S3  CT00_S4  CT02_S1
 #> Gene_01 3.541119 3.632892 3.650497 3.639091 3.726633
@@ -64,8 +65,8 @@ print(cw_data[1:5, 1:5])
 #> Gene_04 6.411975 6.667066 6.987838 5.369700 5.014173
 #> Gene_05 5.618924 6.541327 7.519745 5.659031 3.111079
 
-# The meta data requires a column with sample IDs corresponding to 
-# the row names of the data and a column containing the time
+# The meta data requires a column with sample IDs corresponding to the column
+# names of the data and a column containing the time
 print(head(cw_metadata))
 #>   Sample_ID Time Group Subject_ID
 #> 1   CT00_S1    0     A         S1

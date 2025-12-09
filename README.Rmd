@@ -50,11 +50,12 @@ library(clockworks)
 data("cw_data")
 data("cw_metadata")
 
-# The input data is a matrix or data frame with feature IDs as row names
+# The input data is a matrix or data frame with feature IDs as row names and
+# sample IDs as column names
 print(cw_data[1:5, 1:5])
 
-# The meta data requires a column with sample IDs corresponding to 
-# the row names of the data and a column containing the time
+# The meta data requires a column with sample IDs corresponding to the column
+# names of the data and a column containing the time
 print(head(cw_metadata))
 
 # Create CircadianData object with default period of 24 hours
