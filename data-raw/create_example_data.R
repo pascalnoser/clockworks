@@ -24,9 +24,6 @@ cd_full <- add_experiment_info(
   log_base = 2
 )
 
-wave_params(cd_full) <- estimate_wave_params(cd_full)
-
-
 ## 2) No groups, 2 replicates, repeated measures ----
 cd_rpl_rpt <- CircadianData(
   dataset = cw_data,
@@ -46,9 +43,6 @@ cd_rpl_rpt <- add_experiment_info(
   log_transformed = TRUE,
   log_base = 2
 )
-
-wave_params(cd_rpl_rpt) <- estimate_wave_params(cd_rpl_rpt)
-
 
 ## 3) 2 Groups, no replicates, repeated measures ----
 cd_grp_rpt <- CircadianData(
@@ -71,9 +65,6 @@ cd_grp_rpt <- add_experiment_info(
   log_base = 2
 )
 
-wave_params(cd_grp_rpt) <- estimate_wave_params(cd_grp_rpt)
-
-
 ## 4) No Groups, no replicates, repeated measures ----
 cd_rpt <- CircadianData(
   dataset = cw_data,
@@ -94,9 +85,6 @@ cd_rpt <- add_experiment_info(
   log_base = 2
 )
 
-wave_params(cd_rpt) <- estimate_wave_params(cd_rpt)
-
-
 ## 5) 2 Groups, 2 replicates each, no repeated measures ----
 cd_grp_rpl <- CircadianData(
   dataset = cw_data,
@@ -113,9 +101,6 @@ cd_grp_rpl <- add_experiment_info(
   log_transformed = TRUE,
   log_base = 2
 )
-
-wave_params(cd_grp_rpl) <- estimate_wave_params(cd_grp_rpl)
-
 
 ## 6) No groups, 2 replicates, no repeated measures ----
 cd_rpl <- CircadianData(
@@ -135,9 +120,6 @@ cd_rpl <- add_experiment_info(
   log_transformed = TRUE,
   log_base = 2
 )
-
-wave_params(cd_rpl) <- estimate_wave_params(cd_rpl)
-
 
 ## 7) 2 groups, no replicates, no repeated measures ----
 cd_grp <- CircadianData(
@@ -159,9 +141,6 @@ cd_grp <- add_experiment_info(
   log_base = 2
 )
 
-wave_params(cd_grp) <- estimate_wave_params(cd_grp)
-
-
 ## 8) No groups, no replicates, no repeated measures ----
 cd_min <- CircadianData(
   dataset = cw_data,
@@ -181,9 +160,6 @@ cd_min <- add_experiment_info(
   log_base = 2
 )
 
-wave_params(cd_min) <- estimate_wave_params(cd_min)
-
-
 ## 9) 2 Groups, 2 replicates each, repeated measures, count data ----
 cd_full_counts <- CircadianData(
   dataset = cw_data_counts,
@@ -201,11 +177,45 @@ cd_full_counts <- add_experiment_info(
   log_transformed = FALSE
 )
 
-wave_params(cd_full_counts) <- estimate_wave_params(cd_full_counts)
+## 10) Groups and replicates, no repeated measures, added results ----
+cd_results <- cd_grp_rpl
+
+methods <- c(
+  "ARSER",
+  # "CircaN",
+  "diffCircadian",
+  "dryR",
+  "GeneCycle",
+  "JTK_CYCLE",
+  # "RepeatedCircadian",
+  "LimoRhyde",
+  "LS",
+  "meta2d",
+  "RAIN",
+  "TimeCycle"
+)
+
+for (i_method in methods) {
+  cat("\n\nMethod:", i_method)
+  cd_results <- clockworks(cd_results, method = i_method)
+}
 
 
 # Save objects ----
 usethis::use_data(cw_data, overwrite = TRUE)
 usethis::use_data(cw_data_counts, overwrite = TRUE)
 usethis::use_data(cw_metadata, overwrite = TRUE)
-usethis::use_data(cd_full, cd_rpl_rpt, cd_grp_rpt, cd_rpt, cd_grp_rpl, cd_rpl, cd_grp, cd_min, cd_full_counts, overwrite = TRUE, internal = TRUE)
+usethis::use_data(
+  cd_full,
+  cd_rpl_rpt,
+  cd_grp_rpt,
+  cd_rpt,
+  cd_grp_rpl,
+  cd_rpl,
+  cd_grp,
+  cd_min,
+  cd_full_counts,
+  cd_results,
+  overwrite = TRUE,
+  internal = TRUE
+)

@@ -52,6 +52,8 @@ clockworks <- function(cd,
   validate_exp_info(cd)
 
   # === Add wave parameters if not already present ===
+  # TODO: Can probably remove this since `esimtate_wave_params()` is ran
+  # whenever a new CD object is created now.
   w_params <- wave_params(cd)
   if (nrow(w_params) == 0) {
     wave_params(cd) <- estimate_wave_params(cd)

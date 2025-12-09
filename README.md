@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 [![](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![](https://img.shields.io/badge/devel%20version-0.2.22-blue.svg)](https://github.com/pascalnoser/clockworks)
+[![](https://img.shields.io/badge/devel%20version-0.2.24-blue.svg)](https://github.com/pascalnoser/clockworks)
 [![](https://img.shields.io/github/languages/code-size/pascalnoser/clockworks.svg)](https://github.com/pascalnoser/clockworks)
 <!-- badges: end -->
 
@@ -39,8 +39,12 @@ straightforward. In the example below, we will use a synthetic data set
 of two rhythmic and eight non-rhythmic genes. We will analyse them using
 [RAIN](https://www.bioconductor.org/packages/release/bioc/html/rain.html)
 as well as the [MetaCycle](https://github.com/gangwug/MetaCycle)
-implementation the
-[JTK_CYCLE](https://doi.org/10.1177/0748730410379711):
+implementation of [JTK_CYCLE](https://doi.org/10.1177/0748730410379711).
+
+We start by loading the package and creating a `CircadianData` object
+using some synthetic example data. When using your own data, make sure
+that the formatting is the same as the `cw_data` and `cw_metadata` shown
+below:
 
 ``` r
 library(clockworks)
@@ -72,7 +76,7 @@ print(head(cw_metadata))
 #> 6   CT02_S2    2     A         S2
 
 # Create CircadianData object with default period of 24 hours
-cd = CircadianData(
+cd <- CircadianData(
   dataset = cw_data,
   metadata = cw_metadata,
   colname_sample = "Sample_ID",
@@ -81,8 +85,14 @@ cd = CircadianData(
 )
 #> 
 #> The following columns in `metadata` will be ignored: Subject_ID
+```
 
-# Look at object before running analysis
+This `CircadianData` object is a way to store all the relevant
+information in one container with standardised formatting. Printing the
+object returns an overview of what `clockworks` “sees”. Note that
+e.g. the metadata column names have been renamed:
+
+``` r
 print(cd)
 #> An object of class 'CircadianData'
 #>  Dimensions: 10 features, 96 samples
@@ -135,18 +145,51 @@ print(cd)
 #>      
 #> 
 #> Wave Parameters:
-#>  [Not calculated]
+#>  Calculated for 10 of 10 features
 #> 
 #> Results:
 #>  [No results stored]
+```
 
+When creating a `CircadianData` object as we just did above,
+`clockworks` automatically runs a harmonic regression to fit a cosine
+wave to your data. You can visualise your data with the added cosine
+wave very easily. You can also add shading to distinguish between light
+and dark periods by defining the borders:
+
+``` r
+# Plot first feature
+p <- plot_feature(
+  cd = cd,
+  feature = "Gene_01",
+  background_cutoffs = c(12, 24, 36, 48)
+)
+print(p)
+```
+
+<img src="man/figures/plot_feature-1.png" width="75%" />
+
+Since this is a ggplot2 object, it can be modified very easily.
+
+Now that our `CircadianData` object is created, running the rhythmicity
+analysis is just one line of code. By changing the `method` argument you
+can easily run different methods on your data. The results are stored
+inside the `CircadianData` object so everything is in one place:
+
+``` r
 # Run analysis using RAIN
-cd = clockworks(cd, method = "RAIN")
+cd <- clockworks(cd, method = "RAIN")
 # Run analysis using JTK_CYCLE
-cd = clockworks(cd, method = "JTK_CYCLE")
+cd <- clockworks(cd, method = "JTK_CYCLE")
+```
 
+The `get_results()` function can be used to extract the results. By
+default, a formatted version of the results with consistent naming of
+columns across all methods will be returned:
+
+``` r
 # Extract formatted (standardised) results
-res = get_results(cd)
+res <- get_results(cd)
 head(res$RAIN)
 #>   feature group period_estimate         pval     pval_adj method hr_period
 #> 1 Gene_01     A              24 5.280247e-32 5.280247e-31   RAIN        24
@@ -155,20 +198,20 @@ head(res$RAIN)
 #> 4 Gene_04     A              24 8.390387e-02 2.097597e-01   RAIN        24
 #> 5 Gene_05     A              24 8.537546e-01 8.537546e-01   RAIN        24
 #> 6 Gene_06     A              24 2.138942e-02 7.129806e-02   RAIN        24
-#>   hr_phase_estimate hr_mesor_estimate hr_amplitude_estimate
-#> 1        11.4090051          4.301432             0.7053057
-#> 2         6.4617936          4.576863             1.4168445
-#> 3        13.9199917          5.886923             0.4085035
-#> 4         0.4821957          6.297386             0.4843375
-#> 5        13.3053857          6.056194             0.1668934
-#> 6         6.3201412          6.025998             0.3418065
-#>   hr_relative_amplitude_estimate
-#> 1                     0.16396996
-#> 2                     0.30956671
-#> 3                     0.06939169
-#> 4                     0.07691087
-#> 5                     0.02755747
-#> 6                     0.05672197
+#>   hr_phase_estimate hr_peak_time_estimate hr_mesor_estimate
+#> 1        11.4090051            11.4090051          4.301432
+#> 2         6.4617936             6.4617936          4.576863
+#> 3        13.9199917            13.9199917          5.886923
+#> 4         0.4821957             0.4821957          6.297386
+#> 5        13.3053857            13.3053857          6.056194
+#> 6         6.3201412             6.3201412          6.025998
+#>   hr_amplitude_estimate hr_relative_amplitude_estimate
+#> 1             0.7053057                     0.16396996
+#> 2             1.4168445                     0.30956671
+#> 3             0.4085035                     0.06939169
+#> 4             0.4843375                     0.07691087
+#> 5             0.1668934                     0.02755747
+#> 6             0.3418065                     0.05672197
 head(res$JTK_CYCLE)
 #>   feature group period_estimate phase_estimate amplitude_estimate         pval
 #> 1 Gene_01     A              24             12          0.6508123 1.096605e-30
@@ -177,29 +220,27 @@ head(res$JTK_CYCLE)
 #> 4 Gene_04     A              24              1          0.3366538 3.292045e-01
 #> 5 Gene_05     A              24             12          0.2693553 1.000000e+00
 #> 6 Gene_06     A              24              7          0.2975580 5.159350e-01
-#>       pval_adj    method hr_period hr_phase_estimate hr_mesor_estimate
-#> 1 1.096605e-29 JTK_CYCLE        24        11.4090051          4.301432
-#> 2 2.546176e-26 JTK_CYCLE        24         6.4617936          4.576863
-#> 3 1.000000e+00 JTK_CYCLE        24        13.9199917          5.886923
-#> 4 1.000000e+00 JTK_CYCLE        24         0.4821957          6.297386
-#> 5 1.000000e+00 JTK_CYCLE        24        13.3053857          6.056194
-#> 6 1.000000e+00 JTK_CYCLE        24         6.3201412          6.025998
-#>   hr_amplitude_estimate hr_relative_amplitude_estimate
-#> 1             0.7053057                     0.16396996
-#> 2             1.4168445                     0.30956671
-#> 3             0.4085035                     0.06939169
-#> 4             0.4843375                     0.07691087
-#> 5             0.1668934                     0.02755747
-#> 6             0.3418065                     0.05672197
+#>       pval_adj    method hr_period hr_phase_estimate hr_peak_time_estimate
+#> 1 1.096605e-29 JTK_CYCLE        24        11.4090051            11.4090051
+#> 2 2.546176e-26 JTK_CYCLE        24         6.4617936             6.4617936
+#> 3 1.000000e+00 JTK_CYCLE        24        13.9199917            13.9199917
+#> 4 1.000000e+00 JTK_CYCLE        24         0.4821957             0.4821957
+#> 5 1.000000e+00 JTK_CYCLE        24        13.3053857            13.3053857
+#> 6 1.000000e+00 JTK_CYCLE        24         6.3201412             6.3201412
+#>   hr_mesor_estimate hr_amplitude_estimate hr_relative_amplitude_estimate
+#> 1          4.301432             0.7053057                     0.16396996
+#> 2          4.576863             1.4168445                     0.30956671
+#> 3          5.886923             0.4085035                     0.06939169
+#> 4          6.297386             0.4843375                     0.07691087
+#> 5          6.056194             0.1668934                     0.02755747
+#> 6          6.025998             0.3418065                     0.05672197
 ```
 
-The column names in the formatted output follow the same pattern for all
-methods. Furthermore, the results of a harmonic regression are also
-included in this output, allowing for a quick comparison of the
-estimated parameters to those of a simple sine wave fit. The harmonic
-regression used is equivalent to the model
+The results of the harmonic regression are also included in this
+formatted output, allowing for a quick comparison of the estimated
+parameters to those of a simple cosine wave fit. The harmonic regression
+used is equivalent to the model
 $y = M + A \cos(\frac{2 \pi}{T}(t - \varphi))$ with $M$ the mesor, $A$
 the amplitude, $t$ the time (e.g. in hours), and $T$ and $\phi$ the
-period and phase in the same units as $t$. This model was chosen because
-the value of $\varphi$ corresponds to the time point of the peak of the
-fitted wave.
+period and phase in the same units as $t$. The value of $\varphi$
+corresponds to the time point of the first peak of the fitted wave.

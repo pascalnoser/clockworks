@@ -2,7 +2,7 @@
 % Please edit documentation in R/CircadianData.R
 \name{estimate_wave_params}
 \alias{estimate_wave_params}
-\title{Estimating sine Wave Parameters}
+\title{Estimating cosine Wave Parameters}
 \usage{
 estimate_wave_params(cd_obj)
 }
@@ -13,12 +13,12 @@ estimate_wave_params(cd_obj)
 A data frame with estimated sine wave parameters for every feature.
 }
 \description{
-This function is used to get an estimate for the amplitude and phase using
-harmonic regression.
+This function is used to get an estimate for the cosine wave parameters for
+each feature using harmonic regression.
 }
 \details{
 The returned parameters correspond to the model \deqn{y = M + A
 cos(\frac{2\pi}{T} (t - \varphi))} With \eqn{M} the mesor, \eqn{A} the
-amplitude, \eqn{T} the period, \eqn{t} the time and \eqn{\varphi} the phase in
-the same units as \eqn{t} (e.g. hours).
+amplitude, \eqn{T} the period, \eqn{t} the time and \eqn{\varphi} the phase
+in the same units as \eqn{t} (e.g. hours).
 }

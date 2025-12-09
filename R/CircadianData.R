@@ -409,6 +409,9 @@ CircadianData <- function(dataset,
   # TODO: Should I run this here or just in `clockworks()`?
   validate_exp_info(cd_obj)
 
+  # === 6. Run Harmonic Regression ===
+  cd_obj@wave_params <- estimate_wave_params(cd_obj)
+
   return(cd_obj)
 }
 
@@ -1151,10 +1154,10 @@ setMethod("$<-", "CircadianData",
 # package for rhythmicity detection but just for plotting
 # TODO: Explain stuff about relative amplitude
 
-#' Estimating sine Wave Parameters
+#' Estimating cosine Wave Parameters
 #'
-#' This function is used to get an estimate for the amplitude and phase using
-#' harmonic regression.
+#' This function is used to get an estimate for the cosine wave parameters for
+#' each feature using harmonic regression.
 #'
 #' @param cd_obj A `CircadianData` object
 #'
@@ -1163,8 +1166,8 @@ setMethod("$<-", "CircadianData",
 #' @details
 #' The returned parameters correspond to the model \deqn{y = M + A
 #' cos(\frac{2\pi}{T} (t - \varphi))} With \eqn{M} the mesor, \eqn{A} the
-#' amplitude, \eqn{T} the period, \eqn{t} the time and \eqn{\varphi} the phase in
-#' the same units as \eqn{t} (e.g. hours).
+#' amplitude, \eqn{T} the period, \eqn{t} the time and \eqn{\varphi} the phase
+#' in the same units as \eqn{t} (e.g. hours).
 #'
 #' @returns A data frame with estimated sine wave parameters for every feature.
 estimate_wave_params <- function(cd_obj) {
@@ -1714,11 +1717,10 @@ setMethod("show", "CircadianData", function(object) {
 #' @return A `ggplot` object representing the circular phase plot. This can be
 #'   printed to display the plot or modified with additional `ggplot2` layers.
 #'
-#' @importFrom dplyr mutate count group_by ungroup
+#' @importFrom dplyr mutate count group_by ungroup distinct
 #' @importFrom tidyr complete
-#' @importFrom ggplot2 ggplot aes geom_rect geom_tile scale_fill_discrete
-#' @importFrom ggplot2 coord_polar scale_alpha_continuous scale_x_continuous
-#' @importFrom ggplot2 scale_y_continuous labs theme_minimal theme
+#' @importFrom magrittr %>%
+#' @import ggplot2
 #' @export
 # TODO: PROVIDE AN EXAMPLE
 # TODO: Update documentation
@@ -1925,6 +1927,213 @@ plot_phase_estimates <- function(cd,
 }
 
 
+
+#' Plot the expression of a feature from a CircadianData object
+#'
+#' This function generates a ggplot2-based dot plot showing the expression
+#' values of a selected feature across time points stored in a `CircadianData`
+#' object. Points are optionally filled by sample groups. A fitted cosine wave
+#' can be drawn behind the points (if available in `cd@wave_params`), and
+#' alternating background shading can be added to indicate day/night or other
+#' cyclical intervals.
+#'
+#' @param cd A `CircadianData` object.
+#' @param feature Character or numeric. The feature (gene) to plot.
+#' @param add_wave Logical; if `TRUE`, adds the cosine fit curve.
+#' @param group Character or `NULL`; restrict the plot to a single group.
+#' @param background_cutoffs Numeric vector or `NULL`; switches for alternating
+#'   background shading.
+#' @param background_colors Character vector of length 1 or 2; colors used for
+#'   shading.
+#'
+#' @return A ggplot object.
+#'
+#' @examples
+#' \dontrun{
+#'   plot_feature_gg(cd, "Gene_01", background_cutoffs = c(12, 24))
+#' }
+#'
+#' @import ggplot2
+#' @importFrom dplyr n_distinct pull do rowwise filter
+#' @importFrom tibble tibble
+#'
+#' @export
+plot_feature <- function(cd,
+                         feature,
+                         add_wave = TRUE,
+                         group = NULL,
+                         background_cutoffs = NULL,
+                         background_colors = c("white", "grey85")) {
+
+  # --- 0. Extract Data ---
+  mdata <- cd@metadata
+  dat <- cd@dataset
+  w_params <- cd@wave_params
+
+  # --- 1. Input Validation ---
+  # Validate time column
+  if (!("time" %in% colnames(mdata))) {
+    stop("Metadata must contain a 'time' column for plotting.")
+  }
+
+  # Validate feature argument
+  if (!(is.character(feature) || is.numeric(feature)) || length(feature) != 1) {
+    stop("'feature' must be a single character string or a single numeric value.")
+  }
+  if (is.character(feature)) {
+    if (!(feature %in% rownames(cd))) {
+      stop("Feature '", feature, "' not found in the dataset.")
+    }
+  } else {
+    if (feature > nrow(cd)) {
+      stop("Feature index (", feature, ") out of bounds.")
+    }
+    feature <- rownames(cd)[feature]
+  }
+
+  # Validate group column + argument
+  has_group_col <- "group" %in% colnames(mdata)
+  if (!is.null(group)) {
+    if (!has_group_col) {
+      stop("'group' argument was provided, but metadata has no 'group' column.")
+    }
+    if (!is.character(group) || length(group) != 1) {
+      stop("'group' must be a single character string.")
+    }
+    if (!(group %in% mdata$group)) {
+      stop("Group '", group, "' not found in metadata.")
+    }
+  }
+
+  # Validate background_colors
+  if (!is.character(background_colors)) {
+    stop("'background_colors' must be a character vector.")
+  }
+  if (length(background_colors) == 1) {
+    background_colors <- c("white", background_colors)
+  }
+  if (length(background_colors) != 2) {
+    stop("'background_colors' must be length 2.")
+  }
+
+  # --- 2. Prepare Data for Plotting ---
+  feature_values <- dat[feature, , drop = TRUE]
+
+  plot_df <- data.frame(
+    time  = mdata$time,
+    value = feature_values
+  )
+
+  if (has_group_col) {
+    plot_df$group <- mdata$group
+  } else {
+    plot_df$group <- factor("all_samples")
+  }
+
+  # Filter to group if requested
+  if (!is.null(group)) {
+    plot_df <- plot_df[plot_df$group == group, , drop = FALSE]
+    if (nrow(plot_df) == 0) {
+      stop("No data available for feature '", feature, "' in group '", group, "'.")
+    }
+  }
+
+  multiple_groups <- dplyr::n_distinct(plot_df$group) > 1
+
+  # --- 3. Begin ggplot ---
+  p <- ggplot() +
+    theme_bw() +
+    labs(title = paste0("Expression of ", feature))
+
+  # --- 4. Background Shading ---
+  if (!is.null(background_cutoffs)) {
+
+    # x_min <- min(plot_df$time)
+    # x_max <- max(plot_df$time)
+    x_min <- -Inf
+    x_max <- Inf
+
+    cuts <- sort(unique(background_cutoffs))
+    boundaries <- c(x_min, cuts, x_max)
+
+    bg_df <- data.frame(
+      xmin = boundaries[-length(boundaries)],
+      xmax = boundaries[-1],
+      fill_bg = rep(background_colors, length.out = length(boundaries) - 1)
+    )
+
+    # Use fill as a plain argument: no aes → no fill scale → no conflicts
+    p <- p +
+      geom_rect(
+        data = bg_df,
+        aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf),
+        inherit.aes = FALSE,
+        alpha = 0.5,
+        fill = bg_df$fill_bg
+      )
+  }
+
+  # --- 5. Add Cosine Wave (Behind Points) ---
+  if (add_wave && is.data.frame(w_params) && nrow(w_params) > 0) {
+    wp <- w_params %>%
+      dplyr::filter(feature == !!feature)
+
+    if (!is.null(group)) {
+      wp <- wp %>% dplyr::filter(group == !!group)
+    }
+
+    wp <- wp %>% dplyr::filter(group %in% unique(plot_df$group))
+
+    if (nrow(wp) > 0) {
+      time_grid <- seq(min(plot_df$time), max(plot_df$time), length.out = 400)
+
+      wave_df <- wp %>%
+        rowwise() %>%
+        do({
+          tibble(
+            time  = time_grid,
+            value = .$mesor_estimate +
+              .$amplitude_estimate *
+              cos(2 * pi * (time_grid - .$phase_estimate) / .$period),
+            group = .$group
+          )
+        }) %>%
+        ungroup()
+
+      p <- p +
+        geom_line(
+          data = wave_df,
+          aes(x = time, y = value, colour = group),
+          linewidth = 1
+        )
+
+      if (!multiple_groups) {
+        p <- p + guides(colour = "none")
+      }
+    }
+  }
+
+  # --- 6. Add Points (On Top) ---
+  p <- p +
+    geom_point(
+      data = plot_df,
+      aes(x = time, y = value, fill = group),
+      shape = 21, size = 3, colour = "black"
+    )
+
+  p <- p + scale_fill_discrete(name = "group")
+
+  if (!multiple_groups) {
+    p <- p + guides(fill = "none")
+  }
+
+  return(p)
+}
+
+
+
+
+# TODO: Remove this base R plotting function at some point
 #' Plot Feature Values Over Time
 #'
 #' Creates a scatterplot of the values for a specific feature against time. If a
@@ -1946,8 +2155,7 @@ plot_phase_estimates <- function(cd,
 #' @param ... Additional arguments passed to the base `plot()` function.
 #'
 #'
-#' @export
-#' @rdname plot_feature
+#' @rdname plot_feature_base
 #' @examples
 #' # --- With a 'group' column in metadata ---
 #' set.seed(123)
@@ -1968,10 +2176,10 @@ plot_phase_estimates <- function(cd,
 #' cd_obj_grouped <- add_experiment_info(cd_obj_grouped)
 #'
 #' # Plot a feature for all groups (colored by group)
-#' plot_feature(cd_obj_grouped, feature = "Feature3")
+#' plot_feature_base(cd_obj_grouped, feature = "Feature3")
 #'
 #' # Plot a feature for only the "Treated" group
-#' plot_feature(cd_obj_grouped, feature = "Feature3", group = "Treated")
+#' plot_feature_base(cd_obj_grouped, feature = "Feature3", group = "Treated")
 #'
 #' # --- Without a 'group' column in metadata ---
 #' cd_obj_no_group <- CircadianData(
@@ -1983,14 +2191,14 @@ plot_phase_estimates <- function(cd,
 #' cd_obj_no_group <- add_experiment_info(cd_obj_no_group)
 #'
 #' # Plot a feature (all points will have the same color)
-#' plot_feature(cd_obj_no_group,
+#' plot_feature_base(cd_obj_no_group,
 #'              feature = "Feature5",
 #'              main = "Feature 5 (No Groups Defined)")
 #'
-setGeneric("plot_feature", function(x, feature, group = NULL, add_wave = TRUE, ...) standardGeneric("plot_feature"))
+setGeneric("plot_feature_base", function(x, feature, group = NULL, add_wave = TRUE, ...) standardGeneric("plot_feature_base"))
 
-#' @rdname plot_feature
-setMethod("plot_feature", "CircadianData",
+#' @rdname plot_feature_base
+setMethod("plot_feature_base", "CircadianData",
           function(x, feature, group = NULL, add_wave = TRUE, ...) {
 
             # --- 1. Input Validation ---
@@ -2190,98 +2398,5 @@ setMethod("plot_feature", "CircadianData",
 
 # --- Example Usage ---
 if (FALSE) { # Don't run automatically
-  # Sample Data
-  counts <- matrix(rpois(100, lambda = 10), nrow = 10, ncol = 10,
-                   dimnames = list(paste0("Feature", 1:10), paste0("Sample", 1:10)))
-  meta <- data.frame(
-    row.names = paste0("Sample", 1:10),
-    group = rep(c("Control", "Treated"), each = 5),
-    time = rep(seq(0, 8, by = 2), 2)
-  )
-
-  # Create object
-  cd_obj <- CircadianData(
-    dataset = counts,
-    metadata = meta,
-    colname_sample = "rownames",
-    colname_time = "time",
-    colname_group = "group"
-  )
-  print(cd_obj)
-
-  # Access data
-  dset <- dataset(cd_obj)
-  mdata <- metadata(cd_obj)
-
-  # Check dimensions and names
-  dim(cd_obj)
-  rownames(cd_obj) # Feature names
-  colnames(cd_obj) # Sample names
-
-  # --- Synchronization Examples ---
-
-  # 1. Subsetting samples
-  cd_subset_samples <- cd_obj[, c("Sample1", "Sample5", "Sample9")]
-  print(cd_subset_samples)
-  print(dim(dataset(cd_subset_samples))) # 10 x 3
-  print(dim(metadata(cd_subset_samples))) # 3 x 2
-  print(colnames(dataset(cd_subset_samples)))
-  print(rownames(metadata(cd_subset_samples))) # Should match!
-
-  # 2. Subsetting features (metadata unaffected)
-  cd_subset_features <- cd_obj[c(1, 3, 5), ]
-  print(cd_subset_features)
-  print(dim(dataset(cd_subset_features))) # 3 x 10
-  print(dim(metadata(cd_subset_features))) # 10 x 2
-
-  # 3. Renaming samples
-  cd_renamed <- cd_obj
-  new_names <- paste0("S", 1:10)
-  colnames(cd_renamed) <- new_names
-  print(colnames(dataset(cd_renamed))) # S1, S2, ...
-  print(rownames(metadata(cd_renamed))) # S1, S2, ... (synchronized!)
-
-  # --- Adding Experiment Information ---
-  info_list <- list(
-    period = 24,
-    is_missing = FALSE,
-    replicates_per_tp = table(metadata(cd_obj)$time),
-    assay_type = "RNA-Seq"
-  )
-  experiment_info(cd_obj) <- info_list
-  print(cd_obj)
-
-  # Add/modify elements using `[[<-`
-  cd_obj[["experiment_id"]] <- "EXP_001"
-  cd_obj[["period"]] <- 24
-  cd_obj[["has_replicates"]] <- TRUE
-  print(experiment_info(cd_obj))
-
-  # Access elements using `[[`
-  exp_id <- cd_obj[["experiment_id"]]
-  cat("Experiment ID:", exp_id, "\n")
-  # Access non-existent element (returns NULL, standard list behavior)
-  print(cd_obj[["non_existent"]])
-
-  # Modify existing element using `[[<-`
-  cd_obj[["period"]] <- 23.8
-  print(cd_obj[["period"]])
-
-  # Add/modify elements using `$<-`
-  cd_obj$operator <- "John Doe"
-  cd_obj$has_replicates <- FALSE # Modify existing
-  print(experiment_info(cd_obj))
-
-  # Access elements using `$`
-  op <- cd_obj$operator
-  cat("Operator:", op, "\n")
-  # Access non-existent element (returns NULL)
-  print(cd_obj$tissue)
-
-  # Verify the main object is updated
-  print(cd_obj)
-
-  # Access all experiment information
-  full_info <- experiment_info(cd_obj)
-  print(full_info)
+  #
 }

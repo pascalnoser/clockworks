@@ -2,74 +2,46 @@
 % Please edit documentation in R/CircadianData.R
 \name{plot_feature}
 \alias{plot_feature}
-\alias{plot_feature,CircadianData-method}
-\title{Plot Feature Values Over Time}
+\title{Plot the expression of a feature from a CircadianData object}
 \usage{
-plot_feature(x, feature, group = NULL, add_wave = TRUE, ...)
-
-\S4method{plot_feature}{CircadianData}(x, feature, group = NULL, add_wave = TRUE, ...)
+plot_feature(
+  cd,
+  feature,
+  add_wave = TRUE,
+  group = NULL,
+  background_cutoffs = NULL,
+  background_colors = c("white", "grey85")
+)
 }
 \arguments{
-\item{x}{A \code{CircadianData} object.}
+\item{cd}{A \code{CircadianData} object.}
 
-\item{feature}{A single character string specifying the name or a single
-numeric value specifying the row number of the feature (from
-\code{rownames(dataset(x))}) to plot.}
+\item{feature}{Character or numeric. The feature (gene) to plot.}
 
-\item{group}{An optional single character string specifying a group to filter
-by. This is only applicable if a 'group' column exists in the metadata. If
-\code{NULL} (the default) and a 'group' column exists, data from all groups are
-plotted with different colors.}
+\item{add_wave}{Logical; if \code{TRUE}, adds the cosine fit curve.}
 
-\item{add_wave}{An optional logical value (TRUE/FALSE) specifying whether a
-sine wave fitted by harmonic regression should be plotted on top of the
-data. Only applies when \code{wave_params} has been filled by running
-\code{estimate_wave_params()} or \code{clockworks()} on \code{x}.}
+\item{group}{Character or \code{NULL}; restrict the plot to a single group.}
 
-\item{...}{Additional arguments passed to the base \code{plot()} function.}
+\item{background_cutoffs}{Numeric vector or \code{NULL}; switches for alternating
+background shading.}
+
+\item{background_colors}{Character vector of length 1 or 2; colors used for
+shading.}
+}
+\value{
+A ggplot object.
 }
 \description{
-Creates a scatterplot of the values for a specific feature against time. If a
-'group' column exists in the metadata, points are colored by group, and the
-plot can be optionally filtered to a single group.
+This function generates a ggplot2-based dot plot showing the expression
+values of a selected feature across time points stored in a \code{CircadianData}
+object. Points are optionally filled by sample groups. A fitted cosine wave
+can be drawn behind the points (if available in \code{cd@wave_params}), and
+alternating background shading can be added to indicate day/night or other
+cyclical intervals.
 }
 \examples{
-# --- With a 'group' column in metadata ---
-set.seed(123)
-counts <- matrix(rpois(80, lambda = 50), nrow = 10, ncol = 8,
-                 dimnames = list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
-meta <- data.frame(
-  row.names = paste0("Sample", 1:8),
-  time = rep(c(0, 6, 12, 18), each = 2),
-  group = factor(rep(c("Control", "Treated"), 4))
-)
-cd_obj_grouped <- CircadianData(
-  dataset = counts,
-  metadata = meta,
-  colname_sample = "rownames",
-  colname_time = "time",
-  colname_group = "group"
-)
-cd_obj_grouped <- add_experiment_info(cd_obj_grouped)
-
-# Plot a feature for all groups (colored by group)
-plot_feature(cd_obj_grouped, feature = "Feature3")
-
-# Plot a feature for only the "Treated" group
-plot_feature(cd_obj_grouped, feature = "Feature3", group = "Treated")
-
-# --- Without a 'group' column in metadata ---
-cd_obj_no_group <- CircadianData(
-  dataset = counts,
-  metadata = meta,
-  colname_sample = "rownames",
-  colname_time = "time"
-)
-cd_obj_no_group <- add_experiment_info(cd_obj_no_group)
-
-# Plot a feature (all points will have the same color)
-plot_feature(cd_obj_no_group,
-             feature = "Feature5",
-             main = "Feature 5 (No Groups Defined)")
+\dontrun{
+  plot_feature_gg(cd, "Gene_01", background_cutoffs = c(12, 24))
+}
 
 }
