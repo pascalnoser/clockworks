@@ -1932,25 +1932,35 @@ plot_phase_estimates <- function(cd,
 #'
 #' This function generates a ggplot2-based dot plot showing the expression
 #' values of a selected feature across time points stored in a `CircadianData`
-#' object. Points are optionally filled by sample groups. A fitted cosine wave
-#' can be drawn behind the points (if available in `cd@wave_params`), and
-#' alternating background shading can be added to indicate day/night or other
-#' cyclical intervals.
+#' object. A fitted cosine wave can be drawn behind the points, and alternating
+#' background shading can be added to indicate day/night or other cyclical
+#' intervals.
 #'
 #' @param cd A `CircadianData` object.
-#' @param feature Character or numeric. The feature (gene) to plot.
-#' @param add_wave Logical; if `TRUE`, adds the cosine fit curve.
-#' @param group Character or `NULL`; restrict the plot to a single group.
-#' @param background_cutoffs Numeric vector or `NULL`; switches for alternating
+#' @param feature Character or numeric. The name or row number of the feature to
+#'   plot.
+#' @param plot_type Character. Plot individual points ("points") or means plus
+#'   standard deviations ("mean_sd").
+#' @param add_wave Logical. If `TRUE`, adds the cosine fit curve.
+#' @param point_size Numeric. Size of the points.
+#' @param wave_linewidth Numeric. Line width of the cosine fit curve.
+#' @param groups Character vector or `NULL`. Restrict the plot to the selected
+#'   groups.
+#' @param background_cutoffs Numeric vector or `NULL`. Switches for alternating
 #'   background shading.
-#' @param background_colors Character vector of length 1 or 2; colors used for
+#' @param background_colors Character vector of length 1 or 2. Colors used for
 #'   shading.
+#' @param background_alpha Numeric. Alpha value of background colours.
+#' @param errorbar_linewidth Numeric. Line width of error bars if `plot_type` is
+#'   set to "mean_sd".
+#' @param errorbar_width Numeric. Width of error bars if `plot_type` is set to
+#'   "mean_sd".
 #'
 #' @return A ggplot object.
 #'
 #' @examples
 #' \dontrun{
-#'   plot_feature_gg(cd, "Gene_01", background_cutoffs = c(12, 24))
+#'   plot_feature(cd, "Gene_01", background_cutoffs = c(12, 24))
 #' }
 #'
 #' @import ggplot2
@@ -1960,10 +1970,16 @@ plot_phase_estimates <- function(cd,
 #' @export
 plot_feature <- function(cd,
                          feature,
+                         plot_type = c("points", "mean_sd"),
                          add_wave = TRUE,
-                         group = NULL,
+                         point_size = 3,
+                         wave_linewidth = 1,
+                         groups = NULL,
                          background_cutoffs = NULL,
-                         background_colors = c("white", "grey85")) {
+                         background_colors = c("white", "grey50"),
+                         background_alpha = 0.5,
+                         errorbar_linewidth = 0.6,
+                         errorbar_width = 0.4) {
 
   # --- 0. Extract Data ---
   mdata <- cd@metadata
@@ -1972,6 +1988,7 @@ plot_feature <- function(cd,
 
   # --- 1. Input Validation ---
   # Validate time column
+  # TODO: Probably can remove this part?
   if (!("time" %in% colnames(mdata))) {
     stop("Metadata must contain a 'time' column for plotting.")
   }
@@ -1991,17 +2008,23 @@ plot_feature <- function(cd,
     feature <- rownames(cd)[feature]
   }
 
-  # Validate group column + argument
+  # Validate plot_type argument
+  plot_type <- match.arg(plot_type)
+
+  # Validate groups argument
   has_group_col <- "group" %in% colnames(mdata)
-  if (!is.null(group)) {
+  if (!is.null(groups)) {
     if (!has_group_col) {
-      stop("'group' argument was provided, but metadata has no 'group' column.")
+      stop("'groups' was provided, but metadata has no 'group' column.")
     }
-    if (!is.character(group) || length(group) != 1) {
-      stop("'group' must be a single character string.")
+    if (!is.character(groups)) {
+      stop("'groups' must be a character vector.")
     }
-    if (!(group %in% mdata$group)) {
-      stop("Group '", group, "' not found in metadata.")
+
+    missing_groups <- setdiff(groups, unique(mdata$group))
+    if (length(missing_groups) > 0) {
+      stop("The following groups were not found in metadata: ",
+           paste(missing_groups, collapse = ", "))
     }
   }
 
@@ -2031,14 +2054,29 @@ plot_feature <- function(cd,
   }
 
   # Filter to group if requested
-  if (!is.null(group)) {
-    plot_df <- plot_df[plot_df$group == group, , drop = FALSE]
+  if (!is.null(groups)) {
+    plot_df <- plot_df[plot_df$group %in% groups, , drop = FALSE]
     if (nrow(plot_df) == 0) {
-      stop("No data available for feature '", feature, "' in group '", group, "'.")
+      stop("No data available for feature '",
+           feature,
+           "' in the selected groups.")
     }
   }
 
   multiple_groups <- dplyr::n_distinct(plot_df$group) > 1
+
+
+  # Get mean and standard deviation
+  if (plot_type == "mean_sd") {
+
+    summary_df <- plot_df %>%
+      dplyr::group_by(time, group) %>%
+      dplyr::summarise(
+        mean = mean(value),
+        sd   = sd(value),
+        .groups = "drop"
+      )
+  }
 
   # --- 3. Begin ggplot ---
   p <- ggplot() +
@@ -2062,13 +2100,13 @@ plot_feature <- function(cd,
       fill_bg = rep(background_colors, length.out = length(boundaries) - 1)
     )
 
-    # Use fill as a plain argument: no aes → no fill scale → no conflicts
+    # Use fill as a plain argument
     p <- p +
       geom_rect(
         data = bg_df,
         aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf),
         inherit.aes = FALSE,
-        alpha = 0.5,
+        alpha = background_alpha,
         fill = bg_df$fill_bg
       )
   }
@@ -2078,8 +2116,8 @@ plot_feature <- function(cd,
     wp <- w_params %>%
       dplyr::filter(feature == !!feature)
 
-    if (!is.null(group)) {
-      wp <- wp %>% dplyr::filter(group == !!group)
+    if (!is.null(groups)) {
+      wp <- wp %>% dplyr::filter(group %in% groups)
     }
 
     wp <- wp %>% dplyr::filter(group %in% unique(plot_df$group))
@@ -2104,7 +2142,7 @@ plot_feature <- function(cd,
         geom_line(
           data = wave_df,
           aes(x = time, y = value, colour = group),
-          linewidth = 1
+          linewidth = wave_linewidth
         )
 
       if (!multiple_groups) {
@@ -2113,13 +2151,36 @@ plot_feature <- function(cd,
     }
   }
 
-  # --- 6. Add Points (On Top) ---
-  p <- p +
-    geom_point(
-      data = plot_df,
-      aes(x = time, y = value, fill = group),
-      shape = 21, size = 3, colour = "black"
-    )
+  # --- 6. Add Points ---
+  if (plot_type == "points") {
+    # Plot individual points
+    p <- p +
+      geom_point(
+        data = plot_df,
+        aes(x = time, y = value, fill = group),
+        shape = 21, size = point_size, colour = "black"
+      )
+
+  } else if (plot_type == "mean_sd") {
+    # Error bars
+    p <- p +
+      geom_errorbar(
+        data = summary_df,
+        aes(x = time, ymin = mean - sd, ymax = mean + sd),
+        width = errorbar_width,
+        linewidth = errorbar_linewidth
+      )
+
+    # Mean points
+    p <- p +
+      geom_point(
+        data = summary_df,
+        aes(x = time, y = mean, fill = group),
+        shape = 21,
+        size = point_size,
+        colour = "black"
+      )
+  }
 
   p <- p + scale_fill_discrete(name = "group")
 

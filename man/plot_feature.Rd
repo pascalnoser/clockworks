@@ -7,26 +7,49 @@
 plot_feature(
   cd,
   feature,
+  plot_type = c("points", "mean_sd"),
   add_wave = TRUE,
-  group = NULL,
+  point_size = 3,
+  wave_linewidth = 1,
+  groups = NULL,
   background_cutoffs = NULL,
-  background_colors = c("white", "grey85")
+  background_colors = c("white", "grey50"),
+  background_alpha = 0.5,
+  errorbar_linewidth = 0.6,
+  errorbar_width = 0.4
 )
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
-\item{feature}{Character or numeric. The feature (gene) to plot.}
+\item{feature}{Character or numeric. The name or row number of the feature to
+plot.}
 
-\item{add_wave}{Logical; if \code{TRUE}, adds the cosine fit curve.}
+\item{plot_type}{Character. Plot individual points ("points") or means plus
+standard deviations ("mean_sd").}
 
-\item{group}{Character or \code{NULL}; restrict the plot to a single group.}
+\item{add_wave}{Logical. If \code{TRUE}, adds the cosine fit curve.}
 
-\item{background_cutoffs}{Numeric vector or \code{NULL}; switches for alternating
+\item{point_size}{Numeric. Size of the points.}
+
+\item{wave_linewidth}{Numeric. Line width of the cosine fit curve.}
+
+\item{groups}{Character vector or \code{NULL}. Restrict the plot to the selected
+groups.}
+
+\item{background_cutoffs}{Numeric vector or \code{NULL}. Switches for alternating
 background shading.}
 
-\item{background_colors}{Character vector of length 1 or 2; colors used for
+\item{background_colors}{Character vector of length 1 or 2. Colors used for
 shading.}
+
+\item{background_alpha}{Numeric. Alpha value of background colours.}
+
+\item{errorbar_linewidth}{Numeric. Line width of error bars if \code{plot_type} is
+set to "mean_sd".}
+
+\item{errorbar_width}{Numeric. Width of error bars if \code{plot_type} is set to
+"mean_sd".}
 }
 \value{
 A ggplot object.
@@ -34,14 +57,13 @@ A ggplot object.
 \description{
 This function generates a ggplot2-based dot plot showing the expression
 values of a selected feature across time points stored in a \code{CircadianData}
-object. Points are optionally filled by sample groups. A fitted cosine wave
-can be drawn behind the points (if available in \code{cd@wave_params}), and
-alternating background shading can be added to indicate day/night or other
-cyclical intervals.
+object. A fitted cosine wave can be drawn behind the points, and alternating
+background shading can be added to indicate day/night or other cyclical
+intervals.
 }
 \examples{
 \dontrun{
-  plot_feature_gg(cd, "Gene_01", background_cutoffs = c(12, 24))
+  plot_feature(cd, "Gene_01", background_cutoffs = c(12, 24))
 }
 
 }
