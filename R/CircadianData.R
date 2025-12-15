@@ -2042,34 +2042,33 @@ plot_feature <- function(cd,
   # --- 2. Prepare Data for Plotting ---
   feature_values <- dat[feature, , drop = TRUE]
 
-  plot_df <- data.frame(
+  df_plot <- data.frame(
     time  = mdata$time,
     value = feature_values
   )
 
   if (has_group_col) {
-    plot_df$group <- mdata$group
+    df_plot$group <- mdata$group
   } else {
-    plot_df$group <- factor("all_samples")
+    df_plot$group <- factor("all_samples")
   }
 
   # Filter to group if requested
   if (!is.null(groups)) {
-    plot_df <- plot_df[plot_df$group %in% groups, , drop = FALSE]
-    if (nrow(plot_df) == 0) {
+    df_plot <- df_plot[df_plot$group %in% groups, , drop = FALSE]
+    if (nrow(df_plot) == 0) {
       stop("No data available for feature '",
            feature,
            "' in the selected groups.")
     }
   }
 
-  multiple_groups <- dplyr::n_distinct(plot_df$group) > 1
+  multiple_groups <- dplyr::n_distinct(df_plot$group) > 1
 
 
   # Get mean and standard deviation
   if (plot_type == "mean_sd") {
-
-    summary_df <- plot_df %>%
+    summary_df <- df_plot %>%
       dplyr::group_by(time, group) %>%
       dplyr::summarise(
         mean = mean(value),
@@ -2086,8 +2085,8 @@ plot_feature <- function(cd,
   # --- 4. Background Shading ---
   if (!is.null(background_cutoffs)) {
 
-    # x_min <- min(plot_df$time)
-    # x_max <- max(plot_df$time)
+    # x_min <- min(df_plot$time)
+    # x_max <- max(df_plot$time)
     x_min <- -Inf
     x_max <- Inf
 
@@ -2112,7 +2111,7 @@ plot_feature <- function(cd,
   }
 
   # --- 5. Add Cosine Wave (Behind Points) ---
-  if (add_wave && is.data.frame(w_params) && nrow(w_params) > 0) {
+  if (add_wave && nrow(w_params) > 0) {
     wp <- w_params %>%
       dplyr::filter(feature == !!feature)
 
@@ -2120,10 +2119,12 @@ plot_feature <- function(cd,
       wp <- wp %>% dplyr::filter(group %in% groups)
     }
 
-    wp <- wp %>% dplyr::filter(group %in% unique(plot_df$group))
+    if (has_group_col == FALSE) {
+      wp$group <- factor("all_samples")
+    }
 
     if (nrow(wp) > 0) {
-      time_grid <- seq(min(plot_df$time), max(plot_df$time), length.out = 400)
+      time_grid <- seq(min(df_plot$time), max(df_plot$time), length.out = 400)
 
       wave_df <- wp %>%
         rowwise() %>%
@@ -2156,7 +2157,7 @@ plot_feature <- function(cd,
     # Plot individual points
     p <- p +
       geom_point(
-        data = plot_df,
+        data = df_plot,
         aes(x = time, y = value, fill = group),
         shape = 21, size = point_size, colour = "black"
       )
