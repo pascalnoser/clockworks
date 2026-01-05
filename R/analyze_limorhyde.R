@@ -4,7 +4,7 @@
 #'
 #' @param cd A `CircadianData` object.
 #' @param method_args Additional parameters passed to `limma::lmfit()` or
-#'   `edgeR::voomLmFit()`
+#'   `edgeR::voomLmFit()`. If included, `robust` is passed to `limma::eBayes()`.
 #'
 #' @returns A list with the original and formatted results of the LimoRhyde analysis.
 analyze_limorhyde <- function(cd, method_args = list()) {

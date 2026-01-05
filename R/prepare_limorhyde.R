@@ -24,10 +24,15 @@ prepare_limorhyde <- function(cd) {
   } else {
     str_model <- "~ time_sin + time_cos"
 
-    # If repeated measures (and no groups), add subject ID to model
-    if (cd_local$repeated_measures == TRUE) {
-      str_model <- paste(str_model, "+ subject_ID")
-    }
+
+    # # If repeated measures (and no groups), add subject ID to model
+    # # NOTE: If there are groups this is not possible because the resulting
+    # # design matrix would not be full rank. In case of no groups it is possible,
+    # # but I decided to be consistent and always add the subject ID as blocking
+    # # variable. Both approaches are completely valid.
+    # if (cd_local$repeated_measures == TRUE) {
+    #   str_model <- paste(str_model, "+ subject_ID")
+    # }
   }
   design <- model.matrix(as.formula(str_model), data = metadata(cd_local))
 
@@ -42,7 +47,7 @@ prepare_limorhyde <- function(cd) {
       func = "voomLmFit",
       counts = dataset(cd_local),
       design = design,
-      sample.weights = TRUE  # TODO: Figure out if this should be TRUE or FALSE
+      sample.weights = TRUE
     )
 
   } else if (cd_local$data_type == "norm") {
@@ -59,10 +64,14 @@ prepare_limorhyde <- function(cd) {
 
   # Add blocking variable ----
   if (cd_local$repeated_measures == TRUE) {
-    # If we have groups, add subject ID as blocking variable
-    if (!(is.na(cd_local$n_groups) | cd_local$n_groups == 1)) {
-      inputs$block <- metadata(cd_local)[["subject_ID"]]
-    }
+    # # If we have groups, add subject ID as blocking variable
+    # # NOTE: See note above about adding to model vs. blocking
+    # if (!(is.na(cd_local$n_groups) | cd_local$n_groups == 1)) {
+    #   inputs$block <- metadata(cd_local)[["subject_ID"]]
+    # }
+
+    # Add subject ID as blocking variable
+    inputs$block <- metadata(cd_local)[["subject_ID"]]
 
     # Add 'correlation' if using lmFit()
     if (cd_local$data_type == "norm") {

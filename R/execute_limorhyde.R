@@ -18,14 +18,17 @@ execute_limorhyde <- function(inputs, groups, method_args = list()) {
   func <- inputs$func
   inputs$func <- NULL
 
+  # If in method args, change robust and otherwise set to TRUE
+  robust <- inputs$robust %||% TRUE
+
   # Run rhythmicity analysis
   if (func == "lmFit") {
     fit <- do.call(limma::lmFit, inputs)
-    fit <- limma::eBayes(fit, trend = TRUE)
+    fit <- limma::eBayes(fit, trend = TRUE, robust = robust)
 
   } else if (func == "voomLmFit") {
     fit <- do.call(edgeR::voomLmFit, inputs)
-    fit <- limma::eBayes(fit)
+    fit <- limma::eBayes(fit, robust = robust)
   }
 
   # Extract results

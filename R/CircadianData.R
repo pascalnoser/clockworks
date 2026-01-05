@@ -444,7 +444,7 @@ CircadianData <- function(dataset,
 #'
 #' @name CircadianData-accessors
 #' @aliases dataset dataset<- metadata metadata<- experiment_info
-#'   experiment_info<- results results<- wave_params wave_params<-
+#'   experiment_info<- wave_params wave_params<-
 NULL # A NULL object to hold the main documentation block
 
 
