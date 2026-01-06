@@ -14,9 +14,9 @@ prepare_repeatedcircadian <- function(cd, grp) {
 
   # Create named list to return
   inputs <- list(
-    dat = dataset(cd_filt),
-    tt = metadata(cd_filt)[["time"]],
-    id = metadata(cd_filt)[["subject_ID"]],
+    dat = get_dataset(cd_filt),
+    tt = get_metadata(cd_filt)[["time"]],
+    id = get_metadata(cd_filt)[["subject_ID"]],
     period = mean(cd_filt$period)
   )
 

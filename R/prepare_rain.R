@@ -15,7 +15,7 @@ prepare_rain <- function(cd, grp) {
   # Create list with inputs for execute method
   per <- cd_filt$period
   inputs <- list(
-    x = t(dataset(cd_filt)),
+    x = t(get_dataset(cd_filt)),
     deltat = cd_filt$delta_t,
     period = mean(per),
     period.delta = max(per) - mean(per),

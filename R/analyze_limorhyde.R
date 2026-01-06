@@ -15,13 +15,13 @@ analyze_limorhyde <- function(cd, method_args = list()) {
   inputs <- prepare_limorhyde(cd_local)
 
   # Run rhythmicity analysis
-  groups <- unique(metadata(cd_local)[["group"]])
+  groups <- unique(get_metadata(cd_local)[["group"]])
   df_res <- execute_limorhyde(inputs, groups, method_args)
 
   # Postprocessing
   ls_res <- format_limorhyde(
     res_original = df_res,
-    w_params = wave_params(cd_local),
+    w_params = get_wave_params(cd_local),
     period = mean(cd_local$period)
   )
 

@@ -12,13 +12,13 @@ check_dryr <- function(cd) {
 
   # Add temporary group if there is no group column
   if (is.na(cd_local$n_groups)){
-    df_meta_temp <- metadata(cd_local)
+    df_meta_temp <- get_metadata(cd_local)
     df_meta_temp[["group"]] <- "tmp"
     metadata(cd_local) <- df_meta_temp
   }
 
   # Make sure samples are ordered by time and group (and subject ID if relevant)
-  sort_cols <- intersect(c("time", "group", "subject_ID"), colnames(metadata(cd_local)))
+  sort_cols <- intersect(c("time", "group", "subject_ID"), colnames(get_metadata(cd_local)))
   cd_local <- order_samples(cd_local, sort_cols)
 
   return(cd_local)

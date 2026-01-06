@@ -14,8 +14,8 @@ normalise_dataset <- function(cd, verbose = TRUE) {
   }
 
   # Get counts and group
-  counts <- dataset(cd)
-  group <- metadata(cd)$group
+  counts <- get_dataset(cd)
+  group <- get_metadata(cd)$group
 
   # Filter, normalise, and turn to log CPM values
   dge <- edgeR::DGEList(counts = counts, group = group)

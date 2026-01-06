@@ -51,13 +51,13 @@ dim(cd_obj_sub1) # 2 10
 # Subset samples (columns) - metadata is subsetted automatically
 cd_obj_sub2 <- cd_obj[ , c("Sample1", "Sample3", "Sample8")]
 dim(cd_obj_sub2) # 10  3
-print(metadata(cd_obj_sub2))
+print(get_metadata(cd_obj_sub2))
 print(experiment_info(cd_obj_sub2)) # Carried over
 
 # Subset both
 cd_obj_sub3 <- cd_obj[1:3, c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE)]
 dim(cd_obj_sub3) # 3 5
 print(colnames(cd_obj_sub3))
-print(rownames(metadata(cd_obj_sub3)))
+print(rownames(get_metadata(cd_obj_sub3)))
 
 }

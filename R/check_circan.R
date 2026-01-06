@@ -16,7 +16,7 @@ check_circan <- function(cd) {
   }
 
   # Extract meta data to add necessary columns
-  df_meta_temp <- metadata(cd_local)
+  df_meta_temp <- get_metadata(cd_local)
 
   # If the user has picked this method but there are no repeated measures, add a
   # subject ID column with a unique subject ID for each sample because CircaN

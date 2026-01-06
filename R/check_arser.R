@@ -16,7 +16,7 @@ check_arser <- function(cd) {
   }
 
   # Extract meta data to add necessary columns
-  df_meta_temp <- metadata(cd_local)
+  df_meta_temp <- get_metadata(cd_local)
 
   # Add temporary group if there is no group column
   if (is.na(cd_local$n_groups)){

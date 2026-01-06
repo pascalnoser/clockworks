@@ -51,17 +51,17 @@ cd_obj <- CircadianData(
 )
 
 print("Original Metadata Order:")
-print(metadata(cd_obj))
+print(get_metadata(cd_obj))
 
 # --- Now run the sorting function ---
 # Sort samples by time
 cd_sorted_time <- order_samples(cd_obj, "time")
 print("Metadata sorted by time:")
-print(metadata(cd_sorted_time))
+print(get_metadata(cd_sorted_time))
 
 # Sort samples first by time (asc), then by subject_ID (desc)
 cd_sorted_multi <- order_samples(cd_obj, c("time", "subject_ID"), decreasing = c(FALSE, TRUE))
 print("Metadata sorted by time (asc) then subject_ID (desc):")
-print(metadata(cd_sorted_multi))
+print(get_metadata(cd_sorted_multi))
 
 }

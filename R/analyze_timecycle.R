@@ -18,7 +18,7 @@ analyze_timecycle <- function(cd, method_args = list()) {
   ls_res_groups <- list()
 
   # Run rhythmicity detection for each group separately
-  groups <- unique(metadata(cd_local)[["group"]])
+  groups <- unique(get_metadata(cd_local)[["group"]])
   for (grp in groups) {
     # Prepare inputs
     inputs <- prepare_timecycle(cd_local, grp)
@@ -36,7 +36,7 @@ analyze_timecycle <- function(cd, method_args = list()) {
   # Postprocessing
   ls_res <- format_timecycle(
     ls_res_groups = ls_res_groups,
-    w_params = wave_params(cd_local),
+    w_params = get_wave_params(cd_local),
     resamplings = resamplings,
     added_group = added_group
   )

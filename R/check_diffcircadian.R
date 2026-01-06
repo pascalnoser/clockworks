@@ -16,11 +16,11 @@ check_diffcircadian <- function(cd) {
   }
 
   # Make sure samples are ordered by time and group
-  sort_cols <- intersect(c("time", "group"), colnames(metadata(cd_local)))
+  sort_cols <- intersect(c("time", "group"), colnames(get_metadata(cd_local)))
   cd_local <- order_samples(cd_local, sort_cols)
 
   # Get meta data
-  df_meta_temp <- metadata(cd_local)
+  df_meta_temp <- get_metadata(cd_local)
 
   # Add temporary group if there is no group column
   if (is.na(cd_local$n_groups)){

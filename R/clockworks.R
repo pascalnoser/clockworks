@@ -54,14 +54,14 @@ clockworks <- function(cd,
   # === Add wave parameters if not already present ===
   # TODO: Can probably remove this since `esimtate_wave_params()` is ran
   # whenever a new CD object is created now.
-  w_params <- wave_params(cd)
+  w_params <- get_wave_params(cd)
   if (nrow(w_params) == 0) {
     wave_params(cd) <- estimate_wave_params(cd)
   }
 
   # === Sort to ensure format of input ===
   # Sort by group, time, and subject ID
-  sort_cols <- intersect(c("time", "group", "subject_ID"), colnames(metadata(cd)))
+  sort_cols <- intersect(c("time", "group", "subject_ID"), colnames(get_metadata(cd)))
   cd <- order_samples(cd, sort_cols)
 
   # === Set up parallel processing ===
@@ -77,7 +77,7 @@ clockworks <- function(cd,
   rhythmicity_results <- analyze_fn(cd, method_args)
 
   # Add to CD object
-  cd@results[[method]] <- rhythmicity_results
+  results(cd)[[method]] <- rhythmicity_results
 
   return(cd)
 }

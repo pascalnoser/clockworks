@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 [![](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![](https://img.shields.io/badge/devel%20version-0.2.25-blue.svg)](https://github.com/pascalnoser/clockworks)
+[![](https://img.shields.io/badge/devel%20version-0.2.29-blue.svg)](https://github.com/pascalnoser/clockworks)
 [![](https://img.shields.io/github/languages/code-size/pascalnoser/clockworks.svg)](https://github.com/pascalnoser/clockworks)
 <!-- badges: end -->
 
@@ -41,10 +41,25 @@ of two rhythmic and eight non-rhythmic genes. We will analyse them using
 as well as the [MetaCycle](https://github.com/gangwug/MetaCycle)
 implementation of [JTK_CYCLE](https://doi.org/10.1177/0748730410379711).
 
-We start by loading the package and creating a `CircadianData` object
-using some synthetic example data. When using your own data, make sure
-that the formatting is the same as the `cw_data` and `cw_metadata` shown
-below:
+We start the workflow by creating a `CircadianData` object using our
+input data and meta data. The only requirements for these are:
+
+- The input data (`dataset`) must be a matrix or data frame with row
+  names corresponding to features and column names corresponding to
+  sample IDs.
+
+- The meta data (`metadata`) must be a data frame containing at least
+  two columns:
+
+  1.  `colname_sample`: Sample IDs corresponding to the column names of
+      `dataset` (e.g. “Sample_ID” below)
+  2.  `colname_time`: Time point of each sample (e.g. “Time” below)
+
+If a group column (`colname_group`) is defined, the samples from the
+different groups will be analysed separately. See the documentation of
+the `CircadianData` class for more info.
+
+Below is an example workflow using the synthetic data mentioned above:
 
 ``` r
 library(clockworks)
@@ -65,8 +80,9 @@ print(cw_data[1:5, 1:5])
 #> Gene_04 6.411975 6.667066 6.987838 5.369700 5.014173
 #> Gene_05 5.618924 6.541327 7.519745 5.659031 3.111079
 
-# The meta data requires a column with sample IDs corresponding to the column
-# names of the data and a column containing the time
+# The meta data contains a column for sample IDs and one for time. Additional
+# column like group or subject information (for repeated measures) are not
+# necessarily required
 print(head(cw_metadata))
 #>   Sample_ID Time Group Subject_ID
 #> 1   CT00_S1    0     A         S1
@@ -91,7 +107,8 @@ cd <- CircadianData(
 This `CircadianData` object is a way to store all the relevant
 information in one container with standardised formatting. Printing the
 object returns an overview of what `clockworks` “sees”. Note that
-e.g. the metadata column names have been renamed:
+e.g. the metadata column names have been renamed and the “Subject_ID”
+column is no longer present since we did not define a `colname_subject`:
 
 ``` r
 print(cd)

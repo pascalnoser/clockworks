@@ -23,7 +23,7 @@ check_repeatedcircadian <- function(cd) {
 
   # If there is only one subject throw an error because RepeatedCircadian needs
   # multiple subjects.
-  if (!nlevels(metadata(cd_local)$subject_ID) > 1) {
+  if (!nlevels(get_metadata(cd_local)$subject_ID) > 1) {
     stop(
       "The 'colname_subject' column has only 1 level. RepeatedCircadian ",
       "requires multiple subjects with repeated measures.",
@@ -39,7 +39,7 @@ check_repeatedcircadian <- function(cd) {
   # Add temporary group if there is no group column
   if (is.na(cd_local$n_groups)){
     # Add column
-    df_meta_temp <- metadata(cd_local)
+    df_meta_temp <- get_metadata(cd_local)
     df_meta_temp[["group"]] <- "tmp"
 
     # Add back to CD object

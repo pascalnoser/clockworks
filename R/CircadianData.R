@@ -5,37 +5,36 @@
 
 #' Define the CircadianData Class
 #'
-#' @description An S4 class to store and manage data from biological
-#' experiments, such as circadian studies. It serves as an integrated container
-#' for raw measurement data, sample annotations, experimental parameters, and
-#' analysis results.
+#' @description
+#' An S4 class to store and manage data from biological experiments, such as
+#' circadian studies. It serves as an integrated container for raw measurement
+#' data, sample annotations, experimental parameters, and analysis results.
 #'
-#' @details This class bundles the main components of an experimental dataset.
-#' Its primary goal is to ensure that the samples (columns of `dataset`, rows of
-#' `metadata`) remain synchronized during data manipulation operations like
-#' subsetting, ordering, and filtering. Analysis functions within the package
-#' are designed to take this object as input and can store their output in the
-#' `results` slot, creating a self-contained analysis workflow. The rows of the
-#' `dataset` represent features (e.g., genes, proteins, metabolites). The
-#' columns of `dataset` and rows of `metadata` represent samples. The
-#' `experiment_info` stores parameters (e.g. period) that are relevant for the
-#' analysis.
+#' @details
+#' This class bundles the main components of an experimental dataset.
+#' Its primary goal is to ensure that the samples remain synchronized during
+#' data manipulation operations like subsetting, ordering, and filtering.
+#' Analysis functions within the package are designed to take this object as
+#' input and can store their output in the `results` slot, creating a
+#' self-contained analysis workflow. The rows of the `dataset` represent
+#' features (e.g., genes, proteins, metabolites). The columns of `dataset` and
+#' rows of `metadata` represent samples. The `experiment_info` stores parameters
+#' (e.g. period) that are relevant for the analysis.
 #'
 #' To manipulate the object:
 #' \itemize{
-#'   \item To access main data slots, see \code{\link{CircadianData-accessors}}.
+#'   \item To access data slots, see \code{\link{get_dataset}}, \code{\link{get_metadata}}, \code{\link{get_results}}, \code{\link{get_experiment_info}}, \code{\link{get_wave_params}}.
 #'   \item To subset by features or samples, see \code{\link{CircadianData-subsetting}}.
 #'   \item To sort samples by metadata columns, see \code{\link{order_samples}}.
 #'   \item To filter samples by metadata values, see \code{\link{filter_samples}}.
-#'   \item To interact with the `experiment_info` list, see \code{\link{CircadianData-subset-expinfo}}.
 #' }
 #'
 #' @slot dataset A matrix containing measurement data (features x samples).
-#' @slot metadata A data.frame containing sample annotations (samples x
+#' @slot metadata A data frame containing sample annotations (samples x
 #'   attributes).
 #' @slot experiment_info A list for storing experiment-level parameters.
-#' @slot wave_params A data frame containing estimated wave parameters
-#'   of a sine wave fit to each feature using a harmonic regression.
+#' @slot wave_params A data frame containing estimated wave parameters of a
+#'   cosine wave fit to each feature using a harmonic regression.
 #' @slot results A list for storing the output from various analysis functions.
 #'
 #' @name CircadianData-class
@@ -178,7 +177,7 @@ setValidity("CircadianData", function(object) {
 #'
 #' print(cd_obj)
 #' # Note how metadata columns have been renamed and standardized
-#' head(metadata(cd_obj))
+#' head(get_metadata(cd_obj))
 #'
 CircadianData <- function(dataset,
                           metadata,
@@ -291,22 +290,6 @@ CircadianData <- function(dataset,
       paste(ignored_cols, collapse = ", ")
     )
 
-    # if (is.null(colname_group)) {
-    #   message_group <- paste0(
-    #     "If your data set contains groups which should be analysed ",
-    #     "separately, make sure to define `colname_group`."
-    #   )
-    #   message_cols <- paste0(message_cols, "\n", message_group)
-    # }
-
-    # if (is.null(colname_subject)) {
-    #   message_rpt <- paste0(
-    #     "If your data set contains repeated measures, make sure to define ",
-    #     "`colname_subject`."
-    #   )
-    #   message_cols <- paste0(message_cols, "\n", message_rpt)
-    # }
-
     message(paste0(message_cols, "\n"))
   }
 
@@ -410,57 +393,23 @@ CircadianData <- function(dataset,
   validate_exp_info(cd_obj)
 
   # === 6. Run Harmonic Regression ===
-  cd_obj@wave_params <- estimate_wave_params(cd_obj)
+  wave_params(cd_obj) <- estimate_wave_params(cd_obj)
 
   return(cd_obj)
 }
 
 
 
-# ---- Accessor Methods ----
+# ---- Accessor/Replacement Methods ----
 
-#' Access or Replace Object Components
-#'
-#' @description Functions to access or replace the main components of a
-#' \code{CircadianData} object, including the dataset matrix, metadata
-#' data.frame, experiment_info list, and results list.
-#'
-#' @param x A \code{CircadianData} object.
-#' @param value A value to replace a component with. See individual function
-#'   details for required class (e.g., a matrix for `dataset<-`, a list for
-#'   `results<-`).
-#'
-#' @details
-#' \itemize{
-#'   \item \code{dataset()}: Retrieves the feature x sample matrix.
-#'   \item \code{metadata()}: Retrieves the sample x attribute data.frame.
-#'   \item \code{experiment_info()}: Retrieves the list of experiment-level details.
-#'   \item \code{wave_params()}: Retrieves the list of estimated sine wave parameters.
-#'   \item \code{get_results()}: Retrieves the list of analysis results.
-#' }
-#'
-#' @return The requested component (for accessors) or the modified
-#'   \code{CircadianData} object (for replacement methods).
-#'
-#' @name CircadianData-accessors
-#' @aliases dataset dataset<- metadata metadata<- experiment_info
-#'   experiment_info<- wave_params wave_params<-
-NULL # A NULL object to hold the main documentation block
-
-
-## ---- Dataset Accessor/Replacement ----
-
-#' @rdname CircadianData-accessors
-#' @export
+## ---- Dataset ----
+### ---- Internal S4 Methods ----
 setGeneric("dataset", function(x) standardGeneric("dataset"))
 
-#' @rdname CircadianData-accessors
 setMethod("dataset", "CircadianData", function(x) x@dataset)
 
-#' @rdname CircadianData-accessors
 setGeneric("dataset<-", function(x, value) standardGeneric("dataset<-"))
 
-#' @rdname CircadianData-accessors
 setReplaceMethod("dataset", "CircadianData", function(x, value) {
   if (!is.matrix(value)) stop("'value' must be a matrix.")
   x@dataset <- value
@@ -468,20 +417,29 @@ setReplaceMethod("dataset", "CircadianData", function(x, value) {
   x
 })
 
-
-## ---- Metadata Accessor/Replacement ----
-
-#' @rdname CircadianData-accessors
+### ---- Exported Accessor ----
+#' Extract Data Set from a CircadianData Object
+#'
+#' `get_dataset()` retrieves the data set stored inside a `CircadianData`
+#' object.
+#'
+#' @param cd A `CircadianData` object.
+#'
+#' @returns A matrix with features as row names and sample IDs as column names
 #' @export
+get_dataset <- function(cd) {
+  dataset(cd)
+}
+
+
+## ---- Metadata ----
+### ---- Internal S4 Methods ----
 setGeneric("metadata", function(x) standardGeneric("metadata"))
 
-#' @rdname CircadianData-accessors
 setMethod("metadata", "CircadianData", function(x) x@metadata)
 
-#' @rdname CircadianData-accessors
 setGeneric("metadata<-", function(x, value) standardGeneric("metadata<-"))
 
-#' @rdname CircadianData-accessors
 setReplaceMethod("metadata", "CircadianData", function(x, value) {
   if (!is.data.frame(value)) stop("'value' must be a data frame.")
   x@metadata <- value
@@ -489,21 +447,29 @@ setReplaceMethod("metadata", "CircadianData", function(x, value) {
   x
 })
 
-
-## ---- Experiment Info Accessor/Replacement ----
-
-#' @rdname CircadianData-accessors
+### ---- Exported Accessor ----
+#' Extract Meta Data from a CircadianData Object
+#'
+#' `get_metadata()` retrieves the meta data stored inside a `CircadianData`
+#' object.
+#'
+#' @param cd A `CircadianData` object.
+#'
+#' @returns A data frame with sample IDs as row names and formatted column names
 #' @export
+get_metadata <- function(cd) {
+  metadata(cd)
+}
+
+
+## ---- Experiment Info ----
+### ---- Internal S4 Methods ----
 setGeneric("experiment_info", function(x) standardGeneric("experiment_info"))
 
-#' @rdname CircadianData-accessors
 setMethod("experiment_info", "CircadianData", function(x) x@experiment_info)
 
-#' @rdname CircadianData-accessors
-#' @export
 setGeneric("experiment_info<-", function(x, value) standardGeneric("experiment_info<-"))
 
-#' @rdname CircadianData-accessors
 setReplaceMethod("experiment_info", "CircadianData", function(x, value) {
   if (!is.list(value)) stop("'value' must be a list.")
   x@experiment_info <- value
@@ -511,8 +477,67 @@ setReplaceMethod("experiment_info", "CircadianData", function(x, value) {
   x
 })
 
+### ---- Exported Accessor ----
+#' Extract Experiment Info from a CircadianData Object
+#'
+#' `get_experiment_info()` retrieves the experiment info stored inside a
+#' `CircadianData` object.
+#'
+#' @param cd A `CircadianData` object.
+#'
+#' @returns A list with all stored experiment info
+#' @export
+get_experiment_info <- function(cd) {
+  experiment_info(cd)
+}
 
-## ---- Results Accessor/Replacement ----
+
+## ---- Wave Params ----
+### ---- Internal S4 Methods ----
+setGeneric("wave_params", function(x) standardGeneric("wave_params"))
+
+setMethod("wave_params", "CircadianData", function(x) x@wave_params)
+
+setGeneric("wave_params<-", function(x, value) standardGeneric("wave_params<-"))
+
+setReplaceMethod("wave_params", "CircadianData", function(x, value) {
+  if (!is.data.frame(value)) stop("'value' must be a data frame.")
+  x@wave_params <- value
+  validObject(x)
+  x
+})
+
+### ---- Exported Accessor ----
+#' Extract Wave Parameters from a CircadianData Object
+#'
+#' `get_wave_params()` retrieves the estimated wave parameters stored inside a
+#' `CircadianData` object.
+#'
+#' @param cd A `CircadianData` object.
+#'
+#' @returns A data frame with estimated wave parameters
+#' @export
+get_wave_params <- function(cd) {
+  wave_params(cd)
+}
+
+
+## ---- Results ----
+### ---- Internal S4 Methods ----
+setGeneric("results", function(x) standardGeneric("results"))
+
+setMethod("results", "CircadianData", function(x) x@results)
+
+setGeneric("results<-", function(x, value) standardGeneric("results<-"))
+
+setReplaceMethod("results", "CircadianData", function(x, value) {
+  if (!is.list(value)) stop("'value' must be a list.")
+  x@results <- value
+  validObject(x)
+  x
+})
+
+### ---- Exported Accessor ----
 #' Extract Results From a CircadianData Object
 #'
 #' `get_results()` retrieves standardised ("formatted") or original results for
@@ -557,7 +582,7 @@ get_results <- function(cd, method = "all", type = c("formatted", "original", "b
   type <- match.arg(type)
 
   # Extract available methods
-  methods_available <- names(cd@results)
+  methods_available <- names(results(cd))
 
   # Throw error if no results available
   if (length(methods_available) == 0) {
@@ -572,7 +597,7 @@ get_results <- function(cd, method = "all", type = c("formatted", "original", "b
 
   # Helper to extract for a single method
   extract_one <- function(m) {
-    res <- cd@results[[m]]
+    res <- results(cd)[[m]]
     switch(
       type,
       formatted = res$res_formatted,
@@ -593,7 +618,7 @@ get_results <- function(cd, method = "all", type = c("formatted", "original", "b
       return(extract_one(methods_available[1]))
     } else {
       # Return the whole slot
-      return(cd@results)
+      return(results(cd))
     }
   }
 
@@ -606,28 +631,6 @@ get_results <- function(cd, method = "all", type = c("formatted", "original", "b
 
   return(out)
 }
-
-
-
-## ---- Wave params Accessor/Replacement ----
-
-#' @rdname CircadianData-accessors
-#' @export
-setGeneric("wave_params", function(x) standardGeneric("wave_params"))
-
-#' @rdname CircadianData-accessors
-setMethod("wave_params", "CircadianData", function(x) x@wave_params)
-
-#' @rdname CircadianData-accessors
-setGeneric("wave_params<-", function(x, value) standardGeneric("wave_params<-"))
-
-#' @rdname CircadianData-accessors
-setReplaceMethod("wave_params", "CircadianData", function(x, value) {
-  if (!is.data.frame(value)) stop("'value' must be a data frame.")
-  x@wave_params <- value
-  validObject(x)
-  x
-})
 
 
 # ---- Generics for Base Functions ----
@@ -814,14 +817,14 @@ setReplaceMethod("colnames", "CircadianData", function(x, value) {
 #' # Subset samples (columns) - metadata is subsetted automatically
 #' cd_obj_sub2 <- cd_obj[ , c("Sample1", "Sample3", "Sample8")]
 #' dim(cd_obj_sub2) # 10  3
-#' print(metadata(cd_obj_sub2))
+#' print(get_metadata(cd_obj_sub2))
 #' print(experiment_info(cd_obj_sub2)) # Carried over
 #'
 #' # Subset both
 #' cd_obj_sub3 <- cd_obj[1:3, c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE)]
 #' dim(cd_obj_sub3) # 3 5
 #' print(colnames(cd_obj_sub3))
-#' print(rownames(metadata(cd_obj_sub3)))
+#' print(rownames(get_metadata(cd_obj_sub3)))
 #'
 setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
           function(x, i, j, ..., drop = FALSE) {
@@ -857,7 +860,7 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
             # FUNCTION CALLS THIS ONE SO AN ENDLESS LOOP IS CREATED. I COULD
             # ALSO JUST EXPAND THE CODE BELOW TO NOT ONLY REMOVE FILTERED
             # FEATURES BUT ALSO REMOVE UNUSED GROUPS.
-            new_wave_params <- wave_params(x)
+            new_wave_params <- get_wave_params(x)
             if (nrow(new_wave_params) > 0) {
               # Note: `i` can be logical, numeric, or character. This works for all.
               # `rownames(x)` provides the names to subset by if `i` is character.
@@ -874,7 +877,7 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
               dataset = new_dataset,
               metadata = new_metadata,
               wave_params = new_wave_params,
-              results = x@results
+              results = results(x)
             )
 
             # Recalculate delta t and update replicate numbers, but keep the rest
@@ -927,7 +930,7 @@ add_experiment_info <- function(cd_obj, period = NULL, data_type = NULL,
   }
 
   exp_info <- experiment_info(cd_obj)
-  mdata <- metadata(cd_obj)
+  mdata <- get_metadata(cd_obj)
 
   # === 1. Validate and Update Core Parameters ===
   # Priority: User Argument > Existing Value > Default Value
@@ -1174,7 +1177,7 @@ estimate_wave_params <- function(cd_obj) {
   if (!inherits(cd_obj, "CircadianData")) stop("Input must be a CircadianData object.")
 
   # Get original meta data
-  mdata_orig <- metadata(cd_obj)
+  mdata_orig <- get_metadata(cd_obj)
 
   # Get minimum value for time
   t_min <- min(mdata_orig$time)
@@ -1193,7 +1196,7 @@ estimate_wave_params <- function(cd_obj) {
   }
 
   # Get groups
-  groups <- unique(metadata(cd_obj)$group)
+  groups <- unique(get_metadata(cd_obj)$group)
 
   # Run harmonic regression for each group separately
   ls_params <- lapply(groups, function(grp) {
@@ -1201,14 +1204,14 @@ estimate_wave_params <- function(cd_obj) {
 
     # Note: Don't use `filter_samples()` here because that function calls this
     # one, so an endless loop would be created
-    mdata <- metadata(cd_obj)
+    mdata <- get_metadata(cd_obj)
     sample_filt <- rownames(mdata[mdata$group == grp, ])
     cd_filt <- cd_obj[, sample_filt]
 
     # Run harmonic regression
     res_harm <- HarmonicRegression::harmonic.regression(
-      inputts = t(dataset(cd_filt)),
-      inputtime = metadata(cd_filt)[["time"]],
+      inputts = t(get_dataset(cd_filt)),
+      inputtime = get_metadata(cd_filt)[["time"]],
       Tau = per,
       normalize = FALSE,
       trend.eliminate = FALSE,  # TODO: make this a variable,
@@ -1370,18 +1373,18 @@ estimate_wave_params <- function(cd_obj) {
 #' )
 #'
 #' print("Original Metadata Order:")
-#' print(metadata(cd_obj))
+#' print(get_metadata(cd_obj))
 #'
 #' # --- Now run the sorting function ---
 #' # Sort samples by time
 #' cd_sorted_time <- order_samples(cd_obj, "time")
 #' print("Metadata sorted by time:")
-#' print(metadata(cd_sorted_time))
+#' print(get_metadata(cd_sorted_time))
 #'
 #' # Sort samples first by time (asc), then by subject_ID (desc)
 #' cd_sorted_multi <- order_samples(cd_obj, c("time", "subject_ID"), decreasing = c(FALSE, TRUE))
 #' print("Metadata sorted by time (asc) then subject_ID (desc):")
-#' print(metadata(cd_sorted_multi))
+#' print(get_metadata(cd_sorted_multi))
 #'
 setGeneric("order_samples", function(x, by_columns, decreasing = FALSE, ...) standardGeneric("order_samples"))
 
@@ -1397,7 +1400,7 @@ setMethod("order_samples", "CircadianData",
               stop("'decreasing' must be a logical vector.")
             }
 
-            mdata <- metadata(x)
+            mdata <- get_metadata(x)
             available_cols <- colnames(mdata)
 
             # Check if specified columns exist in metadata
@@ -1436,7 +1439,7 @@ setMethod("order_samples", "CircadianData",
 
             # --- Apply Ordering ---
             # Reorder dataset columns
-            new_dataset <- dataset(x)[, new_order_indices, drop = FALSE]
+            new_dataset <- get_dataset(x)[, new_order_indices, drop = FALSE]
 
             # Reorder metadata rows
             new_metadata <- mdata[new_order_indices, , drop = FALSE]
@@ -1449,7 +1452,7 @@ setMethod("order_samples", "CircadianData",
                 metadata = new_metadata,
                 experiment_info = experiment_info(x),
                 wave_params = wave_params(x),
-                results = x@results
+                results = results(x)
             )
           }
 )
@@ -1463,8 +1466,8 @@ setMethod("order_samples", "CircadianData",
 #'
 #' @param cd_obj A \code{CircadianData} object.
 #' @param filter_expr An expression that evaluates to a logical vector within
-#'   the context of the object's metadata. Use column names from
-#'   `metadata(cd_obj)` directly in the expression.
+#'   the context of the object's metadata. Use meta data column names
+#'    directly in the expression.
 #' @param recalc_delta_t A logical value. If `TRUE`, the sampling interval
 #'   (`delta_t`) will be re-estimated from the remaining time points after
 #'   filtering. Defaults to `TRUE`.
@@ -1492,15 +1495,15 @@ setMethod("order_samples", "CircadianData",
 #'
 #' # Filter for a single group
 #' cd_control <- filter_samples(cd_obj, group == "Control")
-#' print(metadata(cd_control))
+#' print(get_metadata(cd_control))
 #'
 #' # Filter for a time range
 #' cd_late <- filter_samples(cd_obj, time >= 12)
-#' print(metadata(cd_late))
+#' print(get_metadata(cd_late))
 #'
 #' # Combine conditions
 #' cd_filtered <- filter_samples(cd_obj, group == "Treated" & time < 12)
-#' print(metadata(cd_filtered))
+#' print(get_metadata(cd_filtered))
 #'
 filter_samples <- function(cd_obj, filter_expr, recalc_delta_t = TRUE) {
   # --- 1. Manual Type Check ---
@@ -1509,7 +1512,7 @@ filter_samples <- function(cd_obj, filter_expr, recalc_delta_t = TRUE) {
     stop("'cd_obj' must be an object of class CircadianData.", call. = FALSE)
   }
 
-  mdata <- metadata(cd_obj)
+  mdata <- get_metadata(cd_obj)
   if (ncol(cd_obj) == 0) return(cd_obj)
 
   # Check that recalc_delta_t is logical
@@ -1593,7 +1596,7 @@ setMethod("show", "CircadianData", function(object) {
 
   # --- Metadata Preview ---
   cat("\nMetadata preview:\n")
-  mdata <- metadata(object)
+  mdata <- get_metadata(object)
   if (n_samples > 0 && ncol(mdata) > 0) {
     # Show head of metadata
     print(head(mdata))
@@ -1605,7 +1608,7 @@ setMethod("show", "CircadianData", function(object) {
 
   # --- Dataset Preview ---
   cat("\nDataset preview:\n")
-  dset <- dataset(object)
+  dset <- get_dataset(object)
   if (n_features > 0 && n_samples > 0) {
     # Determine rows/cols to show (e.g., up to 6x6)
     rows_to_show <- min(n_features, 6)
@@ -1623,7 +1626,7 @@ setMethod("show", "CircadianData", function(object) {
 
   # --- Experiment Info ---
   cat("\nExperiment Info:\n")
-  exp_info <- experiment_info(object)
+  exp_info <- get_experiment_info(object)
   if (length(exp_info) > 0) {
     for (i in seq_along(exp_info)) {
       key <- names(exp_info)[i]
@@ -1646,7 +1649,7 @@ setMethod("show", "CircadianData", function(object) {
 
   # --- Wave Parameters Info ---
   cat("\nWave Parameters:\n")
-  w_params <- wave_params(object)
+  w_params <- get_wave_params(object)
   if (nrow(w_params) > 0) {
     n_features_params <- length(unique(w_params$feature))
     cat(paste(" Calculated for", n_features_params, "of", nrow(object), "features\n"))
@@ -1657,7 +1660,7 @@ setMethod("show", "CircadianData", function(object) {
 
   # --- Results Info ---
   cat("\nResults:\n")
-  res <- object@results
+  res <- results(object)
   if (length(res) > 0) {
     cat(" Stored results for:", paste(names(res), collapse=", "), "\n")
   } else {
@@ -1743,7 +1746,7 @@ plot_phase_estimates <- function(cd,
 
   # --- 1. Get harmonic regression params and period ---
   # Get params
-  df_params <- wave_params(cd)
+  df_params <- get_wave_params(cd)
   per <- mean(experiment_info(cd)$period)
 
   # Stop and tell user to run wave fit if not done so
@@ -1753,7 +1756,7 @@ plot_phase_estimates <- function(cd,
   }
 
   # --- 2. p-value filtering ---
-  res_methods <- names(cd@results)
+  res_methods <- names(results(cd))
 
   if (pval_adj_cutoff < 1 & is.na(method)) {
     if (length(res_methods) == 1) {
@@ -2205,7 +2208,7 @@ plot_feature <- function(cd,
 #' @param x A \code{CircadianData} object.
 #' @param feature A single character string specifying the name or a single
 #'   numeric value specifying the row number of the feature (from
-#'   `rownames(dataset(x))`) to plot.
+#'   `rownames(x)`) to plot.
 #' @param group An optional single character string specifying a group to filter
 #'   by. This is only applicable if a 'group' column exists in the metadata. If
 #'   `NULL` (the default) and a 'group' column exists, data from all groups are
@@ -2264,7 +2267,7 @@ setMethod("plot_feature_base", "CircadianData",
           function(x, feature, group = NULL, add_wave = TRUE, ...) {
 
             # --- 1. Input Validation ---
-            mdata <- metadata(x)
+            mdata <- get_metadata(x)
             if (!("time" %in% colnames(mdata))) {
               stop("Metadata must contain a 'time' column for plotting.")
             }
@@ -2273,7 +2276,7 @@ setMethod("plot_feature_base", "CircadianData",
             }
 
             if (is.character(feature)) {
-              if (!(feature %in% rownames(dataset(x)))) {
+              if (!(feature %in% rownames(x))) {
                 stop("Feature '", feature, "' not found in the dataset.")
               }
             } else if (is.numeric(feature)) {
@@ -2302,7 +2305,7 @@ setMethod("plot_feature_base", "CircadianData",
             }
 
             # --- 2. Prepare Data for Plotting ---
-            feature_values <- dataset(x)[feature, , drop = TRUE]
+            feature_values <- get_dataset(x)[feature, , drop = TRUE]
             plot_df <- data.frame(
               time = mdata$time,
               value = feature_values
@@ -2389,7 +2392,7 @@ setMethod("plot_feature_base", "CircadianData",
             do.call("plot", final_args)
 
             # --- 5. Add Fitted Wave ---
-            w_params <- wave_params(x)
+            w_params <- get_wave_params(x)
 
             if (add_wave == TRUE && ncol(w_params) > 0) {
               # Get wave parameters just for this feature

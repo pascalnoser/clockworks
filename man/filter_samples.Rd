@@ -10,8 +10,8 @@ filter_samples(cd_obj, filter_expr, recalc_delta_t = TRUE)
 \item{cd_obj}{A \code{CircadianData} object.}
 
 \item{filter_expr}{An expression that evaluates to a logical vector within
-the context of the object's metadata. Use column names from
-\code{metadata(cd_obj)} directly in the expression.}
+the context of the object's metadata. Use meta data column names
+directly in the expression.}
 
 \item{recalc_delta_t}{A logical value. If \code{TRUE}, the sampling interval
 (\code{delta_t}) will be re-estimated from the remaining time points after
@@ -43,14 +43,14 @@ cd_obj <- CircadianData(
 
 # Filter for a single group
 cd_control <- filter_samples(cd_obj, group == "Control")
-print(metadata(cd_control))
+print(get_metadata(cd_control))
 
 # Filter for a time range
 cd_late <- filter_samples(cd_obj, time >= 12)
-print(metadata(cd_late))
+print(get_metadata(cd_late))
 
 # Combine conditions
 cd_filtered <- filter_samples(cd_obj, group == "Treated" & time < 12)
-print(metadata(cd_filtered))
+print(get_metadata(cd_filtered))
 
 }

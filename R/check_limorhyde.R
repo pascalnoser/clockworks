@@ -13,18 +13,18 @@ check_limorhyde <- function(cd) {
   cd_local <- cd
 
   # Get sine and cosine component
-  df_meta_temp <- metadata(cd_local)
+  df_meta_temp <- get_metadata(cd_local)
   limo <- limorhyde::limorhyde(
-    time = metadata(cd_local)$time,
+    time = get_metadata(cd_local)$time,
     colnamePrefix = "time_",
     period = mean(cd_local$period)
   )
 
   # Add to meta data
-  metadata(cd_local) <- cbind(metadata(cd_local), limo)
+  metadata(cd_local) <- cbind(get_metadata(cd_local), limo)
 
   # Make sure samples are ordered by time and group (and subject ID if relevant)
-  sort_cols <- intersect(c("time", "group", "subject_ID"), colnames(metadata(cd_local)))
+  sort_cols <- intersect(c("time", "group", "subject_ID"), colnames(get_metadata(cd_local)))
   cd_local <- order_samples(cd_local, sort_cols)
 
   # If there are repeated measures but no replicates, continue as if there were

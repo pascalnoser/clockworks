@@ -86,6 +86,6 @@ cd_obj <- CircadianData(
 
 print(cd_obj)
 # Note how metadata columns have been renamed and standardized
-head(metadata(cd_obj))
+head(get_metadata(cd_obj))
 
 }

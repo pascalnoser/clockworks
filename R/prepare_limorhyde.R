@@ -34,7 +34,7 @@ prepare_limorhyde <- function(cd) {
     #   str_model <- paste(str_model, "+ subject_ID")
     # }
   }
-  design <- model.matrix(as.formula(str_model), data = metadata(cd_local))
+  design <- model.matrix(as.formula(str_model), data = get_metadata(cd_local))
 
   # Replace ':' by '.' to not throw an error when defining contrasts later
   colnames(design) = gsub(":", ".", colnames(design))
@@ -45,7 +45,7 @@ prepare_limorhyde <- function(cd) {
     # Use voomLmFit for count data
     inputs <- list(
       func = "voomLmFit",
-      counts = dataset(cd_local),
+      counts = get_dataset(cd_local),
       design = design,
       sample.weights = TRUE
     )
@@ -54,7 +54,7 @@ prepare_limorhyde <- function(cd) {
     # Use limma trend for normalised data
     inputs <- list(
       func = "lmFit",
-      object = dataset(cd_local),
+      object = get_dataset(cd_local),
       design = design
     )
   } else {
@@ -67,11 +67,11 @@ prepare_limorhyde <- function(cd) {
     # # If we have groups, add subject ID as blocking variable
     # # NOTE: See note above about adding to model vs. blocking
     # if (!(is.na(cd_local$n_groups) | cd_local$n_groups == 1)) {
-    #   inputs$block <- metadata(cd_local)[["subject_ID"]]
+    #   inputs$block <- get_metadata(cd_local)[["subject_ID"]]
     # }
 
     # Add subject ID as blocking variable
-    inputs$block <- metadata(cd_local)[["subject_ID"]]
+    inputs$block <- get_metadata(cd_local)[["subject_ID"]]
 
     # Add 'correlation' if using lmFit()
     if (cd_local$data_type == "norm") {

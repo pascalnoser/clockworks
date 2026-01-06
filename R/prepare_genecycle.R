@@ -19,22 +19,22 @@ prepare_genecycle <- function(cd, grp) {
 
   # If there are replicates, take median
   if (replicates == TRUE) {
-    t_split <- split(metadata(cd_filt), metadata(cd_filt)[["time"]])
+    t_split <- split(get_metadata(cd_filt), get_metadata(cd_filt)[["time"]])
     timepoints <- as.numeric(names(t_split))
 
     names(t_split) <- paste0("CT_", timepoints)
 
     ls_meds <- lapply(t_split, function(df) {
       sample_IDs <- rownames(df)
-      df_vals <- dataset(cd_filt)[, sample_IDs]
+      df_vals <- get_dataset(cd_filt)[, sample_IDs]
       apply(df_vals, 1, median)
     })
 
     # Prepare data
     df_dat <- t(data.frame(ls_meds))
   } else {
-    df_dat <- t(dataset(cd_filt))
-    timepoints <- metadata(cd_filt)[["time"]]
+    df_dat <- t(get_dataset(cd_filt))
+    timepoints <- get_metadata(cd_filt)[["time"]]
   }
 
   # Create list with inputs for run

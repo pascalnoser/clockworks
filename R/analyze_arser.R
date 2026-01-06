@@ -21,7 +21,7 @@ analyze_arser <- function(cd, method_args = list()) {
   # difference
 
   # Run rhythmicity detection for each group separately
-  groups <- unique(metadata(cd_local)[["group"]])
+  groups <- unique(get_metadata(cd_local)[["group"]])
   for (grp in groups) {
     # Prepare inputs
     inputs <- prepare_arser(cd_local, grp)
@@ -35,7 +35,7 @@ analyze_arser <- function(cd, method_args = list()) {
 
   # Postprocessing
   ls_res <- format_arser(ls_res_groups = ls_res_groups,
-                         w_params = wave_params(cd_local),
+                         w_params = get_wave_params(cd_local),
                          added_group = added_group,
                          log_transformed = cd_local$log_transformed,
                          log_base = cd_local$log_base)

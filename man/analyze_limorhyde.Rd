@@ -10,7 +10,7 @@ analyze_limorhyde(cd, method_args = list())
 \item{cd}{A \code{CircadianData} object.}
 
 \item{method_args}{Additional parameters passed to \code{limma::lmfit()} or
-\code{edgeR::voomLmFit()}}
+\code{edgeR::voomLmFit()}. If included, \code{robust} is passed to \code{limma::eBayes()}.}
 }
 \value{
 A list with the original and formatted results of the LimoRhyde analysis.

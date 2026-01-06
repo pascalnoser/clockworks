@@ -7,7 +7,7 @@
 #' @returns A data frame.
 prepare_repeatedcircadian_long <- function(cd) {
   # Get dataset
-  df_data <- dataset(cd)
+  df_data <- get_dataset(cd)
 
   # Get feature- and sample IDs
   feature_IDs <- rownames(df_data)
@@ -21,7 +21,7 @@ prepare_repeatedcircadian_long <- function(cd) {
   )
 
   # Add sample IDs as column to metadata
-  df_meta <- metadata(cd)
+  df_meta <- get_metadata(cd)
   df_meta[["sample"]] <- rownames(df_meta)
 
   # Only keep relevant columns of meta data

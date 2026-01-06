@@ -15,8 +15,8 @@ prepare_dryr <- function(cd, grp) {
   if (cd_filt$data_type == "norm") {
     # Data will be analysed by `f_24()`
     inputs <- list(
-      data = dataset(cd_filt),
-      time = metadata(cd_filt)$time,
+      data = get_dataset(cd_filt),
+      time = get_metadata(cd_filt)$time,
       period = mean(cd_filt$period),
       method = "f_24"  # will be removed later
     )
@@ -28,10 +28,10 @@ prepare_dryr <- function(cd, grp) {
     # Because there is no default we need to define them, even if we have
     # filtered the data already.
     inputs <- list(
-      countData = dataset(cd_filt),
-      time = metadata(cd_filt)$time,
+      countData = get_dataset(cd_filt),
+      time = get_metadata(cd_filt)$time,
       period = mean(cd_filt$period),
-      group = metadata(cd_filt)$group,
+      group = get_metadata(cd_filt)$group,
       single = grp,
       method = "dryseq_single"  # will be removed later
     )

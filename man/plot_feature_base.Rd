@@ -14,7 +14,7 @@ plot_feature_base(x, feature, group = NULL, add_wave = TRUE, ...)
 
 \item{feature}{A single character string specifying the name or a single
 numeric value specifying the row number of the feature (from
-\code{rownames(dataset(x))}) to plot.}
+\code{rownames(x)}) to plot.}
 
 \item{group}{An optional single character string specifying a group to filter
 by. This is only applicable if a 'group' column exists in the metadata. If

@@ -22,7 +22,7 @@ analyze_diffcircadian <- function(cd, method_args = list()) {
   # Postprocessing
   ls_res <- format_diffcircadian(
     res_original = df_res,
-    w_params = wave_params(cd_local),
+    w_params = get_wave_params(cd_local),
     period = mean(cd_local$period),
     added_group = added_group,
     log_transformed = cd_local$log_transformed,
