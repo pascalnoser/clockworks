@@ -53,13 +53,17 @@ format_dryr <- function(ls_res_groups,
     }))
 
     # Create formatted results
+    # TODO: Mention in documentation that amplitude output is divided by 2 since
+    # they seem to define amplitude as peak to trough distance. Weirdly enough,
+    # the relative amplitude seems to be mesor-to-peak-distance divided by
+    # mesor, i.e. the "correct" way.
     res_formatted <- data.frame(
       feature = df_combined$feature,
       group = df_combined$group,
       period_estimate = df_combined$period,
       phase_estimate = df_combined$phase,
       mesor_estimate = df_combined$mean,
-      amplitude_estimate = df_combined$amp,
+      amplitude_estimate = df_combined$amp / 2,
       relative_amplitude_estimate = df_combined$relamp,
       pval = df_combined$pval,
       pval_adj = df_combined$padj,
