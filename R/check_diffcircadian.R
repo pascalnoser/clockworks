@@ -15,6 +15,11 @@ check_diffcircadian <- function(cd) {
     cd_local <- normalise_dataset(cd_local)
   }
 
+  # If we have repeated measures, remove subject batch effect
+  if (cd_local$repeated_measures == TRUE) {
+    cd_local <- remove_batch_effects(cd_local)
+  }
+
   # Make sure samples are ordered by time and group
   sort_cols <- intersect(c("time", "group"), colnames(get_metadata(cd_local)))
   cd_local <- order_samples(cd_local, sort_cols)
@@ -23,7 +28,7 @@ check_diffcircadian <- function(cd) {
   df_meta_temp <- get_metadata(cd_local)
 
   # Add temporary group if there is no group column
-  if (is.na(cd_local$n_groups)){
+  if (is.na(cd_local$n_groups)) {
     df_meta_temp[["group"]] <- "tmp"
   }
 

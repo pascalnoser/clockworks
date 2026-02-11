@@ -5,30 +5,27 @@
 \alias{CircadianData-class}
 \title{Define the CircadianData Class}
 \description{
-An S4 class to store and manage data from biological
-experiments, such as circadian studies. It serves as an integrated container
-for raw measurement data, sample annotations, experimental parameters, and
-analysis results.
+An S4 class to store and manage data from biological experiments, such as
+circadian studies. It serves as an integrated container for raw measurement
+data, sample annotations, experimental parameters, and analysis results.
 }
 \details{
 This class bundles the main components of an experimental dataset.
-Its primary goal is to ensure that the samples (columns of \code{dataset}, rows of
-\code{metadata}) remain synchronized during data manipulation operations like
-subsetting, ordering, and filtering. Analysis functions within the package
-are designed to take this object as input and can store their output in the
-\code{results} slot, creating a self-contained analysis workflow. The rows of the
-\code{dataset} represent features (e.g., genes, proteins, metabolites). The
-columns of \code{dataset} and rows of \code{metadata} represent samples. The
-\code{experiment_info} stores parameters (e.g. period) that are relevant for the
-analysis.
+Its primary goal is to ensure that the samples remain synchronized during
+data manipulation operations like subsetting, ordering, and filtering.
+Analysis functions within the package are designed to take this object as
+input and can store their output in the \code{results} slot, creating a
+self-contained analysis workflow. The rows of the \code{dataset} represent
+features (e.g., genes, proteins, metabolites). The columns of \code{dataset} and
+rows of \code{metadata} represent samples. The \code{experiment_info} stores parameters
+(e.g. period) that are relevant for the analysis.
 
 To manipulate the object:
 \itemize{
-\item To access main data slots, see \code{\link{CircadianData-accessors}}.
+\item To access data slots, see \code{\link{get_dataset}}, \code{\link{get_metadata}}, \code{\link{get_results}}, \code{\link{get_experiment_info}}, \code{\link{get_wave_params}}.
 \item To subset by features or samples, see \code{\link{CircadianData-subsetting}}.
 \item To sort samples by metadata columns, see \code{\link{order_samples}}.
 \item To filter samples by metadata values, see \code{\link{filter_samples}}.
-\item To interact with the \code{experiment_info} list, see \code{\link{CircadianData-subset-expinfo}}.
 }
 }
 \section{Slots}{
@@ -36,13 +33,13 @@ To manipulate the object:
 \describe{
 \item{\code{dataset}}{A matrix containing measurement data (features x samples).}
 
-\item{\code{metadata}}{A data.frame containing sample annotations (samples x
+\item{\code{metadata}}{A data frame containing sample annotations (samples x
 attributes).}
 
 \item{\code{experiment_info}}{A list for storing experiment-level parameters.}
 
-\item{\code{wave_params}}{A data frame containing estimated wave parameters
-of a sine wave fit to each feature using a harmonic regression.}
+\item{\code{wave_params}}{A data frame containing estimated wave parameters of a
+cosine wave fit to each feature using a harmonic regression.}
 
 \item{\code{results}}{A list for storing the output from various analysis functions.}
 }}

@@ -20,38 +20,25 @@ check_rain <- function(cd) {
   # If we have repeated measures, remove subject batch effect
   # TODO: Make this optional
   if (cd_local$repeated_measures == TRUE) {
-    message("Removing subject batch effect before RAIN analysis")
-    if (is.na(cd_local$n_groups) | cd_local$n_groups == 1) {
-      # None or one group
-      dataset_corrected <- limma::removeBatchEffect(
-        x = get_dataset(cd_local),
-        batch = get_metadata(cd_local)$subject_ID
-      )
-    } else {
-      # Multiple groups
-      dataset_corrected <- limma::removeBatchEffect(
-        x = get_dataset(cd_local),
-        batch = get_metadata(cd_local)$subject_ID,
-        group = get_metadata(cd_local)$group
-      )
-    }
-    cd_local@dataset = dataset_corrected
+    cd_local <- remove_batch_effects(cd_local)
   }
 
   # Extract meta data to add necessary columns
   df_meta_temp <- get_metadata(cd_local)
 
   # Add temporary group if there is no group column
-  if (is.na(cd_local$n_groups)){
+  if (is.na(cd_local$n_groups)) {
     df_meta_temp[["group"]] <- "tmp"
   }
 
   # Add meta data back to CD object
   metadata(cd_local) <- df_meta_temp
 
-
   # Make sure samples are ordered by time and group (and subject ID if relevant)
-  sort_cols <- intersect(c("time", "group", "subject_ID"), colnames(df_meta_temp))
+  sort_cols <- intersect(
+    c("time", "group", "subject_ID"),
+    colnames(df_meta_temp)
+  )
   cd_local <- order_samples(cd_local, sort_cols)
 
   return(cd_local)

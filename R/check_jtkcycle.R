@@ -15,11 +15,16 @@ check_jtkcycle <- function(cd) {
     cd_local <- normalise_dataset(cd_local)
   }
 
+  # If we have repeated measures, remove subject batch effect
+  if (cd_local$repeated_measures == TRUE) {
+    cd_local <- remove_batch_effects(cd_local)
+  }
+
   # Extract meta data to add necessary columns
   df_meta_temp <- get_metadata(cd_local)
 
   # Add temporary group if there is no group column
-  if (is.na(cd_local$n_groups)){
+  if (is.na(cd_local$n_groups)) {
     df_meta_temp[["group"]] <- "tmp"
   }
 
@@ -27,7 +32,10 @@ check_jtkcycle <- function(cd) {
   metadata(cd_local) <- df_meta_temp
 
   # Make sure samples are ordered by time and group (and subject ID if relevant)
-  sort_cols <- intersect(c("time", "group", "subject_ID"), colnames(df_meta_temp))
+  sort_cols <- intersect(
+    c("time", "group", "subject_ID"),
+    colnames(df_meta_temp)
+  )
   cd_local <- order_samples(cd_local, sort_cols)
 
   return(cd_local)
