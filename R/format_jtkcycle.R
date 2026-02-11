@@ -11,12 +11,14 @@
 #'   is `TRUE`.
 #'
 #' @returns A list of data frames containing the original and formatted results
-format_jtkcycle <- function(ls_res_groups,
-                            w_params,
-                            added_group,
-                            t_min,
-                            log_transformed = FALSE,
-                            log_base = 2) {
+format_jtkcycle <- function(
+  ls_res_groups,
+  w_params,
+  added_group,
+  t_min,
+  log_transformed = FALSE,
+  log_base = 2
+) {
   # TODO: Probably remove `log_transformed` and `log_base` parameters since we
   # will likely only report the relative amplitude from the harmonic regression.
   # Alternatively, uncomment the relative amplitude calculation below.
@@ -49,7 +51,7 @@ format_jtkcycle <- function(ls_res_groups,
     feature = df_meta$CycID,
     group = df_meta$group,
     period_estimate = df_meta$JTK_period,
-    phase_estimate = df_meta$JTK_adjphase,  # TODO: Mention in documentation that we use the adjusted phase
+    phase_estimate = df_meta$JTK_adjphase, # TODO: Mention in documentation that we use the adjusted phase
     # peak_time_estimate = df_jtk$LAG + t_min,
     # mesor_estimate = df_meta$meta2d_Base,
     amplitude_estimate = df_meta$JTK_amplitude,
@@ -74,11 +76,14 @@ format_jtkcycle <- function(ls_res_groups,
   # Remove group column if added temporarily by check function at the start
   if (added_group == TRUE) {
     res_formatted$group <- NULL
-    res_original <- lapply(res_original, function(df){
+    res_original <- lapply(res_original, function(df) {
       df$group <- NULL
       return(df)
     })
   }
+
+  # Set period estimate to NA if it is 0
+  res_formatted$period_estimate[res_formatted$period_estimate == 0] <- NA
 
   return(list(res_original = res_original, res_formatted = res_formatted))
 }

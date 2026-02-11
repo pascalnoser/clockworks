@@ -10,11 +10,13 @@
 #'   is `TRUE`.
 #'
 #' @returns A list of data frames containing the original and formatted results
-format_ls <- function(ls_res_groups,
-                      w_params,
-                      added_group,
-                      log_transformed,
-                      log_base) {
+format_ls <- function(
+  ls_res_groups,
+  w_params,
+  added_group,
+  log_transformed,
+  log_base
+) {
   # TODO: Probably remove `log_transformed` and `log_base` parameters since we
   # will likely only report the relative amplitude from the harmonic regression.
   # Alternatively, uncomment the relative amplitude calculation below.
@@ -49,9 +51,9 @@ format_ls <- function(ls_res_groups,
     feature = df_ls$CycID,
     group = df_ls$group,
     period_estimate = df_meta$LS_period,
-    phase_estimate = df_meta$LS_adjphase,  # Just original value modulo period
+    phase_estimate = df_meta$LS_adjphase, # Just original value modulo period
     # mesor_estimate = df_meta$meta2d_Base,
-    # amplitude_estimate = df_meta$meta2d_AMP,  # Note: The LS_amplitude seems to be influenced by both the mesor and amplitude
+    # amplitude_estimate = df_meta$LS_amplitude,  # Note: The LS_amplitude is a loess peak value, not the amplitude of a fitted cosine
     # relative_amplitude_estimate = rel_amp,
     pval = df_meta$LS_pvalue,
     pval_adj = df_meta$LS_BH.Q,
@@ -73,7 +75,7 @@ format_ls <- function(ls_res_groups,
   # Remove group column if added temporarily by check function at the start
   if (added_group == TRUE) {
     res_formatted$group <- NULL
-    res_original <- lapply(res_original, function(df){
+    res_original <- lapply(res_original, function(df) {
       df$group <- NULL
       return(df)
     })
