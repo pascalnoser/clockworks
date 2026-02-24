@@ -549,6 +549,13 @@ CircadianData <- function(
 
 
 # ---- Accessor/Replacement Methods ----
+# Note: For now I'm keeping the internal S4 methods despite the fact that the exported, non-S4
+# accessors could just use the @ operator to access the slots directly. I'm doing it this way because
+# the S4 methods allow me to include validity checks when setting the slots.
+# For example, I can change the metadata using `metadata(cd) <- new_metadata`. This is safer than
+# using `cd@metadata <- new_metadata` because the S4 methods will also run a validity check on the object.
+# In the future, I might want to get rid of the S4 methods and just use regular functions to access and
+# set the slots, but for now I think this is a good balance between safety and usability, if a bit convoluted.
 
 ## ---- Dataset ----
 ### ---- Internal S4 Methods ----
