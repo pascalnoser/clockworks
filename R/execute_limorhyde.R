@@ -25,7 +25,6 @@ execute_limorhyde <- function(inputs, groups, method_args = list()) {
   if (func == "lmFit") {
     fit <- do.call(limma::lmFit, inputs)
     fit <- limma::eBayes(fit, trend = TRUE, robust = robust)
-
   } else if (func == "voomLmFit") {
     fit <- do.call(edgeR::voomLmFit, inputs)
     fit <- limma::eBayes(fit, robust = robust)
@@ -37,7 +36,12 @@ execute_limorhyde <- function(inputs, groups, method_args = list()) {
     relev_cols <- grep("time_", colnames(inputs$design), value = TRUE)
 
     # Extract statistics
-    df_res <- limma::topTable(fit, coef = relev_cols, number = Inf, sort.by = "none")
+    df_res <- limma::topTable(
+      fit,
+      coef = relev_cols,
+      number = Inf,
+      sort.by = "none"
+    )
 
     # If a single group is present, add it
     if (length(groups) == 1) {
@@ -56,13 +60,26 @@ execute_limorhyde <- function(inputs, groups, method_args = list()) {
     ls_res <- list()
     for (grp in groups) {
       # Get columns
-      relev_cols <- grep(paste0(grp, ".time_"), colnames(inputs$design), value = TRUE)
+      relev_cols <- grep(
+        paste0(grp, ".time_"),
+        colnames(inputs$design),
+        value = TRUE
+      )
 
       # Extract statistics
-      df_res_grp <- limma::topTable(fit, coef = relev_cols, number = Inf, sort.by = "none")
+      df_res_grp <- limma::topTable(
+        fit,
+        coef = relev_cols,
+        number = Inf,
+        sort.by = "none"
+      )
 
       # Rename interaction columns so they no longer include the group name
-      colnames(df_res_grp) <- gsub("^group.+\\.(time_.*)", "\\1", colnames(df_res_grp))
+      colnames(df_res_grp) <- gsub(
+        "^group.+\\.(time_.*)",
+        "\\1",
+        colnames(df_res_grp)
+      )
 
       # Add feature names and group
       df_res_grp <- data.frame(

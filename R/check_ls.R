@@ -5,14 +5,18 @@
 #'
 #' @param cd A `CircadianData` object
 #'
+#' @importFrom edgeR cpm
+#'
 #' @returns A `CircadianData` object
 check_ls <- function(cd) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
-  # Normalise if count data
+  # Turn to logCPM values if we have count data
   if (cd_local$data_type == "count") {
-    cd_local <- normalise_dataset(cd_local)
+    counts <- get_dataset(cd)
+    logCPM <- edgeR::cpm(dge, log = TRUE)
+    cd@dataset <- logCPM
   }
 
   # If we have repeated measures, remove subject batch effect

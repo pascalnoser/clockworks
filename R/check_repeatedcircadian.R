@@ -5,6 +5,8 @@
 #'
 #' @param cd A `CircadianData` object
 #'
+#' @importFrom edgeR cpm
+#'
 #' @returns A `CircadianData` object
 check_repeatedcircadian <- function(cd) {
   # Create local copy of cd to prevent accidental changes to main object
@@ -31,13 +33,15 @@ check_repeatedcircadian <- function(cd) {
     )
   }
 
-  # Normalise if count data
+  # Turn to logCPM values if we have count data
   if (cd_local$data_type == "count") {
-    cd_local <- normalise_dataset(cd_local)
+    counts <- get_dataset(cd)
+    logCPM <- edgeR::cpm(dge, log = TRUE)
+    cd@dataset <- logCPM
   }
 
   # Add temporary group if there is no group column
-  if (is.na(cd_local$n_groups)){
+  if (is.na(cd_local$n_groups)) {
     # Add column
     df_meta_temp <- get_metadata(cd_local)
     df_meta_temp[["group"]] <- "tmp"

@@ -1,6 +1,5 @@
 # TODO: Change most S4 functions to regular functions
 
-
 # ---- Class definition ----
 
 #' Define the CircadianData Class
@@ -40,14 +39,15 @@
 #' @name CircadianData-class
 #' @rdname CircadianData-class
 #' @exportClass CircadianData
-setClass("CircadianData",
-         slots = c(
-           dataset = "matrix",
-           metadata = "data.frame",
-           experiment_info = "list",
-           wave_params = "data.frame",
-           results = "list"
-         )
+setClass(
+  "CircadianData",
+  slots = c(
+    dataset = "matrix",
+    metadata = "data.frame",
+    experiment_info = "list",
+    wave_params = "data.frame",
+    results = "list"
+  )
 )
 
 
@@ -72,14 +72,19 @@ setValidity("CircadianData", function(object) {
 
   # --- Metadata ---
   if (!"time" %in% colnames(mdata) || !is.numeric(mdata$time)) {
-    errors <- c(errors, "A valid object must have a numeric 'time' column in its metadata.")
+    errors <- c(
+      errors,
+      "A valid object must have a numeric 'time' column in its metadata."
+    )
   }
 
   # --- Synchronization ---
   if (!identical(colnames(dset), rownames(mdata))) {
-    errors <- c(errors, "Column names of 'dataset' must be identical to and in the same order as row names of 'metadata'.")
+    errors <- c(
+      errors,
+      "Column names of 'dataset' must be identical to and in the same order as row names of 'metadata'."
+    )
   }
-
 
   # --- Experiment Info ---
   if (!is.list(exp_info)) {
@@ -95,7 +100,9 @@ setValidity("CircadianData", function(object) {
     "amplitude_estimate",
     "relative_amplitude_estimate"
   )
-  if ("group" %in% colnames(mdata)) required_cols <- c(required_cols, "group")
+  if ("group" %in% colnames(mdata)) {
+    required_cols <- c(required_cols, "group")
+  }
 
   if (!is.data.frame(wave_par)) {
     errors <- c(errors, "'wave_params' slot must be a data frame")
@@ -103,7 +110,13 @@ setValidity("CircadianData", function(object) {
     missing_cols <- setdiff(required_cols, colnames(wave_par))
     if (ncol(wave_par) > 0 && length(missing_cols) > 1) {
       str_missing_cols <- paste(missing_cols, collapse = ", ")
-      errors <- c(errors, paste("'wave_params' data frame is missing the following columns:", str_missing_cols))
+      errors <- c(
+        errors,
+        paste(
+          "'wave_params' data frame is missing the following columns:",
+          str_missing_cols
+        )
+      )
     }
   }
 
@@ -146,6 +159,10 @@ setValidity("CircadianData", function(object) {
 #'   Defaults to 24.
 #' @param data_type A character string specifying the data type. Must be one of
 #'   "count" or "norm". Defaults to "norm" if not already set.
+#' @param preprocess A logical value specifying whether to preprocess count
+#'   data by filtering lowly expressed features and normalising the data using
+#'   edgeR's `filterByExpr` and `normLibSizes` functions. Has no effect if
+#'   `data_type` is not "count". Defaults to `TRUE`.
 #' @param log_transformed A logical value specifying if the input data is
 #'   log-transformed. This has no influence on the rhythmicity analysis itself
 #'   but is used to calculate the relative amplitude in the original scale of
@@ -179,16 +196,91 @@ setValidity("CircadianData", function(object) {
 #' # Note how metadata columns have been renamed and standardized
 #' head(get_metadata(cd_obj))
 #'
-CircadianData <- function(dataset,
-                          metadata,
-                          colname_sample,
-                          colname_time,
-                          colname_group = NULL,
-                          colname_subject = NULL,
-                          period = 24,
-                          data_type = "norm",
-                          log_transformed = FALSE,
-                          log_base = NULL) {
+CircadianData <- function(
+  dataset,
+  metadata,
+  colname_sample,
+  colname_time,
+  colname_group = NULL,
+  colname_subject = NULL,
+  period = 24,
+  data_type = "norm",
+  preprocess = TRUE,
+  log_transformed = FALSE,
+  log_base = NULL
+) {
+  # === 0. Ensure validity of input parameters ===
+  # Check colname_sample and colname_time
+  if (!is.character(colname_sample) || length(colname_sample) != 1) {
+    stop(
+      "'colname_sample' must be a single character string.",
+      call. = FALSE
+    )
+  }
+  if (!is.character(colname_time) || length(colname_time) != 1) {
+    stop(
+      "'colname_time' must be a single character string.",
+      call. = FALSE
+    )
+  }
+
+  # Check colname_group and colname_subject
+  if (
+    !is.null(colname_group) &&
+      (!is.character(colname_group) || length(colname_group) != 1)
+  ) {
+    stop(
+      "'colname_group' must be NULL or a single character string.",
+      call. = FALSE
+    )
+  }
+  if (
+    !is.null(colname_subject) &&
+      (!is.character(colname_subject) || length(colname_subject) != 1)
+  ) {
+    stop(
+      "'colname_subject' must be NULL or a single character string.",
+      call. = FALSE
+    )
+  }
+
+  # Check period
+  if (!is.numeric(period) || length(period) > 2) {
+    stop(
+      "'period' must be a numeric vector of length 1 or 2.",
+      call. = FALSE
+    )
+  }
+
+  # Check data_type
+  if (!data_type %in% c("count", "norm")) {
+    stop(
+      "Invalid 'data_type': ",
+      data_type,
+      ". Must be either 'count' or 'norm'.",
+      call. = FALSE
+    )
+  }
+
+  # Check preprocess
+  if (!is.logical(preprocess) || length(preprocess) != 1 || is.na(preprocess)) {
+    stop(
+      "'preprocess' must be a logical value (TRUE or FALSE).",
+      call. = FALSE
+    )
+  }
+
+  # Check log_base
+  if (!is.null(log_base) && (!is.numeric(log_base) || length(log_base) != 1)) {
+    stop(
+      "'log_base' must be a single numeric value.",
+      call. = FALSE
+    )
+  }
+  # If log_transformed is TRUE and log_base is NULL, default to 2
+  if (log_transformed && is.null(log_base)) {
+    log_base <- 2
+  }
 
   # === 1. Metadata Processing and Validation ===
   ## -- 1.1 Check if metadata is a data.frame --
@@ -196,16 +288,19 @@ CircadianData <- function(dataset,
     stop("'metadata' must be a data.frame.", call. = FALSE)
   }
 
-
   ## -- 1.2 Ensure it's a data frame and not e.g. a tibble or data.table --
   metadata <- as.data.frame(metadata)
-
 
   ## -- 1.3 Check if columns are present --
   ### 1.3a Required columns (`colname_sample` and `colname_time`)
   # Handle case where sample IDs are in the rownames
   if (colname_sample == "rownames") {
-    if (is.null(rownames(metadata))) stop("`colname_sample` is 'rownames', but metadata has no row names.", call.=FALSE)
+    if (is.null(rownames(metadata))) {
+      stop(
+        "`colname_sample` is 'rownames', but metadata has no row names.",
+        call. = FALSE
+      )
+    }
     metadata$`.internal_sample_id` <- rownames(metadata)
     colname_sample <- ".internal_sample_id"
   }
@@ -219,17 +314,27 @@ CircadianData <- function(dataset,
 
   missing_cols <- user_cols[!user_cols %in% cnames]
   if (length(missing_cols) > 0) {
-    stop("The following required columns are missing from metadata: ",
-         paste0("'", missing_cols, "' (specified by '", names(missing_cols), "') ", collapse=", "),
-         call. = FALSE)
+    stop(
+      "The following required columns are missing from metadata: ",
+      paste0(
+        "'",
+        missing_cols,
+        "' (specified by '",
+        names(missing_cols),
+        "') ",
+        collapse = ", "
+      ),
+      call. = FALSE
+    )
   }
-
 
   ### 1.3b Optional columns (`colname_group` and `colname_subject`)
   if (!is.null(colname_group) && !colname_group %in% cnames) {
     stop(
       paste0(
-        "Missing column '", colname_group, "' in `metadata`. ",
+        "Missing column '",
+        colname_group,
+        "' in `metadata`. ",
         "If applicable, please make sure that `colname_group` corresponds to the ",
         "column containing the group information or leave it as NULL otherwise."
       ),
@@ -240,7 +345,9 @@ CircadianData <- function(dataset,
   if (!is.null(colname_subject) && !colname_subject %in% cnames) {
     stop(
       paste0(
-        "Missing column '", colname_subject, "' in `metadata`. ",
+        "Missing column '",
+        colname_subject,
+        "' in `metadata`. ",
         "If your data contains repeated measures, please make sure that ",
         "`colname_subject` corresponds to the column containing the subject IDs ",
         "or set it to NULL (default) otherwise."
@@ -253,7 +360,10 @@ CircadianData <- function(dataset,
   if (!is.numeric(metadata[[colname_time]])) {
     stop(
       paste0(
-        "Column '", colname_time, "' of `metadata` is of type ", class(metadata[[colname_time]]),
+        "Column '",
+        colname_time,
+        "' of `metadata` is of type ",
+        class(metadata[[colname_time]]),
         ". The column defined as `colname_time` in `metadata` must be of type numeric."
       ),
       call. = FALSE
@@ -263,7 +373,11 @@ CircadianData <- function(dataset,
   ## -- 1.5 Check if the values in colname_sample are unique --
   if (any(duplicated(metadata[[colname_sample]]))) {
     stop(
-      paste0("Values in metadata column '", colname_sample, "' must be unique."),
+      paste0(
+        "Values in metadata column '",
+        colname_sample,
+        "' must be unique."
+      ),
       call. = FALSE
     )
   }
@@ -272,12 +386,17 @@ CircadianData <- function(dataset,
   # Print a message if all values are unique because this suggests the user
   # simply has replicates rather than repeated measures, in which case
   # `colname_sample` need not be defined.
-  if (!is.null(colname_subject) && !any(duplicated(metadata[[colname_subject]]))) {
-    message("All values in column '", colname_subject, "' are unique. ",
-            "Assuming no repeated measures and ignoring this column.")
+  if (
+    !is.null(colname_subject) && !any(duplicated(metadata[[colname_subject]]))
+  ) {
+    message(
+      "All values in column '",
+      colname_subject,
+      "' are unique. ",
+      "Assuming no repeated measures and ignoring this column."
+    )
     colname_subject <- NULL
   }
-
 
   ## -- 1.7 Warn the user that additional columns will be ignored --
   ignored_cols <- setdiff(
@@ -304,7 +423,6 @@ CircadianData <- function(dataset,
     final_meta$subject_ID <- as.factor(metadata[[colname_subject]])
   }
 
-
   # === 2. Dataset Processing and Validation ===
   ## -- 2.1 Check if dataset is a data.frame or matrix ---
   if (!inherits(dataset, c("data.frame", "matrix"))) {
@@ -317,11 +435,14 @@ CircadianData <- function(dataset,
     if (length(non_numeric_cols) > 0) {
       cols_types <- sapply(dataset, function(col) class(col))[non_numeric_cols]
       str_combined <- paste0(names(cols_types), " (", cols_types, ")")
-      stop(paste(
-        "All columns of `dataset` are expected to be of type numeric.",
-        "The following columns have a different data type:\n",
-        paste(str_combined, collapse = "\n ")
-      ), call. = FALSE)
+      stop(
+        paste(
+          "All columns of `dataset` are expected to be of type numeric.",
+          "The following columns have a different data type:\n",
+          paste(str_combined, collapse = "\n ")
+        ),
+        call. = FALSE
+      )
     }
 
     # Convert to matrix
@@ -329,36 +450,51 @@ CircadianData <- function(dataset,
   }
 
   if (is.matrix(dataset) && !is.numeric(dataset)) {
-    stop(paste0(
-      "The `dataset` matrix is of type ", typeof(dataset),
-      " but is expected to be numerical"
-    ), call. = FALSE)
+    stop(
+      paste0(
+        "The `dataset` matrix is of type ",
+        typeof(dataset),
+        " but is expected to be numerical"
+      ),
+      call. = FALSE
+    )
   }
 
   ## -- 2.3 Check if dataset has row numbers --
   if (is.null(rownames(dataset))) {
-    warning("Dataset has no feature IDs (row names). Using row numbers as feature IDs.", call. = FALSE)
+    warning(
+      "Dataset has no feature IDs (row names). Using row numbers as feature IDs.",
+      call. = FALSE
+    )
     rownames(dataset) <- as.character(seq_len(nrow(dataset)))
   }
-
 
   # === 3. Synchronize Dataset and Metadata ===
   meta_samples <- rownames(final_meta)
   dset_samples <- colnames(dataset)
 
   if (is.null(dset_samples)) {
-    stop("'dataset' must have column names that correspond to sample IDs.", call. = FALSE)
+    stop(
+      "'dataset' must have column names that correspond to sample IDs.",
+      call. = FALSE
+    )
   }
 
   missing_in_meta <- setdiff(dset_samples, meta_samples)
   if (length(missing_in_meta) > 0) {
-    stop("The following sample IDs in the dataset are not found in the metadata: ",
-         paste(missing_in_meta, collapse = ", "), call. = FALSE)
+    stop(
+      "The following sample IDs in the dataset are not found in the metadata: ",
+      paste(missing_in_meta, collapse = ", "),
+      call. = FALSE
+    )
   }
   missing_in_dset <- setdiff(meta_samples, dset_samples)
   if (length(missing_in_dset) > 0) {
-    stop("The following sample IDs in the metadata are not found in the dataset: ",
-         paste(missing_in_dset, collapse = ", "), call. = FALSE)
+    stop(
+      "The following sample IDs in the metadata are not found in the dataset: ",
+      paste(missing_in_dset, collapse = ", "),
+      call. = FALSE
+    )
   }
 
   # Reorder dataset columns to match the standardized metadata order
@@ -366,19 +502,32 @@ CircadianData <- function(dataset,
 
   # === 4. Create the Object ===
   # The validity check will run automatically here on the final, processed data
-  cd_obj <- tryCatch({
-    new("CircadianData",
+  cd_obj <- tryCatch(
+    {
+      new(
+        "CircadianData",
         dataset = final_dataset,
         metadata = final_meta,
         experiment_info = list(),
         wave_params = data.frame(),
-        results = list())
-  }, error = function(e) {
-    stop("Failed to create CircadianData object. Please check the following error(s):\n",
-         e, call. = FALSE)
-  })
+        results = list()
+      )
+    },
+    error = function(e) {
+      stop(
+        "Failed to create CircadianData object. Please check the following error(s):\n",
+        e,
+        call. = FALSE
+      )
+    }
+  )
 
-  # === 5. Add Experiment Info ===
+  # === 5. Process Count Data if Relevant ===
+  if (data_type == "count" && isTRUE(preprocess)) {
+    cd_obj <- preprocess_counts(cd_obj)
+  }
+
+  # === 6. Add Experiment Info ===
   cd_obj <- add_experiment_info(
     cd_obj = cd_obj,
     period = period,
@@ -392,12 +541,11 @@ CircadianData <- function(dataset,
   # TODO: Should I run this here or just in `clockworks()`?
   validate_exp_info(cd_obj)
 
-  # === 6. Run Harmonic Regression ===
+  # === 7. Run Harmonic Regression ===
   wave_params(cd_obj) <- estimate_wave_params(cd_obj)
 
   return(cd_obj)
 }
-
 
 
 # ---- Accessor/Replacement Methods ----
@@ -411,7 +559,9 @@ setMethod("dataset", "CircadianData", function(x) x@dataset)
 setGeneric("dataset<-", function(x, value) standardGeneric("dataset<-"))
 
 setReplaceMethod("dataset", "CircadianData", function(x, value) {
-  if (!is.matrix(value)) stop("'value' must be a matrix.")
+  if (!is.matrix(value)) {
+    stop("'value' must be a matrix.")
+  }
   x@dataset <- value
   validObject(x)
   x
@@ -441,7 +591,9 @@ setMethod("metadata", "CircadianData", function(x) x@metadata)
 setGeneric("metadata<-", function(x, value) standardGeneric("metadata<-"))
 
 setReplaceMethod("metadata", "CircadianData", function(x, value) {
-  if (!is.data.frame(value)) stop("'value' must be a data frame.")
+  if (!is.data.frame(value)) {
+    stop("'value' must be a data frame.")
+  }
   x@metadata <- value
   validObject(x)
   x
@@ -468,10 +620,14 @@ setGeneric("experiment_info", function(x) standardGeneric("experiment_info"))
 
 setMethod("experiment_info", "CircadianData", function(x) x@experiment_info)
 
-setGeneric("experiment_info<-", function(x, value) standardGeneric("experiment_info<-"))
+setGeneric("experiment_info<-", function(x, value) {
+  standardGeneric("experiment_info<-")
+})
 
 setReplaceMethod("experiment_info", "CircadianData", function(x, value) {
-  if (!is.list(value)) stop("'value' must be a list.")
+  if (!is.list(value)) {
+    stop("'value' must be a list.")
+  }
   x@experiment_info <- value
   validObject(x)
   x
@@ -501,7 +657,9 @@ setMethod("wave_params", "CircadianData", function(x) x@wave_params)
 setGeneric("wave_params<-", function(x, value) standardGeneric("wave_params<-"))
 
 setReplaceMethod("wave_params", "CircadianData", function(x, value) {
-  if (!is.data.frame(value)) stop("'value' must be a data frame.")
+  if (!is.data.frame(value)) {
+    stop("'value' must be a data frame.")
+  }
   x@wave_params <- value
   validObject(x)
   x
@@ -531,7 +689,9 @@ setMethod("results", "CircadianData", function(x) x@results)
 setGeneric("results<-", function(x, value) standardGeneric("results<-"))
 
 setReplaceMethod("results", "CircadianData", function(x, value) {
-  if (!is.list(value)) stop("'value' must be a list.")
+  if (!is.list(value)) {
+    stop("'value' must be a list.")
+  }
   x@results <- value
   validObject(x)
   x
@@ -576,8 +736,11 @@ setReplaceMethod("results", "CircadianData", function(x, value) {
 #' }
 #'
 #' @export
-get_results <- function(cd, method = "all", type = c("formatted", "original", "both")) {
-
+get_results <- function(
+  cd,
+  method = "all",
+  type = c("formatted", "original", "both")
+) {
   # Match type argument
   type <- match.arg(type)
 
@@ -591,8 +754,12 @@ get_results <- function(cd, method = "all", type = c("formatted", "original", "b
 
   # Check method validity
   if (!identical(method, "all") && !method %in% methods_available) {
-    stop("Unknown method: ", method,
-         ". Available methods: ", paste(methods_available, collapse = ", "))
+    stop(
+      "Unknown method: ",
+      method,
+      ". Available methods: ",
+      paste(methods_available, collapse = ", ")
+    )
   }
 
   # Helper to extract for a single method
@@ -601,8 +768,8 @@ get_results <- function(cd, method = "all", type = c("formatted", "original", "b
     switch(
       type,
       formatted = res$res_formatted,
-      original  = res$res_original,
-      both      = res
+      original = res$res_original,
+      both = res
     )
   }
 
@@ -627,7 +794,9 @@ get_results <- function(cd, method = "all", type = c("formatted", "original", "b
   names(out) <- methods_available
 
   # If only one method, return as data frame
-  if (length(out) == 1) out <- out[[1]]
+  if (length(out) == 1) {
+    out <- out[[1]]
+  }
 
   return(out)
 }
@@ -647,11 +816,15 @@ if (!isGeneric("ncol")) {
 }
 
 if (!isGeneric("rownames")) {
-  setGeneric("rownames", function(x, do.NULL = TRUE, prefix = "row") standardGeneric("rownames"))
+  setGeneric("rownames", function(x, do.NULL = TRUE, prefix = "row") {
+    standardGeneric("rownames")
+  })
 }
 
 if (!isGeneric("colnames")) {
-  setGeneric("colnames", function(x, do.NULL = TRUE, prefix = "col") standardGeneric("colnames"))
+  setGeneric("colnames", function(x, do.NULL = TRUE, prefix = "col") {
+    standardGeneric("colnames")
+  })
 }
 
 if (!isGeneric("rownames<-")) {
@@ -729,11 +902,15 @@ setReplaceMethod("dimnames", "CircadianData", function(x, value) {
   cn <- value[[2]] # Sample names
 
   if (!is.null(rn)) {
-    if(length(rn) != nrow(x)) stop("Incorrect number of row names (features) provided.")
+    if (length(rn) != nrow(x)) {
+      stop("Incorrect number of row names (features) provided.")
+    }
     rownames(x@dataset) <- rn
   }
   if (!is.null(cn)) {
-    if(length(cn) != ncol(x)) stop("Incorrect number of column names (samples) provided.")
+    if (length(cn) != ncol(x)) {
+      stop("Incorrect number of column names (samples) provided.")
+    }
     # Sync names
     colnames(x@dataset) <- cn
     rownames(x@metadata) <- cn
@@ -750,7 +927,9 @@ setReplaceMethod("dimnames", "CircadianData", function(x, value) {
 #' @return The modified \code{CircadianData} object.
 #' @export
 setReplaceMethod("rownames", "CircadianData", function(x, value) {
-  if(length(value) != nrow(x)) stop("Incorrect number of row names (features) provided.")
+  if (length(value) != nrow(x)) {
+    stop("Incorrect number of row names (features) provided.")
+  }
   rownames(x@dataset) <- value
   validObject(x) # Should still be valid
   x
@@ -762,7 +941,9 @@ setReplaceMethod("rownames", "CircadianData", function(x, value) {
 #' @return The modified \code{CircadianData} object.
 #' @export
 setReplaceMethod("colnames", "CircadianData", function(x, value) {
-  if(length(value) != ncol(x)) stop("Incorrect number of column names (samples) provided.")
+  if (length(value) != ncol(x)) {
+    stop("Incorrect number of column names (samples) provided.")
+  }
   # Sync names
   colnames(x@dataset) <- value
   rownames(x@metadata) <- value
@@ -826,73 +1007,79 @@ setReplaceMethod("colnames", "CircadianData", function(x, value) {
 #' print(colnames(cd_obj_sub3))
 #' print(rownames(get_metadata(cd_obj_sub3)))
 #'
-setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
-          function(x, i, j, ..., drop = FALSE) {
+setMethod(
+  "[",
+  c("CircadianData", "ANY", "ANY", "ANY"),
+  function(x, i, j, ..., drop = FALSE) {
+    # Handle missing indices - select all
+    if (missing(i)) {
+      i <- seq_len(nrow(x))
+    }
+    if (missing(j)) {
+      j <- seq_len(ncol(x))
+    }
 
-            # Handle missing indices - select all
-            if (missing(i)) {
-              i <- seq_len(nrow(x))
-            }
-            if (missing(j)) {
-              j <- seq_len(ncol(x))
-            }
+    # Subset the dataset - use drop = FALSE to keep matrix structure
+    new_dataset <- x@dataset[i, j, drop = FALSE]
 
-            # Subset the dataset - use drop = FALSE to keep matrix structure
-            new_dataset <- x@dataset[i, j, drop = FALSE]
+    # Subset the metadata by rows corresponding to the selected samples (j)
+    # use drop = FALSE to keep data.frame structure
+    new_metadata <- x@metadata[j, , drop = FALSE]
 
-            # Subset the metadata by rows corresponding to the selected samples (j)
-            # use drop = FALSE to keep data.frame structure
-            new_metadata <- x@metadata[j, , drop = FALSE]
+    # Reset levels for group and subject ID to prevent empty levels
+    if ("group" %in% colnames(new_metadata)) {
+      new_metadata$group = factor(new_metadata$group)
+    }
+    if ("subject_ID" %in% colnames(new_metadata)) {
+      new_metadata$subject_ID = factor(new_metadata$subject_ID)
+    }
 
-            # Reset levels for group and subject ID to prevent empty levels
-            if ("group" %in% colnames(new_metadata)) {
-              new_metadata$group = factor(new_metadata$group)
-            }
-            if ("subject_ID" %in% colnames(new_metadata)) {
-              new_metadata$subject_ID = factor(new_metadata$subject_ID)
-            }
+    # Only keep wave parameters for the selected features (i)
 
-            # Only keep wave parameters for the selected features (i)
+    # TODO: IN THE FILTERING FUNCTION I'M JUST RECALCULATING THE WAVE
+    # PARAMETERS IN THE END SO THIS PART IS KIND OF REDUNDANT. I CAN'T
+    # RECALCULATE THE WAVE PARAMS IN THIS FUNCTION, BECAUSE THAT
+    # FUNCTION CALLS THIS ONE SO AN ENDLESS LOOP IS CREATED. I COULD
+    # ALSO JUST EXPAND THE CODE BELOW TO NOT ONLY REMOVE FILTERED
+    # FEATURES BUT ALSO REMOVE UNUSED GROUPS.
+    new_wave_params <- get_wave_params(x)
+    if (nrow(new_wave_params) > 0) {
+      # Note: `i` can be logical, numeric, or character. This works for all.
+      # `rownames(x)` provides the names to subset by if `i` is character.
+      features_to_keep <- rownames(x)[i]
+      new_wave_params <- new_wave_params[
+        new_wave_params$feature %in% features_to_keep,
+        ,
+        drop = FALSE
+      ]
+    }
 
-            # TODO: IN THE FILTERING FUNCTION I'M JUST RECALCULATING THE WAVE
-            # PARAMETERS IN THE END SO THIS PART IS KIND OF REDUNDANT. I CAN'T
-            # RECALCULATE THE WAVE PARAMS IN THIS FUNCTION, BECAUSE THAT
-            # FUNCTION CALLS THIS ONE SO AN ENDLESS LOOP IS CREATED. I COULD
-            # ALSO JUST EXPAND THE CODE BELOW TO NOT ONLY REMOVE FILTERED
-            # FEATURES BUT ALSO REMOVE UNUSED GROUPS.
-            new_wave_params <- get_wave_params(x)
-            if (nrow(new_wave_params) > 0) {
-              # Note: `i` can be logical, numeric, or character. This works for all.
-              # `rownames(x)` provides the names to subset by if `i` is character.
-              features_to_keep <- rownames(x)[i]
-              new_wave_params <- new_wave_params[new_wave_params$feature %in% features_to_keep, , drop = FALSE]
-            }
+    # TODO: Only keep results of selected features
+    # ...
 
-            # TODO: Only keep results of selected features
-            # ...
+    # Create the new object
+    x_new = new(
+      "CircadianData",
+      dataset = new_dataset,
+      metadata = new_metadata,
+      wave_params = new_wave_params,
+      results = results(x)
+    )
 
-            # Create the new object
-            x_new = new(
-              "CircadianData",
-              dataset = new_dataset,
-              metadata = new_metadata,
-              wave_params = new_wave_params,
-              results = results(x)
-            )
+    # Recalculate delta t and update replicate numbers, but keep the rest
+    exp_info_old = x@experiment_info
+    x_new = add_experiment_info(
+      cd_obj = x_new,
+      period = exp_info_old$period,
+      data_type = exp_info_old$data_type,
+      log_transformed = exp_info_old$log_transformed,
+      log_base = exp_info_old$log_base,
+      estimate_delta_t = TRUE
+    )
 
-            # Recalculate delta t and update replicate numbers, but keep the rest
-            exp_info_old = x@experiment_info
-            x_new = add_experiment_info(
-              cd_obj = x_new,
-              period = exp_info_old$period,
-              data_type = exp_info_old$data_type,
-              log_transformed = exp_info_old$log_transformed,
-              log_base = exp_info_old$log_base,
-              estimate_delta_t = TRUE
-            )
-
-            return(x_new)
-          })
+    return(x_new)
+  }
+)
 
 
 # ---- Adding experiment_info ----
@@ -920,10 +1107,14 @@ setMethod("[", c("CircadianData", "ANY", "ANY", "ANY"),
 #'   interval (`delta_t`) will be automatically estimated.
 #'
 #' @return A \code{CircadianData} object with an updated `experiment_info` slot.
-add_experiment_info <- function(cd_obj, period = NULL, data_type = NULL,
-                                log_transformed = NULL, log_base = NULL,
-                                estimate_delta_t = TRUE) {
-
+add_experiment_info <- function(
+  cd_obj,
+  period = NULL,
+  data_type = NULL,
+  log_transformed = NULL,
+  log_base = NULL,
+  estimate_delta_t = TRUE
+) {
   # --- Type Check ---
   if (!inherits(cd_obj, "CircadianData")) {
     stop("'cd_obj' must be an object of class CircadianData.", call. = FALSE)
@@ -973,7 +1164,9 @@ add_experiment_info <- function(cd_obj, period = NULL, data_type = NULL,
       }
       exp_info$log_base <- log_base
     } else if (is.null(exp_info$log_base)) {
-      message("Data is log-transformed but `log_base` not provided. Using default value of 2.")
+      message(
+        "Data is log-transformed but `log_base` not provided. Using default value of 2."
+      )
       exp_info$log_base <- 2
     }
   } else {
@@ -1001,8 +1194,14 @@ add_experiment_info <- function(cd_obj, period = NULL, data_type = NULL,
   # Make sure to show all time points in every group
   t_unique <- sort(unique(mdata$time))
   if (!is.na(exp_info$n_groups)) {
-    exp_info$n_replicates <- tapply(mdata$time, mdata$group, function(g_time)
-      table(factor(g_time, levels = t_unique)), simplify = FALSE)
+    exp_info$n_replicates <- tapply(
+      mdata$time,
+      mdata$group,
+      function(g_time) {
+        table(factor(g_time, levels = t_unique))
+      },
+      simplify = FALSE
+    )
   } else {
     exp_info$n_replicates <- table(factor(mdata$time, levels = t_unique))
   }
@@ -1017,7 +1216,10 @@ add_experiment_info <- function(cd_obj, period = NULL, data_type = NULL,
       delta_freqs <- sort(table(delta_ts), decreasing = TRUE)
       delta_t_unique <- as.numeric(names(delta_freqs))
       most_common <- delta_t_unique[1]
-      if (length(delta_t_unique) == 1 || all(delta_t_unique[-1] %% most_common == 0)) {
+      if (
+        length(delta_t_unique) == 1 ||
+          all(delta_t_unique[-1] %% most_common == 0)
+      ) {
         exp_info$delta_t <- most_common
       } else {
         exp_info$delta_t <- NA
@@ -1041,22 +1243,23 @@ add_experiment_info <- function(cd_obj, period = NULL, data_type = NULL,
       exp_info$n_cycles <- ((t_max + dt) - t_min) / mean_period
     } else {
       # Group-wise
-      exp_info$n_cycles <- tapply(mdata$time, mdata$group,
-                                  function(g_time) (max(g_time) - min(g_time) + dt) / mean_period,
-                                  simplify = FALSE)
+      exp_info$n_cycles <- tapply(
+        mdata$time,
+        mdata$group,
+        function(g_time) (max(g_time) - min(g_time) + dt) / mean_period,
+        simplify = FALSE
+      )
     }
   } else {
     # Sampling interval NA or NULL
     exp_info$n_cycles <- NA
   }
 
-
   # === 3. Put the updated list back into the object ===
   experiment_info(cd_obj) <- exp_info
 
   return(cd_obj)
 }
-
 
 
 # ---- Element-wise access/modification of experiment_info ----
@@ -1110,45 +1313,49 @@ NULL # Attach documentation to a NULL object
 ## ---- Methods for `[[` ----
 
 #' @rdname CircadianData-subset-expinfo
-setMethod("[[", c("CircadianData", "character", "missing"),
-          function(x, i, j, ...) {
-            if (length(i) != 1) {
-              stop("Index 'i' must be a single character string for accessing experiment_info.")
-            }
-            return(x@experiment_info[[i]])
-          }
+setMethod(
+  "[[",
+  c("CircadianData", "character", "missing"),
+  function(x, i, j, ...) {
+    if (length(i) != 1) {
+      stop(
+        "Index 'i' must be a single character string for accessing experiment_info."
+      )
+    }
+    return(x@experiment_info[[i]])
+  }
 )
 
 #' @rdname CircadianData-subset-expinfo
-setReplaceMethod("[[", c("CircadianData", "character", "missing"),
-                 function(x, i, j, value) {
-                   if (length(i) != 1) {
-                     stop("Index 'i' must be a single character string for assigning to experiment_info.")
-                   }
-                   x@experiment_info[[i]] <- value
-                   validObject(x)
-                   return(x)
-                 }
+setReplaceMethod(
+  "[[",
+  c("CircadianData", "character", "missing"),
+  function(x, i, j, value) {
+    if (length(i) != 1) {
+      stop(
+        "Index 'i' must be a single character string for assigning to experiment_info."
+      )
+    }
+    x@experiment_info[[i]] <- value
+    validObject(x)
+    return(x)
+  }
 )
 
 
 ## ---- Methods for `$` ----
 
 #' @rdname CircadianData-subset-expinfo
-setMethod("$", "CircadianData",
-          function(x, name) {
-            return(x@experiment_info[[name]])
-          }
-)
+setMethod("$", "CircadianData", function(x, name) {
+  return(x@experiment_info[[name]])
+})
 
 #' @rdname CircadianData-subset-expinfo
-setMethod("$<-", "CircadianData",
-          function(x, name, value) {
-            x@experiment_info[[name]] <- value
-            validObject(x)
-            return(x)
-          }
-)
+setMethod("$<-", "CircadianData", function(x, name, value) {
+  x@experiment_info[[name]] <- value
+  validObject(x)
+  return(x)
+})
 
 
 # ---- Estimating Wave Parameters ----
@@ -1174,7 +1381,9 @@ setMethod("$<-", "CircadianData",
 #'
 #' @returns A data frame with estimated sine wave parameters for every feature.
 estimate_wave_params <- function(cd_obj) {
-  if (!inherits(cd_obj, "CircadianData")) stop("Input must be a CircadianData object.")
+  if (!inherits(cd_obj, "CircadianData")) {
+    stop("Input must be a CircadianData object.")
+  }
 
   # Get original meta data
   mdata_orig <- get_metadata(cd_obj)
@@ -1186,7 +1395,7 @@ estimate_wave_params <- function(cd_obj) {
   per <- mean(cd_obj$period)
 
   # Add temporary group if there is no group column
-  if (is.na(cd_obj$n_groups)){
+  if (is.na(cd_obj$n_groups)) {
     mdata_tmp <- mdata_orig
     mdata_tmp[["group"]] <- "tmp"
     metadata(cd_obj) <- mdata_tmp
@@ -1214,8 +1423,8 @@ estimate_wave_params <- function(cd_obj) {
       inputtime = get_metadata(cd_filt)[["time"]],
       Tau = per,
       normalize = FALSE,
-      trend.eliminate = FALSE,  # TODO: make this a variable,
-      trend.degree = 1  # TODO: make this a variable
+      trend.eliminate = FALSE, # TODO: make this a variable,
+      trend.degree = 1 # TODO: make this a variable
     )
 
     # Get phase estimate in hours.`harmonic.regression()` uses a cosine, but the
@@ -1282,11 +1491,11 @@ estimate_wave_params <- function(cd_obj) {
       df_res$mesor_estimate <- log_mesors
       df_res$amplitude_estimate <- log_amps
       df_res$relative_amplitude_estimate <- lin_relative_amplitudes
-
     } else {
       df_res$mesor_estimate <- res_harm$means
       df_res$amplitude_estimate <- res_harm$pars$amp
-      df_res$relative_amplitude_estimate <- df_res$amplitude_estimate / df_res$mesor_estimate
+      df_res$relative_amplitude_estimate <- df_res$amplitude_estimate /
+        df_res$mesor_estimate
     }
 
     # Add group if original object had groups
@@ -1328,7 +1537,6 @@ estimate_wave_params <- function(cd_obj) {
 
   return(df_params)
 }
-
 
 
 # ---- Sorting ----
@@ -1386,75 +1594,90 @@ estimate_wave_params <- function(cd_obj) {
 #' print("Metadata sorted by time (asc) then subject_ID (desc):")
 #' print(get_metadata(cd_sorted_multi))
 #'
-setGeneric("order_samples", function(x, by_columns, decreasing = FALSE, ...) standardGeneric("order_samples"))
+setGeneric("order_samples", function(x, by_columns, decreasing = FALSE, ...) {
+  standardGeneric("order_samples")
+})
 
 #' @rdname order_samples
-setMethod("order_samples", "CircadianData",
-          function(x, by_columns, decreasing = FALSE) {
+setMethod(
+  "order_samples",
+  "CircadianData",
+  function(x, by_columns, decreasing = FALSE) {
+    # --- Input Validation ---
+    if (!is.character(by_columns) || length(by_columns) == 0) {
+      stop(
+        "'by_columns' must be a non-empty character vector of metadata column names."
+      )
+    }
+    if (!is.logical(decreasing)) {
+      stop("'decreasing' must be a logical vector.")
+    }
 
-            # --- Input Validation ---
-            if (!is.character(by_columns) || length(by_columns) == 0) {
-              stop("'by_columns' must be a non-empty character vector of metadata column names.")
-            }
-            if (!is.logical(decreasing)) {
-              stop("'decreasing' must be a logical vector.")
-            }
+    mdata <- get_metadata(x)
+    available_cols <- colnames(mdata)
 
-            mdata <- get_metadata(x)
-            available_cols <- colnames(mdata)
+    # Check if specified columns exist in metadata
+    missing_cols <- setdiff(by_columns, available_cols)
+    if (length(missing_cols) > 0) {
+      stop(
+        "The following columns specified in 'by_columns' were not found in metadata: ",
+        paste(missing_cols, collapse = ", ")
+      )
+    }
 
-            # Check if specified columns exist in metadata
-            missing_cols <- setdiff(by_columns, available_cols)
-            if (length(missing_cols) > 0) {
-              stop("The following columns specified in 'by_columns' were not found in metadata: ",
-                   paste(missing_cols, collapse = ", "))
-            }
+    # Handle 'decreasing' argument length
+    n_sort_cols <- length(by_columns)
+    if (length(decreasing) == 1 && n_sort_cols > 1) {
+      decreasing <- rep(decreasing, n_sort_cols)
+    } else if (length(decreasing) != n_sort_cols) {
+      stop(
+        "Length of 'decreasing' (",
+        length(decreasing),
+        ") must be 1 or match the length of 'by_columns' (",
+        n_sort_cols,
+        ")."
+      )
+    }
 
-            # Handle 'decreasing' argument length
-            n_sort_cols <- length(by_columns)
-            if (length(decreasing) == 1 && n_sort_cols > 1) {
-              decreasing <- rep(decreasing, n_sort_cols)
-            } else if (length(decreasing) != n_sort_cols) {
-              stop("Length of 'decreasing' (", length(decreasing),
-                   ") must be 1 or match the length of 'by_columns' (", n_sort_cols, ").")
-            }
+    # Handle case with no samples
+    if (ncol(x) == 0) {
+      warning("Object has 0 samples, returning unchanged.")
+      return(x)
+    }
 
-            # Handle case with no samples
-            if (ncol(x) == 0) {
-              warning("Object has 0 samples, returning unchanged.")
-              return(x)
-            }
+    # --- Get Sorting Order ---
+    # Extract the columns to sort by into a list
+    sort_cols_list <- as.list(mdata[, by_columns, drop = FALSE])
 
-            # --- Get Sorting Order ---
-            # Extract the columns to sort by into a list
-            sort_cols_list <- as.list(mdata[, by_columns, drop = FALSE])
+    # Prepare arguments for do.call with order()
+    # Always use method = "radix" for consistency and vector `decreasing` support
+    order_args <- c(
+      sort_cols_list,
+      list(decreasing = decreasing, method = "radix")
+    )
 
-            # Prepare arguments for do.call with order()
-            # Always use method = "radix" for consistency and vector `decreasing` support
-            order_args <- c(sort_cols_list,
-                            list(decreasing = decreasing, method = "radix"))
+    # Get the indices that define the new order
+    new_order_indices <- do.call(order, order_args)
 
-            # Get the indices that define the new order
-            new_order_indices <- do.call(order, order_args)
+    # --- Apply Ordering ---
+    # Reorder dataset columns
+    new_dataset <- get_dataset(x)[, new_order_indices, drop = FALSE]
 
-            # --- Apply Ordering ---
-            # Reorder dataset columns
-            new_dataset <- get_dataset(x)[, new_order_indices, drop = FALSE]
+    # Reorder metadata rows
+    new_metadata <- mdata[new_order_indices, , drop = FALSE]
 
-            # Reorder metadata rows
-            new_metadata <- mdata[new_order_indices, , drop = FALSE]
-
-            # --- Create and Return New Object ---
-            # Use new() instead of the user-facing CircadianData() constructor
-            # This correctly builds the object from already-processed slots.
-            new("CircadianData",
-                dataset = new_dataset,
-                metadata = new_metadata,
-                experiment_info = experiment_info(x),
-                wave_params = wave_params(x),
-                results = results(x)
-            )
-          }
+    # --- Create and Return New Object ---
+    # Use new() instead of the user-facing CircadianData() constructor
+    # This correctly builds the object from already-processed slots.
+    new(
+      "CircadianData",
+      dataset = new_dataset,
+      metadata = new_metadata,
+      experiment_info = experiment_info(x),
+      wave_params = wave_params(x),
+      results = results(x)
+    )
+  }
 )
 
 
@@ -1513,23 +1736,37 @@ filter_samples <- function(cd_obj, filter_expr, recalc_delta_t = TRUE) {
   }
 
   mdata <- get_metadata(cd_obj)
-  if (ncol(cd_obj) == 0) return(cd_obj)
+  if (ncol(cd_obj) == 0) {
+    return(cd_obj)
+  }
 
   # Check that recalc_delta_t is logical
   if (!is.logical(recalc_delta_t)) {
-    stop("'recalc_delta_t' must be of type logcial, not '", class(recalc_delta_t), "'.")
+    stop(
+      "'recalc_delta_t' must be of type logcial, not '",
+      class(recalc_delta_t),
+      "'."
+    )
   }
 
   # --- 2. Capture and Evaluate the Expression (using rlang) ---
   quo_filter <- rlang::enquo(filter_expr)
 
-  logical_vector <- tryCatch({
-    rlang::eval_tidy(quo_filter, data = mdata)
-  }, error = function(err) {
-    stop("Error evaluating 'filter_expr': ", err$message,
-         "\n  Expression was: ", rlang::quo_text(quo_filter),
-         "\n  Check that variables exist as column names in metadata.", call. = FALSE)
-  })
+  logical_vector <- tryCatch(
+    {
+      rlang::eval_tidy(quo_filter, data = mdata)
+    },
+    error = function(err) {
+      stop(
+        "Error evaluating 'filter_expr': ",
+        err$message,
+        "\n  Expression was: ",
+        rlang::quo_text(quo_filter),
+        "\n  Check that variables exist as column names in metadata.",
+        call. = FALSE
+      )
+    }
+  )
 
   # --- 3. Validate the Result ---
   if (!is.logical(logical_vector)) {
@@ -1581,16 +1818,18 @@ setMethod("show", "CircadianData", function(object) {
   # Show snippet of row/col names
   if (is.null(rn)) {
     rn_show <- "[NULL]"
-  } else if (length(rn) > 6)
+  } else if (length(rn) > 6) {
     rn_show <- c(head(rn, 3), "...", tail(rn, 2))
-  else
+  } else {
     rn_show <- rn
+  }
   if (is.null(cn)) {
     cn_show <- "[NULL]"
-  } else if (length(cn) > 6)
+  } else if (length(cn) > 6) {
     cn_show <- c(head(cn, 3), "...", tail(cn, 2))
-  else
+  } else {
     cn_show <- cn
+  }
   cat(sprintf(" %s:", "Feature names"), paste(rn_show, collapse = " "), "\n")
   cat(sprintf(" %s:", "Sample names"), paste(cn_show, collapse = " "), "\n")
 
@@ -1602,7 +1841,8 @@ setMethod("show", "CircadianData", function(object) {
     print(head(mdata))
   } else if (n_samples == 0) {
     cat(" [No samples]\n")
-  } else { # ncol(mdata) == 0
+  } else {
+    # ncol(mdata) == 0
     cat(" [No metadata columns]\n")
   }
 
@@ -1613,14 +1853,19 @@ setMethod("show", "CircadianData", function(object) {
     # Determine rows/cols to show (e.g., up to 6x6)
     rows_to_show <- min(n_features, 6)
     cols_to_show <- min(n_samples, 6)
-    cat(sprintf(" [showing %d features x %d samples]\n", rows_to_show, cols_to_show))
+    cat(sprintf(
+      " [showing %d features x %d samples]\n",
+      rows_to_show,
+      cols_to_show
+    ))
     # Extract subset
     dset_preview <- dset[1:rows_to_show, 1:cols_to_show, drop = FALSE]
     # Print the subsetted matrix
     print(dset_preview)
   } else if (n_features == 0) {
     cat(" [No features]\n")
-  } else { # n_samples == 0
+  } else {
+    # n_samples == 0
     cat(" [No samples]\n")
   }
 
@@ -1646,23 +1891,27 @@ setMethod("show", "CircadianData", function(object) {
     cat(" [Empty list]\n")
   }
 
-
   # --- Wave Parameters Info ---
   cat("\nWave Parameters:\n")
   w_params <- get_wave_params(object)
   if (nrow(w_params) > 0) {
     n_features_params <- length(unique(w_params$feature))
-    cat(paste(" Calculated for", n_features_params, "of", nrow(object), "features\n"))
+    cat(paste(
+      " Calculated for",
+      n_features_params,
+      "of",
+      nrow(object),
+      "features\n"
+    ))
   } else {
     cat(" [Not calculated]\n")
   }
-
 
   # --- Results Info ---
   cat("\nResults:\n")
   res <- results(object)
   if (length(res) > 0) {
-    cat(" Stored results for:", paste(names(res), collapse=", "), "\n")
+    cat(" Stored results for:", paste(names(res), collapse = ", "), "\n")
   } else {
     cat(" [No results stored]\n")
   }
@@ -1670,7 +1919,6 @@ setMethod("show", "CircadianData", function(object) {
   # Add a final newline for spacing
   cat("\n")
 })
-
 
 
 # ---- Plotting ----
@@ -1727,21 +1975,25 @@ setMethod("show", "CircadianData", function(object) {
 #' @export
 # TODO: PROVIDE AN EXAMPLE
 # TODO: Update documentation
-plot_phase_estimates <- function(cd,
-                                 n_bins = 24,
-                                 n_labels = 4,
-                                 pval_adj_cutoff = 1,
-                                 method = NA,
-                                 initial_offset = 5,
-                                 step_size = 1.25,
-                                 title = NULL,
-                                 add_border = TRUE,
-                                 alpha_range = c(0.05, 1),
-                                 default_colour = "deepskyblue") {
+plot_phase_estimates <- function(
+  cd,
+  n_bins = 24,
+  n_labels = 4,
+  pval_adj_cutoff = 1,
+  method = NA,
+  initial_offset = 5,
+  step_size = 1.25,
+  title = NULL,
+  add_border = TRUE,
+  alpha_range = c(0.05, 1),
+  default_colour = "deepskyblue"
+) {
   # --- 0. Validation ---
   # Check if 'add_border' is a single, non-NA, logical value (TRUE or FALSE)
   if (!is.logical(add_border) || length(add_border) != 1 || is.na(add_border)) {
-    stop("The 'add_border' argument must be a single logical value (TRUE or FALSE).")
+    stop(
+      "The 'add_border' argument must be a single logical value (TRUE or FALSE)."
+    )
   }
 
   # --- 1. Get harmonic regression params and period ---
@@ -1751,8 +2003,10 @@ plot_phase_estimates <- function(cd,
 
   # Stop and tell user to run wave fit if not done so
   if (ncol(df_params) == 0) {
-    stop("No wave parameters detected. Please run ",
-    "`wave_parameters(cd) <- estimate_wave_params(cd)` and retry.")
+    stop(
+      "No wave parameters detected. Please run ",
+      "`wave_parameters(cd) <- estimate_wave_params(cd)` and retry."
+    )
   }
 
   # --- 2. p-value filtering ---
@@ -1765,23 +2019,32 @@ plot_phase_estimates <- function(cd,
       message("Ignoring significance cutoff because no results available.")
     } else {
       method <- res_methods[1]
-      message("Multiple results available but none selected. Using ",
-              res_methods[1], " results for filtering.")
+      message(
+        "Multiple results available but none selected. Using ",
+        res_methods[1],
+        " results for filtering."
+      )
     }
   }
 
   # Get results if available
   if (!is.na(method)) {
     if (!method %in% res_methods) {
-      message("Method ", method, " not in results. Ignoring significance cutoff.")
+      message(
+        "Method ",
+        method,
+        " not in results. Ignoring significance cutoff."
+      )
     } else {
       # Get results
       df_res <- get_results(cd, method, type = "formatted")
       # Filter by adjusted p-value
       df_res <- df_res[df_res$pval_adj < pval_adj_cutoff, ]
       # Filter wave params data frame
-      df_params <- df_params[paste(df_params$feature, df_params$group) %in%
-                               paste(df_res$feature, df_res$group), ]
+      df_params <- df_params[
+        paste(df_params$feature, df_params$group) %in%
+          paste(df_res$feature, df_res$group),
+      ]
     }
   }
 
@@ -1796,7 +2059,7 @@ plot_phase_estimates <- function(cd,
   tile_height = 1
 
   # Adjust initial offset if necessary to not remove any data
-  initial_offset = max(initial_offset, tile_height/2)
+  initial_offset = max(initial_offset, tile_height / 2)
 
   binned_density_df <- df_params %>%
     mutate(
@@ -1806,7 +2069,11 @@ plot_phase_estimates <- function(cd,
     group_by(group) %>%
     mutate(density = count / sum(count)) %>%
     ungroup() %>%
-    complete(group, hour_bin = 0:(n_bins - 1), fill = list(count = 0, density = 0)) %>%
+    complete(
+      group,
+      hour_bin = 0:(n_bins - 1),
+      fill = list(count = 0, density = 0)
+    ) %>%
     mutate(group = as.factor(group)) %>%
     mutate(group_numeric = initial_offset + (as.numeric(group) - 1) * step_size)
 
@@ -1816,14 +2083,14 @@ plot_phase_estimates <- function(cd,
     distinct(group, group_numeric) %>%
     mutate(
       # The height of our tiles is 1, so the edges are +/- 0.5 from the center
-      ymin = group_numeric - tile_height/2,
-      ymax = group_numeric + tile_height/2
+      ymin = group_numeric - tile_height / 2,
+      ymax = group_numeric + tile_height / 2
     )
 
   # --- 4. Generate axis breaks and labels ---
   # Dynamically generate breaks and labels for the x-axis (hours)
   hour_label_points <- seq(0, per, length.out = n_labels + 1)
-  hour_label_points <- head(hour_label_points, - 1) # Remove the last point (e.g., 24) to avoid overlap with 0
+  hour_label_points <- head(hour_label_points, -1) # Remove the last point (e.g., 24) to avoid overlap with 0
 
   # Convert these hours into the corresponding bin numbers for the 'breaks'
   plot_breaks <- hour_label_points * n_bins / per
@@ -1855,7 +2122,10 @@ plot_phase_estimates <- function(cd,
         # Add slightly smaller white rings
         geom_rect(
           data = ring_background_df,
-          aes(ymin = ymin + tile_height * 0.025, ymax = ymax - tile_height * 0.025),
+          aes(
+            ymin = ymin + tile_height * 0.025,
+            ymax = ymax - tile_height * 0.025
+          ),
           fill = "white",
           xmin = -Inf,
           xmax = Inf,
@@ -1866,7 +2136,6 @@ plot_phase_estimates <- function(cd,
     plt <- plt +
       geom_tile(aes(fill = group, alpha = density), height = tile_height) +
       scale_fill_discrete(name = "Group")
-
   } else {
     # If no groups, SET fill to a static, default colour
     if (add_border == TRUE) {
@@ -1883,7 +2152,10 @@ plot_phase_estimates <- function(cd,
         # Add slightly smaller white rings
         geom_rect(
           data = ring_background_df,
-          aes(ymin = ymin + tile_height * 0.025, ymax = ymax - tile_height * 0.025),
+          aes(
+            ymin = ymin + tile_height * 0.025,
+            ymax = ymax - tile_height * 0.025
+          ),
           fill = "white",
           xmin = -Inf,
           xmax = Inf,
@@ -1892,7 +2164,11 @@ plot_phase_estimates <- function(cd,
     }
     # Add tiles
     plt <- plt +
-      geom_tile(aes(alpha = density), fill = default_colour, height = tile_height)
+      geom_tile(
+        aes(alpha = density),
+        fill = default_colour,
+        height = tile_height
+      )
   }
 
   # --- 6. Add the common plot components that apply to both cases ---
@@ -1907,7 +2183,7 @@ plot_phase_estimates <- function(cd,
     scale_y_continuous(
       breaks = y_axis_breaks,
       labels = NULL,
-      limits = c(0, max(y_axis_breaks) + tile_height/2)
+      limits = c(0, max(y_axis_breaks) + tile_height / 2)
     ) +
     labs(
       title = title,
@@ -1928,7 +2204,6 @@ plot_phase_estimates <- function(cd,
 
   return(plt)
 }
-
 
 
 #' Plot the expression of a feature from a CircadianData object
@@ -1971,19 +2246,20 @@ plot_phase_estimates <- function(cd,
 #' @importFrom tibble tibble
 #'
 #' @export
-plot_feature <- function(cd,
-                         feature,
-                         plot_type = c("points", "mean_sd"),
-                         add_wave = TRUE,
-                         point_size = 3,
-                         wave_linewidth = 1,
-                         groups = NULL,
-                         background_cutoffs = NULL,
-                         background_colors = c("white", "grey50"),
-                         background_alpha = 0.5,
-                         errorbar_linewidth = 0.6,
-                         errorbar_width = 0.4) {
-
+plot_feature <- function(
+  cd,
+  feature,
+  plot_type = c("points", "mean_sd"),
+  add_wave = TRUE,
+  point_size = 3,
+  wave_linewidth = 1,
+  groups = NULL,
+  background_cutoffs = NULL,
+  background_colors = c("white", "grey50"),
+  background_alpha = 0.5,
+  errorbar_linewidth = 0.6,
+  errorbar_width = 0.4
+) {
   # --- 0. Extract Data ---
   mdata <- cd@metadata
   dat <- cd@dataset
@@ -1998,7 +2274,9 @@ plot_feature <- function(cd,
 
   # Validate feature argument
   if (!(is.character(feature) || is.numeric(feature)) || length(feature) != 1) {
-    stop("'feature' must be a single character string or a single numeric value.")
+    stop(
+      "'feature' must be a single character string or a single numeric value."
+    )
   }
   if (is.character(feature)) {
     if (!(feature %in% rownames(cd))) {
@@ -2026,8 +2304,10 @@ plot_feature <- function(cd,
 
     missing_groups <- setdiff(groups, unique(mdata$group))
     if (length(missing_groups) > 0) {
-      stop("The following groups were not found in metadata: ",
-           paste(missing_groups, collapse = ", "))
+      stop(
+        "The following groups were not found in metadata: ",
+        paste(missing_groups, collapse = ", ")
+      )
     }
   }
 
@@ -2046,7 +2326,7 @@ plot_feature <- function(cd,
   feature_values <- dat[feature, , drop = TRUE]
 
   df_plot <- data.frame(
-    time  = mdata$time,
+    time = mdata$time,
     value = feature_values
   )
 
@@ -2060,14 +2340,15 @@ plot_feature <- function(cd,
   if (!is.null(groups)) {
     df_plot <- df_plot[df_plot$group %in% groups, , drop = FALSE]
     if (nrow(df_plot) == 0) {
-      stop("No data available for feature '",
-           feature,
-           "' in the selected groups.")
+      stop(
+        "No data available for feature '",
+        feature,
+        "' in the selected groups."
+      )
     }
   }
 
   multiple_groups <- dplyr::n_distinct(df_plot$group) > 1
-
 
   # Get mean and standard deviation
   if (plot_type == "mean_sd") {
@@ -2075,7 +2356,7 @@ plot_feature <- function(cd,
       dplyr::group_by(time, group) %>%
       dplyr::summarise(
         mean = mean(value),
-        sd   = sd(value),
+        sd = sd(value),
         .groups = "drop"
       )
   }
@@ -2087,7 +2368,6 @@ plot_feature <- function(cd,
 
   # --- 4. Background Shading ---
   if (!is.null(background_cutoffs)) {
-
     # x_min <- min(df_plot$time)
     # x_max <- max(df_plot$time)
     x_min <- -Inf
@@ -2133,10 +2413,10 @@ plot_feature <- function(cd,
         rowwise() %>%
         do({
           tibble(
-            time  = time_grid,
+            time = time_grid,
             value = .$mesor_estimate +
               .$amplitude_estimate *
-              cos(2 * pi * (time_grid - .$phase_estimate) / .$period),
+                cos(2 * pi * (time_grid - .$phase_estimate) / .$period),
             group = .$group
           )
         }) %>%
@@ -2162,9 +2442,10 @@ plot_feature <- function(cd,
       geom_point(
         data = df_plot,
         aes(x = time, y = value, fill = group),
-        shape = 21, size = point_size, colour = "black"
+        shape = 21,
+        size = point_size,
+        colour = "black"
       )
-
   } else if (plot_type == "mean_sd") {
     # Error bars
     p <- p +
@@ -2194,8 +2475,6 @@ plot_feature <- function(cd,
 
   return(p)
 }
-
-
 
 
 # TODO: Remove this base R plotting function at some point
@@ -2260,208 +2539,234 @@ plot_feature <- function(cd,
 #'              feature = "Feature5",
 #'              main = "Feature 5 (No Groups Defined)")
 #'
-setGeneric("plot_feature_base", function(x, feature, group = NULL, add_wave = TRUE, ...) standardGeneric("plot_feature_base"))
+setGeneric(
+  "plot_feature_base",
+  function(x, feature, group = NULL, add_wave = TRUE, ...) {
+    standardGeneric("plot_feature_base")
+  }
+)
 
 #' @rdname plot_feature_base
-setMethod("plot_feature_base", "CircadianData",
-          function(x, feature, group = NULL, add_wave = TRUE, ...) {
+setMethod(
+  "plot_feature_base",
+  "CircadianData",
+  function(x, feature, group = NULL, add_wave = TRUE, ...) {
+    # --- 1. Input Validation ---
+    mdata <- get_metadata(x)
+    if (!("time" %in% colnames(mdata))) {
+      stop("Metadata must contain a 'time' column for plotting.")
+    }
+    if (
+      !(is.character(feature) || is.numeric(feature)) || length(feature) != 1
+    ) {
+      stop(
+        "'feature' must be a single character string or a single numeric value."
+      )
+    }
 
-            # --- 1. Input Validation ---
-            mdata <- get_metadata(x)
-            if (!("time" %in% colnames(mdata))) {
-              stop("Metadata must contain a 'time' column for plotting.")
-            }
-            if (!(is.character(feature) || is.numeric(feature)) || length(feature) != 1) {
-              stop("'feature' must be a single character string or a single numeric value.")
-            }
+    if (is.character(feature)) {
+      if (!(feature %in% rownames(x))) {
+        stop("Feature '", feature, "' not found in the dataset.")
+      }
+    } else if (is.numeric(feature)) {
+      if (feature > nrow(x)) {
+        stop("Feature position (", feature, ") out of bounds.")
+      }
+      # Get feature name so logic downstream is the same
+      feature <- rownames(x)[feature]
+    }
 
-            if (is.character(feature)) {
-              if (!(feature %in% rownames(x))) {
-                stop("Feature '", feature, "' not found in the dataset.")
-              }
-            } else if (is.numeric(feature)) {
-              if (feature > nrow(x)) {
-                stop("Feature position (", feature, ") out of bounds.")
-              }
-              # Get feature name so logic downstream is the same
-              feature <- rownames(x)[feature]
-            }
+    # Check for group column existence
+    has_group_col <- "group" %in% colnames(mdata)
 
+    # Validate the 'group' argument if the column exists
+    if (!is.null(group)) {
+      if (!has_group_col) {
+        stop(
+          "'group' argument was provided, but no 'group' column exists in metadata."
+        )
+      }
+      if (!is.character(group) || length(group) != 1) {
+        stop("'group' argument must be NULL or a single character string.")
+      }
+      if (!(group %in% mdata$group)) {
+        stop("Group '", group, "' not found in the 'group' column of metadata.")
+      }
+    }
 
-            # Check for group column existence
-            has_group_col <- "group" %in% colnames(mdata)
+    # --- 2. Prepare Data for Plotting ---
+    feature_values <- get_dataset(x)[feature, , drop = TRUE]
+    plot_df <- data.frame(
+      time = mdata$time,
+      value = feature_values
+    )
 
-            # Validate the 'group' argument if the column exists
-            if (!is.null(group)) {
-              if (!has_group_col) {
-                stop("'group' argument was provided, but no 'group' column exists in metadata.")
-              }
-              if (!is.character(group) || length(group) != 1) {
-                stop("'group' argument must be NULL or a single character string.")
-              }
-              if (!(group %in% mdata$group)) {
-                stop("Group '", group, "' not found in the 'group' column of metadata.")
-              }
-            }
+    # Add group information conditionally
+    if (has_group_col) {
+      plot_df$group <- mdata$group
+    } else {
+      # Assign a dummy group if none exists
+      plot_df$group <- factor("all_samples")
+    }
 
-            # --- 2. Prepare Data for Plotting ---
-            feature_values <- get_dataset(x)[feature, , drop = TRUE]
-            plot_df <- data.frame(
-              time = mdata$time,
-              value = feature_values
-            )
+    # Apply filtering if a specific group is requested
+    if (!is.null(group)) {
+      plot_df <- plot_df[plot_df$group == group, , drop = FALSE]
+      if (nrow(plot_df) == 0) {
+        stop(
+          "No data available for feature '",
+          feature,
+          "' in group '",
+          group,
+          "'."
+        )
+      }
+    }
 
-            # Add group information conditionally
-            if (has_group_col) {
-              plot_df$group <- mdata$group
-            } else {
-              # Assign a dummy group if none exists
-              plot_df$group <- factor("all_samples")
-            }
+    # --- 3. Set Up Plotting Parameters ---
+    user_args <- list(...)
+    plot_args <- list()
 
-            # Apply filtering if a specific group is requested
-            if (!is.null(group)) {
-              plot_df <- plot_df[plot_df$group == group, , drop = FALSE]
-              if (nrow(plot_df) == 0) {
-                stop("No data available for feature '", feature, "' in group '", group, "'.")
-              }
-            }
+    # Set default shape
+    plot_args$pch = 21
 
-            # --- 3. Set Up Plotting Parameters ---
-            user_args <- list(...)
-            plot_args <- list()
+    # Set default labels and title
+    plot_args$xlab <- "Time"
+    plot_args$ylab <- "Value"
+    default_main <- if (is.null(group)) {
+      paste("Expression of", feature)
+    } else {
+      paste("Expression of", feature, "in group", group)
+    }
+    plot_args$main <- default_main
 
-            # Set default shape
-            plot_args$pch = 21
+    # Determine colors and if a legend is needed
+    unique_groups <- unique(as.character(plot_df$group))
+    n_groups <- length(unique_groups)
+    show_legend <- has_group_col && n_groups > 1
 
-            # Set default labels and title
-            plot_args$xlab <- "Time"
-            plot_args$ylab <- "Value"
-            default_main <- if (is.null(group)) {
-              paste("Expression of", feature)
-            } else {
-              paste("Expression of", feature, "in group", group)
-            }
-            plot_args$main <- default_main
+    if (show_legend == TRUE) {
+      # Background colour ---
+      if ("bg" %in% names(user_args)) {
+        if (length(user_args$bg) < n_groups) {
+          stop(
+            "Number of background colours (`bg`) must not be smaller than number of groups"
+          )
+        }
+        bgs <- user_args$bg[1:n_groups]
+        user_args$bg <- NULL
+      } else {
+        bgs <- grDevices::palette.colors(n = n_groups, palette = "Okabe-Ito")
+      }
+      names(bgs) <- unique_groups
+      plot_args$bg <- bgs[as.character(plot_df$group)]
 
-            # Determine colors and if a legend is needed
-            unique_groups <- unique(as.character(plot_df$group))
-            n_groups <- length(unique_groups)
-            show_legend <- has_group_col && n_groups > 1
+      # Colour ---
+      if ("col" %in% names(user_args)) {
+        if (length(user_args$col) < n_groups) {
+          stop(
+            "Number of colours (`col`) must not be smaller than number of groups"
+          )
+        }
+        cols <- user_args$col[1:n_groups]
+        user_args$col <- NULL
+      } else {
+        cols <- rep("black", n_groups)
+      }
+      names(cols) <- unique_groups
+      plot_args$col <- cols[as.character(plot_df$group)]
+    } else {
+      plot_args$bg <- "lightgrey"
+      plot_args$col <- "black"
+    }
 
-            if (show_legend == TRUE) {
-              # Background colour ---
-              if ("bg" %in% names(user_args)) {
-                if (length(user_args$bg) < n_groups) {
-                  stop("Number of background colours (`bg`) must not be smaller than number of groups")
-                }
-                bgs <- user_args$bg[1:n_groups]
-                user_args$bg <- NULL
-              } else {
-                bgs <- grDevices::palette.colors(n = n_groups, palette = "Okabe-Ito")
-              }
-              names(bgs) <- unique_groups
-              plot_args$bg <- bgs[as.character(plot_df$group)]
+    # Merge and potentially overwrite with user arguments
+    final_args <- utils::modifyList(plot_args, user_args)
 
-              # Colour ---
-              if ("col" %in% names(user_args)) {
-                if (length(user_args$col) < n_groups) {
-                  stop("Number of colours (`col`) must not be smaller than number of groups")
-                }
-                cols <- user_args$col[1:n_groups]
-                user_args$col <- NULL
-              } else {
-                cols <- rep("black", n_groups)
-              }
-              names(cols) <- unique_groups
-              plot_args$col <- cols[as.character(plot_df$group)]
+    # Enforce x and y parameters
+    final_args$x <- plot_df$time
+    final_args$y <- plot_df$value
 
-            } else {
-              plot_args$bg <- "lightgrey"
-              plot_args$col <- "black"
-            }
+    # --- 4. Create Plot ---
+    do.call("plot", final_args)
 
-            # Merge and potentially overwrite with user arguments
-            final_args <- utils::modifyList(plot_args, user_args)
+    # --- 5. Add Fitted Wave ---
+    w_params <- get_wave_params(x)
 
-            # Enforce x and y parameters
-            final_args$x <- plot_df$time
-            final_args$y <- plot_df$value
+    if (add_wave == TRUE && ncol(w_params) > 0) {
+      # Get wave parameters just for this feature
+      w_params <- w_params[w_params$feature == feature, ]
 
-            # --- 4. Create Plot ---
-            do.call("plot", final_args)
+      if (!is.null(group)) {
+        w_params <- w_params[w_params$group == group, ]
+      }
 
-            # --- 5. Add Fitted Wave ---
-            w_params <- get_wave_params(x)
+      # `show_legend` tells us whether we have multiple groups to plot
+      if (show_legend == TRUE) {
+        # One wave per group
+        for (grp in unique_groups) {
+          plot_df_grp <- plot_df[plot_df$group == grp, ]
+          w_params_grp <- w_params[w_params$group == grp, ]
 
-            if (add_wave == TRUE && ncol(w_params) > 0) {
-              # Get wave parameters just for this feature
-              w_params <- w_params[w_params$feature == feature, ]
+          # Generate points
+          wave_time <- seq(
+            min(plot_df_grp$time),
+            max(plot_df_grp$time),
+            length.out = 100
+          )
 
-              if (!is.null(group)) {
-                w_params <- w_params[w_params$group == group, ]
-              }
+          # Reconstruct sine wave from harmonic regression results
+          per <- w_params_grp$period
+          phase <- w_params_grp$phase_estimate
+          mesor <- w_params_grp$mesor_estimate
+          amp <- w_params_grp$amplitude_estimate
 
-              # `show_legend` tells us whether we have multiple groups to plot
-              if (show_legend == TRUE) {
-                # One wave per group
-                for (grp in unique_groups) {
-                  plot_df_grp <- plot_df[plot_df$group == grp, ]
-                  w_params_grp <- w_params[w_params$group == grp, ]
+          wave_vals <- mesor + amp * cos((2 * pi / per) * (wave_time - phase))
 
-                  # Generate points
-                  wave_time <- seq(min(plot_df_grp$time), max(plot_df_grp$time), length.out = 100)
+          # Add the line to the plot
+          graphics::lines(wave_time, wave_vals, col = bgs[[grp]])
+        }
+      } else {
+        # One wave
+        # Generate points
+        wave_time <- seq(min(plot_df$time), max(plot_df$time), length.out = 100)
 
-                  # Reconstruct sine wave from harmonic regression results
-                  per <- w_params_grp$period
-                  phase <- w_params_grp$phase_estimate
-                  mesor <- w_params_grp$mesor_estimate
-                  amp <- w_params_grp$amplitude_estimate
+        # Reconstruct sine wave from harmonic regression results
+        per <- w_params$period
+        phase <- w_params$phase_estimate
+        mesor <- w_params$mesor_estimate
+        amp <- w_params$amplitude_estimate
 
-                  wave_vals <- mesor + amp * cos((2*pi/per) * (wave_time - phase))
+        wave_vals <- mesor + amp * cos((2 * pi / per) * (wave_time - phase))
 
-                  # Add the line to the plot
-                  graphics::lines(wave_time, wave_vals, col = bgs[[grp]])
-                }
+        # Add the line to the plot
+        graphics::lines(wave_time, wave_vals, col = final_args$bg)
+      }
 
-              } else {
-                # One wave
-                # Generate points
-                wave_time <- seq(min(plot_df$time), max(plot_df$time), length.out = 100)
+      # Plot points again so they are on top of the lines
+      par(new = TRUE)
+      do.call("plot", final_args)
+    }
 
-                # Reconstruct sine wave from harmonic regression results
-                per <- w_params$period
-                phase <- w_params$phase_estimate
-                mesor <- w_params$mesor_estimate
-                amp <- w_params$amplitude_estimate
+    # --- 6. Add a Legend (if needed) ---
+    if (show_legend) {
+      legend(
+        "topright",
+        legend = names(bgs),
+        pt.bg = bgs,
+        col = final_args$col,
+        pch = 21,
+        bty = "n"
+      )
+    }
 
-                wave_vals <- mesor + amp * cos((2*pi/per) * (wave_time - phase))
-
-                # Add the line to the plot
-                graphics::lines(wave_time, wave_vals, col = final_args$bg)
-              }
-
-              # Plot points again so they are on top of the lines
-              par(new = TRUE)
-              do.call("plot", final_args)
-            }
-
-            # --- 6. Add a Legend (if needed) ---
-            if (show_legend) {
-              legend("topright",
-                     legend = names(bgs),
-                     pt.bg = bgs,
-                     col = final_args$col,
-                     pch = 21,
-                     bty = "n")
-            }
-
-            invisible(NULL)
-          }
+    invisible(NULL)
+  }
 )
 
 
 # --- Example Usage ---
-if (FALSE) { # Don't run automatically
+if (FALSE) {
+  # Don't run automatically
   #
 }
