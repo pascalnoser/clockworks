@@ -4,12 +4,15 @@
 \alias{preprocess_counts}
 \title{Preprocess count data by filtering lowly expressed features and normalising the data}
 \usage{
-preprocess_counts(cd, verbose = TRUE)
+preprocess_counts(cd, filter_counts = TRUE, verbose = TRUE)
 }
 \arguments{
-\item{cd}{A \code{CircadianData} object with count data in the \code{results} slot}
+\item{cd}{A \code{CircadianData} object with count data in the \code{results} slot.}
 
-\item{verbose}{Logical, whether a message should be printed}
+\item{filter_counts}{A logical value specifying whether lowly expressed
+features should be filtered out from count data.}
+
+\item{verbose}{Logical, whether a message should be printed.}
 }
 \value{
 The updated \code{CircadianData} object with preprocessed data in the

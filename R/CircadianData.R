@@ -159,10 +159,9 @@ setValidity("CircadianData", function(object) {
 #'   Defaults to 24.
 #' @param data_type A character string specifying the data type. Must be one of
 #'   "count" or "norm". Defaults to "norm" if not already set.
-#' @param preprocess A logical value specifying whether to preprocess count
-#'   data by filtering lowly expressed features and normalising the data using
-#'   edgeR's `filterByExpr` and `normLibSizes` functions. Has no effect if
-#'   `data_type` is not "count". Defaults to `TRUE`.
+#' @param filter_counts A logical value specifying whether lowly expressed
+#'   features should be filtered out from count data using edgeR's `filterByExpr`
+#'   function. Has no effect if `data_type` is not "count". Defaults to `TRUE`.
 #' @param log_transformed A logical value specifying if the input data is
 #'   log-transformed. This has no influence on the rhythmicity analysis itself
 #'   but is used to calculate the relative amplitude in the original scale of
@@ -205,7 +204,7 @@ CircadianData <- function(
   colname_subject = NULL,
   period = 24,
   data_type = "norm",
-  preprocess = TRUE,
+  filter_counts = TRUE,
   log_transformed = FALSE,
   log_base = NULL
 ) {
@@ -262,10 +261,14 @@ CircadianData <- function(
     )
   }
 
-  # Check preprocess
-  if (!is.logical(preprocess) || length(preprocess) != 1 || is.na(preprocess)) {
+  # Check filter_counts
+  if (
+    !is.logical(filter_counts) ||
+      length(filter_counts) != 1 ||
+      is.na(filter_counts)
+  ) {
     stop(
-      "'preprocess' must be a logical value (TRUE or FALSE).",
+      "'filter_counts' must be a logical value (TRUE or FALSE).",
       call. = FALSE
     )
   }
@@ -469,7 +472,7 @@ CircadianData <- function(
     rownames(dataset) <- as.character(seq_len(nrow(dataset)))
   }
 
-  # === 3. Synchronize Dataset and Metadata ===
+  # === 3. Synchronise Dataset and Metadata ===
   meta_samples <- rownames(final_meta)
   dset_samples <- colnames(dataset)
 
@@ -522,9 +525,9 @@ CircadianData <- function(
     }
   )
 
-  # === 5. Process Count Data if Relevant ===
-  if (data_type == "count" && isTRUE(preprocess)) {
-    cd_obj <- preprocess_counts(cd_obj)
+  # === 5. Preprocess Count Data ===
+  if (data_type == "count") {
+    cd_obj <- preprocess_counts(cd_obj, filter_counts)
   }
 
   # === 6. Add Experiment Info ===

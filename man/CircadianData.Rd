@@ -13,7 +13,7 @@ CircadianData(
   colname_subject = NULL,
   period = 24,
   data_type = "norm",
-  preprocess = TRUE,
+  filter_counts = TRUE,
   log_transformed = FALSE,
   log_base = NULL
 )
@@ -48,10 +48,9 @@ Defaults to 24.}
 \item{data_type}{A character string specifying the data type. Must be one of
 "count" or "norm". Defaults to "norm" if not already set.}
 
-\item{preprocess}{A logical value specifying whether to preprocess count
-data by filtering lowly expressed features and normalising the data using
-edgeR's \code{filterByExpr} and \code{normLibSizes} functions. Has no effect if
-\code{data_type} is not "count". Defaults to \code{TRUE}.}
+\item{filter_counts}{A logical value specifying whether lowly expressed
+features should be filtered out from count data using edgeR's \code{filterByExpr}
+function. Has no effect if \code{data_type} is not "count". Defaults to \code{TRUE}.}
 
 \item{log_transformed}{A logical value specifying if the input data is
 log-transformed. This has no influence on the rhythmicity analysis itself

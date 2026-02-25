@@ -5,8 +5,6 @@
 #'
 #' @param cd A `CircadianData` object
 #'
-#' @importFrom edgeR cpm
-#'
 #' @returns A `CircadianData` object
 check_diffcircadian <- function(cd) {
   # Create local copy of cd to prevent accidental changes to main object
@@ -14,9 +12,7 @@ check_diffcircadian <- function(cd) {
 
   # Turn to logCPM values if we have count data
   if (cd_local$data_type == "count") {
-    counts <- get_dataset(cd_local)
-    logCPM <- edgeR::cpm(counts, log = TRUE)
-    cd_local@dataset <- logCPM
+    cd_local <- convert_to_cpm(cd_local, log = TRUE)
   }
 
   # If we have repeated measures, remove subject batch effect
