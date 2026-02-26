@@ -18,13 +18,6 @@ execute_dryr <- function(inputs, grp, method_args = list()) {
   if (inputs$method == "f_24") {
     inputs$method <- NULL
     ls_res <- do.call(dryR::f_24, inputs)
-
-    # # Create output data frame
-    # df_res <- data.frame(
-    #   ls_res$parameters,
-    #   group = grp
-    # )
-
   } else if (inputs$method == "dryseq_single") {
     inputs$method <- NULL
     ls_res <- do.call(dryR::dryseq_single, inputs)

@@ -6,6 +6,7 @@
 #' @param cd A `CircadianData` object
 #'
 #' @importFrom limma duplicateCorrelation
+#' @importFrom edgeR DGEList normLibSizes
 #'
 #' @returns A list with inputs for `execute_limorhyde()`
 prepare_limorhyde <- function(cd) {
@@ -41,17 +42,35 @@ prepare_limorhyde <- function(cd) {
   # Define function ----
   # Use voomLmFit for count data
   if (cd_local$data_type == "count") {
-    # Calculate normalised library sizes
-    counts <- get_dataset(cd_local)
-    meta <- get_metadata(cd_local)
-    lib_sizes = colSums(counts) * meta$norm_factors
+    ## Option 1: Calculate normalised library sizes and pass to voomLmFit
+    # # Calculate normalised library sizes
+    # counts <- get_dataset(cd_local)
+    # meta <- get_metadata(cd_local)
+    # lib_sizes = colSums(counts) * meta$norm_factors
+
+    # # Create input list for voomLmFit
+    # inputs <- list(
+    #   func = "voomLmFit",
+    #   counts = counts,
+    #   design = design,
+    #   lib.size = lib_sizes
+    # )
+
+    ## Option 2: Create DGEList object, rerun normalisation and pass to voomLmFit
+    # Create DGEList object for voomLmFit
+    counts <- get_dataset(cd)
+    meta <- get_metadata(cd)
+    group <- meta$group
+    dge <- edgeR::DGEList(counts = counts, group = group)
+
+    # Add normalisation factors to DGEList object
+    dge <- edgeR::normLibSizes(dge)
 
     # Create input list for voomLmFit
     inputs <- list(
       func = "voomLmFit",
-      counts = counts,
-      design = design,
-      lib.size = lib_sizes
+      counts = dge,
+      design = design
     )
 
     # Use limma trend for normalised data

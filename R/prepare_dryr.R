@@ -18,9 +18,9 @@ prepare_dryr <- function(cd, grp) {
       data = get_dataset(cd_filt),
       time = get_metadata(cd_filt)$time,
       period = mean(cd_filt$period),
-      method = "f_24"  # will be removed later
+      method = "f_24" # will be removed later
     )
-  } else if (cd_local$data_type == "count") {
+  } else if (cd_filt$data_type == "count") {
     # Data will be analysed by `dryseq_single()`
     # Note: `group` and `single` are useful if you don't pre-filter your data
     # because they allow you to provide a vector with the group of each sample
@@ -33,7 +33,7 @@ prepare_dryr <- function(cd, grp) {
       period = mean(cd_filt$period),
       group = get_metadata(cd_filt)$group,
       single = grp,
-      method = "dryseq_single"  # will be removed later
+      method = "dryseq_single" # will be removed later
     )
   } else {
     stop("`data_type` of CircadianData object must be 'count' or 'norm'.")
