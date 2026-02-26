@@ -24,7 +24,6 @@ prepare_limorhyde <- function(cd) {
   } else {
     str_model <- "~ time_sin + time_cos"
 
-
     # # If repeated measures (and no groups), add subject ID to model
     # # NOTE: If there are groups this is not possible because the resulting
     # # design matrix would not be full rank. In case of no groups it is possible,
@@ -39,19 +38,24 @@ prepare_limorhyde <- function(cd) {
   # Replace ':' by '.' to not throw an error when defining contrasts later
   colnames(design) = gsub(":", ".", colnames(design))
 
-
   # Define function ----
+  # Use voomLmFit for count data
   if (cd_local$data_type == "count") {
-    # Use voomLmFit for count data
+    # Calculate normalised library sizes
+    counts <- get_dataset(cd_local)
+    meta <- get_metadata(cd_local)
+    lib_sizes = colSums(counts) * meta$norm_factors
+
+    # Create input list for voomLmFit
     inputs <- list(
       func = "voomLmFit",
-      counts = get_dataset(cd_local),
+      counts = counts,
       design = design,
-      sample.weights = TRUE
+      lib.size = lib_sizes
     )
 
-  } else if (cd_local$data_type == "norm") {
     # Use limma trend for normalised data
+  } else if (cd_local$data_type == "norm") {
     inputs <- list(
       func = "lmFit",
       object = get_dataset(cd_local),
@@ -60,7 +64,6 @@ prepare_limorhyde <- function(cd) {
   } else {
     stop("`data_type` of CircadianData object must be 'count' or 'norm'.")
   }
-
 
   # Add blocking variable ----
   if (cd_local$repeated_measures == TRUE) {
@@ -77,7 +80,10 @@ prepare_limorhyde <- function(cd) {
     if (cd_local$data_type == "norm") {
       corr_input <- inputs
       corr_input$func <- NULL
-      inputs$correlation <- do.call(limma::duplicateCorrelation, corr_input)$consensus.correlation
+      inputs$correlation <- do.call(
+        limma::duplicateCorrelation,
+        corr_input
+      )$consensus.correlation
     }
   }
 
