@@ -127,7 +127,7 @@ cd_full_counts <- CircadianData(
   colname_group = "Group",
   colname_subject = "Subject_ID",
   data_type = "count",
-  preprocess = TRUE
+  filter_counts = TRUE
 )
 
 ## 10) Groups and replicates, no repeated measures, added results ----
@@ -149,7 +149,7 @@ methods <- c(
 )
 
 for (i_method in methods) {
-  cat("\n\nMethod:", i_method)
+  cat("\n\nMethod:", i_method, "\n")
   cd_results <- clockworks(cd_results, method = i_method)
 }
 

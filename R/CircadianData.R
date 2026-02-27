@@ -32,8 +32,10 @@
 #' @slot metadata A data frame containing sample annotations (samples x
 #'   attributes).
 #' @slot experiment_info A list for storing experiment-level parameters.
-#' @slot wave_params A data frame containing estimated wave parameters of a
-#'   cosine wave fit to each feature using a harmonic regression.
+#' @slot wave_params A list of one or two data frames containing estimated wave parameters
+#'   of a cosine wave fit to each feature using a harmonic regression. If the experiment
+#'   has repeated measures, wave parameters are estimated both on the original data and on
+#'   the data after removing subject batch effects, and both are stored in this slot.
 #' @slot results A list for storing the output from various analysis functions.
 #'
 #' @name CircadianData-class
@@ -45,7 +47,7 @@ setClass(
     dataset = "matrix",
     metadata = "data.frame",
     experiment_info = "list",
-    wave_params = "data.frame",
+    wave_params = "list",
     results = "list"
   )
 )
@@ -104,19 +106,62 @@ setValidity("CircadianData", function(object) {
     required_cols <- c(required_cols, "group")
   }
 
-  if (!is.data.frame(wave_par)) {
-    errors <- c(errors, "'wave_params' slot must be a data frame")
+  # if (!is.data.frame(wave_par)) {
+  #   errors <- c(errors, "'wave_params' slot must be a data frame")
+  # } else {
+  #   missing_cols <- setdiff(required_cols, colnames(wave_par))
+  #   if (ncol(wave_par) > 0 && length(missing_cols) > 1) {
+  #     str_missing_cols <- paste(missing_cols, collapse = ", ")
+  #     errors <- c(
+  #       errors,
+  #       paste(
+  #         "'wave_params' data frame is missing the following columns:",
+  #         str_missing_cols
+  #       )
+  #     )
+  #   }
+  # }
+
+  if (!is.list(wave_par)) {
+    errors <- c(errors, "'wave_params' slot must be a list")
   } else {
-    missing_cols <- setdiff(required_cols, colnames(wave_par))
-    if (ncol(wave_par) > 0 && length(missing_cols) > 1) {
-      str_missing_cols <- paste(missing_cols, collapse = ", ")
+    # Check for valid names
+    valid_names <- c("original", "batch_corrected")
+    invalid_names <- setdiff(names(wave_par), valid_names)
+    if (length(invalid_names) > 0) {
       errors <- c(
         errors,
         paste(
-          "'wave_params' data frame is missing the following columns:",
-          str_missing_cols
+          "'wave_params' list contains invalid names:",
+          paste(invalid_names, collapse = ", ")
         )
       )
+    }
+
+    # Validate each data frame if present
+    for (df_name in intersect(names(wave_par), valid_names)) {
+      df <- wave_par[[df_name]]
+
+      if (!is.data.frame(df)) {
+        errors <- c(
+          errors,
+          paste0("'wave_params$", df_name, "' must be a data frame")
+        )
+      } else if (nrow(df) > 0) {
+        missing_cols <- setdiff(required_cols, colnames(df))
+        if (length(missing_cols) > 0) {
+          str_missing_cols <- paste(missing_cols, collapse = ", ")
+          errors <- c(
+            errors,
+            paste0(
+              "'wave_params$",
+              df_name,
+              "' data frame is missing the following columns: ",
+              str_missing_cols
+            )
+          )
+        }
+      }
     }
   }
 
@@ -512,7 +557,7 @@ CircadianData <- function(
         dataset = final_dataset,
         metadata = final_meta,
         experiment_info = list(),
-        wave_params = data.frame(),
+        wave_params = list(),
         results = list()
       )
     },
@@ -545,7 +590,24 @@ CircadianData <- function(
   validate_exp_info(cd_obj)
 
   # === 7. Run Harmonic Regression ===
-  wave_params(cd_obj) <- estimate_wave_params(cd_obj)
+  # Estimate wave parameters on original data
+  df_wave_params_orig <- estimate_wave_params(cd_obj)
+
+  # If we have repeated measures, also estimate wave parameters after removing batch effect
+  if (cd_obj$repeated_measures == TRUE) {
+    df_wave_params_corrected <- estimate_wave_params(
+      cd_obj,
+      remove_batch_effects = TRUE
+    )
+    wave_params(cd_obj) <- list(
+      original = df_wave_params_orig,
+      batch_corrected = df_wave_params_corrected
+    )
+  } else {
+    wave_params(cd_obj) <- list(
+      original = df_wave_params_orig
+    )
+  }
 
   return(cd_obj)
 }
@@ -667,8 +729,8 @@ setMethod("wave_params", "CircadianData", function(x) x@wave_params)
 setGeneric("wave_params<-", function(x, value) standardGeneric("wave_params<-"))
 
 setReplaceMethod("wave_params", "CircadianData", function(x, value) {
-  if (!is.data.frame(value)) {
-    stop("'value' must be a data frame.")
+  if (!is.list(value)) {
+    stop("'value' must be a list.")
   }
   x@wave_params <- value
   validObject(x)
@@ -678,15 +740,49 @@ setReplaceMethod("wave_params", "CircadianData", function(x, value) {
 ### ---- Exported Accessor ----
 #' Extract Wave Parameters from a CircadianData Object
 #'
-#' `get_wave_params()` retrieves the estimated wave parameters stored inside a
-#' `CircadianData` object.
+#' Retrieves the wave parameters estimated by a harmonic regression stored inside a
+#' `CircadianData` object. If the experiment has repeated measures, the parameters
+#' are estimated both on the original data and on the data after removing subject
+#' batch effects. The `version` argument controls which of these to return.
 #'
 #' @param cd A `CircadianData` object.
+#' @param version Character string specifying which wave parameters to return:
+#'   `"batch_corrected"` or `"original"`. If `"auto"` (default),
+#'   returns batch-corrected parameters if available, otherwise original. If
+#'   batch-corrected parameters are requested but unavailable returns original
+#'   parameters.
 #'
 #' @returns A data frame with estimated wave parameters
 #' @export
-get_wave_params <- function(cd) {
-  wave_params(cd)
+get_wave_params <- function(cd, version = "auto") {
+  version <- match.arg(version, c("original", "batch_corrected", "auto"))
+
+  w_params <- wave_params(cd)
+
+  # If auto, choose batch_corrected if available, else original
+  if (version == "auto") {
+    if (
+      !is.null(w_params$batch_corrected) && nrow(w_params$batch_corrected) > 0
+    ) {
+      version <- "batch_corrected"
+    } else {
+      version <- "original"
+    }
+  }
+
+  # Return requested version
+  result <- w_params[[version]]
+
+  # Inform user if batch_corrected was requested but unavailable
+  if (version == "batch_corrected" && (is.null(result) || nrow(result) == 0)) {
+    message(
+      "Batch-corrected wave parameters not available (no repeated measures). ",
+      "Returning original parameters instead."
+    )
+    result <- w_params$original
+  }
+
+  result
 }
 
 
@@ -940,7 +1036,58 @@ setReplaceMethod("rownames", "CircadianData", function(x, value) {
   if (length(value) != nrow(x)) {
     stop("Incorrect number of row names (features) provided.")
   }
+  # -- Dataset --
   rownames(x@dataset) <- value
+
+  # -- Wave parameters --
+  if (length(wave_params(x)) > 0) {
+    for (version in names(wave_params(x))) {
+      w_params <- wave_params(x)[[version]]
+      if (nrow(w_params) > 0) {
+        if ("group" %in% colnames(w_params)) {
+          # Split by group, update feature names, recombine
+          split_params <- split(w_params, w_params$group)
+          split_params <- lapply(split_params, function(df) {
+            df$feature <- value
+            df
+          })
+          w_params <- do.call(rbind, split_params)
+          rownames(w_params) <- NULL
+        } else {
+          w_params$feature <- value
+        }
+      }
+      wave_params(x)[[version]] <- w_params
+    }
+  }
+
+  # -- Results --
+  if (length(results(x)) > 0) {
+    # Warn user that feature names will only be updated in formatted results
+    warning(
+      "Updating feature names in formatted results only. Original method outputs will not be modified.",
+      call. = FALSE
+    )
+    for (method in names(results(x))) {
+      res_formatted <- results(x)[[method]]$res_formatted
+      if (nrow(res_formatted) > 0) {
+        if ("group" %in% colnames(res_formatted)) {
+          # Split by group, update feature names, recombine
+          split_results <- split(res_formatted, res_formatted$group)
+          split_results <- lapply(split_results, function(df) {
+            df$feature <- value
+            df
+          })
+          res_formatted <- do.call(rbind, split_results)
+          rownames(res_formatted) <- NULL
+        } else {
+          res_formatted$feature <- value
+        }
+        results(x)[[method]]$res_formatted <- res_formatted
+      }
+    }
+  }
+
   validObject(x) # Should still be valid
   x
 })
@@ -1024,11 +1171,19 @@ setMethod(
     # Handle missing indices - select all
     if (missing(i)) {
       i <- seq_len(nrow(x))
-    }
-    if (missing(j)) {
-      j <- seq_len(ncol(x))
+      i_missing <- TRUE
+    } else {
+      i_missing <- FALSE
     }
 
+    if (missing(j)) {
+      j <- seq_len(ncol(x))
+      j_missing <- TRUE
+    } else {
+      j_missing <- FALSE
+    }
+
+    ## -- Dataset and Metadata Subsetting --
     # Subset the dataset - use drop = FALSE to keep matrix structure
     new_dataset <- x@dataset[i, j, drop = FALSE]
 
@@ -1044,40 +1199,85 @@ setMethod(
       new_metadata$subject_ID = factor(new_metadata$subject_ID)
     }
 
-    # Only keep wave parameters for the selected features (i)
-
-    # TODO: IN THE FILTERING FUNCTION I'M JUST RECALCULATING THE WAVE
-    # PARAMETERS IN THE END SO THIS PART IS KIND OF REDUNDANT. I CAN'T
-    # RECALCULATE THE WAVE PARAMS IN THIS FUNCTION, BECAUSE THAT
-    # FUNCTION CALLS THIS ONE SO AN ENDLESS LOOP IS CREATED. I COULD
-    # ALSO JUST EXPAND THE CODE BELOW TO NOT ONLY REMOVE FILTERED
-    # FEATURES BUT ALSO REMOVE UNUSED GROUPS.
-    new_wave_params <- get_wave_params(x)
-    if (nrow(new_wave_params) > 0) {
-      # Note: `i` can be logical, numeric, or character. This works for all.
-      # `rownames(x)` provides the names to subset by if `i` is character.
-      features_to_keep <- rownames(x)[i]
-      new_wave_params <- new_wave_params[
-        new_wave_params$feature %in% features_to_keep,
-        ,
-        drop = FALSE
-      ]
+    ## -- Wave Parameters Subsetting --
+    # Determine if wave parameters should be recalculated based on the type of subsetting
+    if (!j_missing) {
+      # Subsetting by samples - wave parameters need to be recalculated
+      recalculate_wave_params <- TRUE
+      message(
+        "Recalculating wave parameters for the subsetted data because samples were changed."
+      )
+    } else {
+      # Samples are not changed, so wave parameters do not need to be recalculated
+      recalculate_wave_params <- FALSE
     }
 
-    # TODO: Only keep results of selected features
-    # ...
+    # Only keep wave parameters for the selected features (i)
+    # Note: If `recalculate_wave_params` is TRUE, the wave parameters will be recalculated
+    # later in the function, so we don't need to subset them here.
+    new_wave_params <- wave_params(x)
+    if (!i_missing && !recalculate_wave_params) {
+      if (length(new_wave_params) > 0) {
+        # Note: `i` can be logical, numeric, or character. This works for all.
+        # `rownames(x)` provides the names to subset by if `i` is character.
+        features_to_keep <- rownames(x)[i]
+        new_wave_params <- lapply(new_wave_params, function(df) {
+          if (nrow(df) > 0) {
+            df[df$feature %in% features_to_keep, , drop = FALSE]
+          } else {
+            df
+          }
+        })
+      }
+    }
 
+    ## -- Results Subsetting --
+    # Only keep results of selected features
+    new_results <- results(x)
+    if (!i_missing && length(new_results) > 0) {
+      # Warn user that only formatted results will be subsetted and that p-values are no longer valid
+      warning(
+        "Subsetting formatted results to selected features. Original method outputs will not be modified.",
+        "\n",
+        "Adjusted p-values will not be recalculated after subsetting and may no longer be valid. ",
+        "Consider re-running rhythm detection methods on the subsetted data.",
+        call. = FALSE
+      )
+
+      features_to_keep <- rownames(x)[i]
+      for (method in names(new_results)) {
+        res_formatted <- new_results[[method]]$res_formatted
+        if (nrow(res_formatted) > 0) {
+          new_results[[method]]$res_formatted <- res_formatted[
+            res_formatted$feature %in% features_to_keep,
+            ,
+            drop = FALSE
+          ]
+        }
+      }
+    }
+
+    # If samples are changed, warn the user that the results will no longer be valid and need to be re-run on the subsetted data
+    if (!j_missing && length(results(x)) > 0) {
+      warning(
+        "Stored results are likely no longer valid because samples have been changed. ",
+        "Consider re-running rhythm detection methods on the subsetted data.",
+        call. = FALSE
+      )
+    }
+
+    ## -- Create New Object and Update Experiment Info --
     # Create the new object
-    x_new = new(
+    x_new <- new(
       "CircadianData",
       dataset = new_dataset,
       metadata = new_metadata,
       wave_params = new_wave_params,
-      results = results(x)
+      results = new_results
     )
 
     # Recalculate delta t and update replicate numbers, but keep the rest
-    exp_info_old = x@experiment_info
+    exp_info_old <- x@experiment_info
     x_new = add_experiment_info(
       cd_obj = x_new,
       period = exp_info_old$period,
@@ -1086,6 +1286,28 @@ setMethod(
       log_base = exp_info_old$log_base,
       estimate_delta_t = TRUE
     )
+
+    ## -- Recalculate wave parameters if needed --
+    if (recalculate_wave_params) {
+      # Estimate wave parameters on the original data
+      df_wave_params_orig <- estimate_wave_params(x_new)
+
+      # If we have repeated measures, also estimate wave parameters after removing batch effect
+      if (x_new$repeated_measures == TRUE) {
+        df_wave_params_corrected <- estimate_wave_params(
+          x_new,
+          remove_batch_effects = TRUE
+        )
+        wave_params(x_new) <- list(
+          original = df_wave_params_orig,
+          batch_corrected = df_wave_params_corrected
+        )
+      } else {
+        wave_params(x_new) <- list(
+          original = df_wave_params_orig
+        )
+      }
+    }
 
     return(x_new)
   }
@@ -1380,6 +1602,11 @@ setMethod("$<-", "CircadianData", function(x, name, value) {
 #' each feature using harmonic regression.
 #'
 #' @param cd_obj A `CircadianData` object
+#' @param remove_batch_effects Logical. If `TRUE`, subject batch effects will be
+#'   removed before estimating the wave parameters.
+#' @param logCPM Logical or "auto". If `TRUE`, the data will be converted to
+#'   logCPM values before estimating the wave parameters. If "auto", logCPM will
+#'   be used if the data type is "count".
 #'
 #' @import HarmonicRegression
 #'
@@ -1389,10 +1616,35 @@ setMethod("$<-", "CircadianData", function(x, name, value) {
 #' amplitude, \eqn{T} the period, \eqn{t} the time and \eqn{\varphi} the phase
 #' in the same units as \eqn{t} (e.g. hours).
 #'
-#' @returns A data frame with estimated sine wave parameters for every feature.
-estimate_wave_params <- function(cd_obj) {
+#' @returns A data frame with estimated cosine wave parameters for every feature.
+estimate_wave_params <- function(
+  cd_obj,
+  remove_batch_effects = FALSE,
+  logCPM = "auto"
+) {
+  logCPM <- match.arg(logCPM, c(TRUE, FALSE, "auto"))
+
   if (!inherits(cd_obj, "CircadianData")) {
     stop("Input must be a CircadianData object.")
+  }
+
+  # If auto, log-transform if data type is count
+  if (logCPM == "auto") {
+    if (cd_obj$data_type == "count") {
+      logCPM <- TRUE
+    } else {
+      logCPM <- FALSE
+    }
+  }
+
+  # If logCPM is TRUE, convert to logCPM values first
+  if (isTRUE(logCPM)) {
+    cd_obj <- convert_to_cpm(cd_obj)
+  }
+
+  # If requested, remove batch effects first
+  if (isTRUE(remove_batch_effects)) {
+    cd_obj <- remove_batch_effects(cd_obj, verbose = FALSE)
   }
 
   # Get original meta data
@@ -1408,7 +1660,7 @@ estimate_wave_params <- function(cd_obj) {
   if (is.na(cd_obj$n_groups)) {
     mdata_tmp <- mdata_orig
     mdata_tmp[["group"]] <- "tmp"
-    metadata(cd_obj) <- mdata_tmp
+    cd_obj@metadata <- mdata_tmp
     add_groups <- FALSE
   } else {
     add_groups <- TRUE
@@ -1421,11 +1673,13 @@ estimate_wave_params <- function(cd_obj) {
   ls_params <- lapply(groups, function(grp) {
     # Filter cd object
 
-    # Note: Don't use `filter_samples()` here because that function calls this
-    # one, so an endless loop would be created
+    # Note: Don't use `filter_samples()` or subsetting function here because
+    # they call `estimate_wave_params()` which would create an endless loop.
     mdata <- get_metadata(cd_obj)
     sample_filt <- rownames(mdata[mdata$group == grp, ])
-    cd_filt <- cd_obj[, sample_filt]
+    cd_filt <- cd_obj
+    cd_filt@dataset <- cd_obj@dataset[, sample_filt, drop = FALSE]
+    cd_filt@metadata <- cd_obj@metadata[sample_filt, , drop = FALSE]
 
     # Run harmonic regression
     res_harm <- HarmonicRegression::harmonic.regression(
@@ -1448,23 +1702,14 @@ estimate_wave_params <- function(cd_obj) {
     # y = M + A * sin(2 * pi / T * (t + phi))
     phase_estimate_rad <- res_harm$pars$phi
     phase_estimate_h_cos <- phase_estimate_rad * per / (2 * pi)
-    phase_estimate_h_sin <- (-1 * (phase_estimate_h_cos - per / 4)) %% per
+    # phase_estimate_h_sin <- (-1 * (phase_estimate_h_cos - per / 4)) %% per
 
     # Create data frame
-    df_res = data.frame(
+    df_res <- data.frame(
       feature = row.names(res_harm$pars),
       period = per,
       phase_estimate = phase_estimate_h_cos
     )
-
-    # Add peak time
-    # Take phase estimates and shift them upward by repeated additions of the
-    # period until the values are greater than t_min. For example, if t_min is 18
-    # and one gene has a phase of 21 this remains unchanged, because the peak in
-    # the real data is at 21. If it has a phase of 5, the real peak is not at 5
-    # but at 29.
-    df_res$peak_time_estimate <- df_res$phase_estimate +
-      pmax(0, ceiling((t_min - df_res$phase_estimate) / per)) * per
 
     # Add mesor and amplitude estimates
     if (cd_obj$log_transformed == TRUE) {
@@ -1695,12 +1940,13 @@ setMethod(
 #' Filter Samples in a CircadianData Object
 #'
 #' Subsets a `CircadianData` object by rows of its metadata using a flexible
-#' filtering expression, similar to `dplyr::filter()`.
+#' filtering expression, similar to `dplyr::filter()`. Wave parameter estimates
+#' are recalculated after filtering to reflect the new data.
 #'
 #' @param cd_obj A \code{CircadianData} object.
 #' @param filter_expr An expression that evaluates to a logical vector within
 #'   the context of the object's metadata. Use meta data column names
-#'    directly in the expression.
+#'   directly in the expression.
 #' @param recalc_delta_t A logical value. If `TRUE`, the sampling interval
 #'   (`delta_t`) will be re-estimated from the remaining time points after
 #'   filtering. Defaults to `TRUE`.
@@ -1792,14 +2038,13 @@ filter_samples <- function(cd_obj, filter_expr, recalc_delta_t = TRUE) {
   exp_info_old <- experiment_info(cd_obj)
 
   # Use the existing S4 subsetting method `[`
-  # Note: This updates the experiment info, including delta t
+  # Note: This updates the wave parameters and experiment info, including delta t
   filtered_obj <- cd_obj[, logical_vector, drop = FALSE]
 
   # Optionally restore original delta t
-  experiment_info(filtered_obj)$delta_t = exp_info_old$delta_t
-
-  # --- 5. Recalculate wave params ---
-  wave_params(filtered_obj) <- estimate_wave_params(filtered_obj)
+  if (!recalc_delta_t) {
+    experiment_info(filtered_obj)$delta_t = exp_info_old$delta_t
+  }
 
   return(filtered_obj)
 }
@@ -1903,9 +2148,10 @@ setMethod("show", "CircadianData", function(object) {
 
   # --- Wave Parameters Info ---
   cat("\nWave Parameters:\n")
-  w_params <- get_wave_params(object)
-  if (nrow(w_params) > 0) {
-    n_features_params <- length(unique(w_params$feature))
+
+  w_params <- wave_params(object)
+  if (length(w_params) > 0 && !is.null(w_params$original)) {
+    n_features_params <- length(unique(w_params$original$feature))
     cat(paste(
       " Calculated for",
       n_features_params,
@@ -1913,6 +2159,12 @@ setMethod("show", "CircadianData", function(object) {
       nrow(object),
       "features\n"
     ))
+    # Indicate if batch-corrected parameters are also available
+    if (
+      !is.null(w_params$batch_corrected) && nrow(w_params$batch_corrected) > 0
+    ) {
+      cat(" (original and batch-corrected versions available)\n")
+    }
   } else {
     cat(" [Not calculated]\n")
   }
@@ -2271,9 +2523,14 @@ plot_feature <- function(
   errorbar_width = 0.4
 ) {
   # --- 0. Extract Data ---
+  # Convert to CPM if count data
+  if (experiment_info(cd)$data_type == "count") {
+    cd <- convert_to_cpm(cd)
+  }
+
   mdata <- cd@metadata
   dat <- cd@dataset
-  w_params <- cd@wave_params
+  w_params <- get_wave_params(cd)
 
   # --- 1. Input Validation ---
   # Validate time column
