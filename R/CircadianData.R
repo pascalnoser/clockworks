@@ -102,25 +102,12 @@ setValidity("CircadianData", function(object) {
     "amplitude_estimate",
     "relative_amplitude_estimate"
   )
-  if ("group" %in% colnames(mdata)) {
-    required_cols <- c(required_cols, "group")
-  }
 
-  # if (!is.data.frame(wave_par)) {
-  #   errors <- c(errors, "'wave_params' slot must be a data frame")
-  # } else {
-  #   missing_cols <- setdiff(required_cols, colnames(wave_par))
-  #   if (ncol(wave_par) > 0 && length(missing_cols) > 1) {
-  #     str_missing_cols <- paste(missing_cols, collapse = ", ")
-  #     errors <- c(
-  #       errors,
-  #       paste(
-  #         "'wave_params' data frame is missing the following columns:",
-  #         str_missing_cols
-  #       )
-  #     )
-  #   }
-  # }
+  if (length(exp_info) > 0) {
+    if (!is.na(exp_info$n_groups) && exp_info$n_groups > 1) {
+      required_cols <- c(required_cols, "group")
+    }
+  }
 
   if (!is.list(wave_par)) {
     errors <- c(errors, "'wave_params' slot must be a list")
@@ -1116,7 +1103,8 @@ setReplaceMethod("colnames", "CircadianData", function(x, value) {
 #' @description
 #' Subsets the object by features (rows) and/or samples (columns) using the `[`
 #' operator. This method ensures that the `dataset` and `metadata` slots remain
-#' synchronized after subsetting. Also updates the experiment info.
+#' synchronized after subsetting. Also updates the experiment info, wave
+#' parameters, and results.
 #'
 #' @param x A \code{CircadianData} object.
 #' @param i Row indices or names (features).
@@ -1171,17 +1159,37 @@ setMethod(
     # Handle missing indices - select all
     if (missing(i)) {
       i <- seq_len(nrow(x))
-      i_missing <- TRUE
-    } else {
-      i_missing <- FALSE
     }
-
     if (missing(j)) {
       j <- seq_len(ncol(x))
-      j_missing <- TRUE
-    } else {
-      j_missing <- FALSE
     }
+
+    # Turn logical and character entries to numeric
+    if (is.logical(i)) {
+      i <- which(i)
+    } else if (is.character(i)) {
+      i <- match(i, rownames(x))
+      if (any(is.na(i))) {
+        stop(
+          "Some feature names in 'i' not found in row names of CircadianData object."
+        )
+      }
+    }
+
+    if (is.logical(j)) {
+      j <- which(j)
+    } else if (is.character(j)) {
+      j <- match(j, colnames(x))
+      if (any(is.na(j))) {
+        stop(
+          "Some sample names in 'j' not found in column names of CircadianData object."
+        )
+      }
+    }
+
+    # Determine if features and/or samples should be updated
+    update_features <- length(i) < nrow(x)
+    update_samples <- length(j) < ncol(x)
 
     ## -- Dataset and Metadata Subsetting --
     # Subset the dataset - use drop = FALSE to keep matrix structure
@@ -1200,26 +1208,19 @@ setMethod(
     }
 
     ## -- Wave Parameters Subsetting --
-    # Determine if wave parameters should be recalculated based on the type of subsetting
-    if (!j_missing) {
+    if (update_samples) {
       # Subsetting by samples - wave parameters need to be recalculated
-      recalculate_wave_params <- TRUE
       message(
         "Recalculating wave parameters for the subsetted data because samples were changed."
       )
-    } else {
-      # Samples are not changed, so wave parameters do not need to be recalculated
-      recalculate_wave_params <- FALSE
     }
 
     # Only keep wave parameters for the selected features (i)
-    # Note: If `recalculate_wave_params` is TRUE, the wave parameters will be recalculated
+    # Note: If `update_samples` is TRUE, the wave parameters will be recalculated
     # later in the function, so we don't need to subset them here.
     new_wave_params <- wave_params(x)
-    if (!i_missing && !recalculate_wave_params) {
+    if (update_features && !update_samples) {
       if (length(new_wave_params) > 0) {
-        # Note: `i` can be logical, numeric, or character. This works for all.
-        # `rownames(x)` provides the names to subset by if `i` is character.
         features_to_keep <- rownames(x)[i]
         new_wave_params <- lapply(new_wave_params, function(df) {
           if (nrow(df) > 0) {
@@ -1234,7 +1235,7 @@ setMethod(
     ## -- Results Subsetting --
     # Only keep results of selected features
     new_results <- results(x)
-    if (!i_missing && length(new_results) > 0) {
+    if (update_features && length(new_results) > 0) {
       # Warn user that only formatted results will be subsetted and that p-values are no longer valid
       warning(
         "Subsetting formatted results to selected features. Original method outputs will not be modified.",
@@ -1258,7 +1259,7 @@ setMethod(
     }
 
     # If samples are changed, warn the user that the results will no longer be valid and need to be re-run on the subsetted data
-    if (!j_missing && length(results(x)) > 0) {
+    if (update_samples && length(results(x)) > 0) {
       warning(
         "Stored results are likely no longer valid because samples have been changed. ",
         "Consider re-running rhythm detection methods on the subsetted data.",
@@ -1268,16 +1269,17 @@ setMethod(
 
     ## -- Create New Object and Update Experiment Info --
     # Create the new object
+    exp_info_old <- x@experiment_info
     x_new <- new(
       "CircadianData",
       dataset = new_dataset,
       metadata = new_metadata,
+      # experiment_info = exp_info_old,
       wave_params = new_wave_params,
       results = new_results
     )
 
     # Recalculate delta t and update replicate numbers, but keep the rest
-    exp_info_old <- x@experiment_info
     x_new = add_experiment_info(
       cd_obj = x_new,
       period = exp_info_old$period,
@@ -1288,7 +1290,7 @@ setMethod(
     )
 
     ## -- Recalculate wave parameters if needed --
-    if (recalculate_wave_params) {
+    if (update_samples) {
       # Estimate wave parameters on the original data
       df_wave_params_orig <- estimate_wave_params(x_new)
 
