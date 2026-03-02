@@ -33,6 +33,9 @@ analyze_rain <- function(cd, method_args = list()) {
   ls_res <- format_rain(
     ls_res_groups = ls_res_groups,
     w_params = get_wave_params(cd_local),
+    t_min = min(get_metadata(cd_local)[["time"]]),
+    deltat = cd_local$delta_t,
+    period = cd_local$period,
     added_group = added_group
   )
 
