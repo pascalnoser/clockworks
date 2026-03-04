@@ -40,5 +40,8 @@ analyze_jtkcycle <- function(cd, method_args = list()) {
     log_base = cd_local$log_base
   )
 
+  # Remove potential results to allow for filtering of CD object later on
+  results(cd_local) <- list()
+
   return(ls_res)
 }

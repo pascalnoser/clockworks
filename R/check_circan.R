@@ -44,5 +44,8 @@ check_circan <- function(cd) {
   # Make sure samples are ordered by time and subject
   cd_local <- order_samples(cd_local, c("time", "group", "ind"))
 
+  # Remove potential results to allow for filtering of CD object later on
+  results(cd_local) <- list()
+
   return(cd_local)
 }

@@ -42,8 +42,10 @@ check_genecycle <- function(cd) {
       "approach (e.g., concatenation), please preprocess the data manually or ",
       "choose a method that supports replicates."
     )
-    # TODO: Print data frame showing time, number of replicates and group?
   }
+
+  # Remove potential results to allow for filtering of CD object later on
+  results(cd_local) <- list()
 
   return(cd_local)
 }

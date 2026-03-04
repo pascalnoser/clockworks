@@ -67,5 +67,8 @@ check_arser <- function(cd) {
     # }
   }
 
+  # Remove potential results to allow for filtering of CD object later on
+  results(cd_local) <- list()
+
   return(cd_local)
 }

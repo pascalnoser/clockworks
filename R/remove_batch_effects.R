@@ -33,18 +33,27 @@ remove_batch_effects <- function(cd, verbose = TRUE) {
   if (is.na(cd$n_groups) | cd$n_groups == 1) {
     # None or one group
     # Note: Suppressing the message about the function assuming a one-group design
-    dataset_corrected <- suppressMessages(limma::removeBatchEffect(
-      x = get_dataset(cd),
-      batch = get_metadata(cd)$subject_ID
-    ))
+    out <- capture.output(
+      dataset_corrected <- suppressMessages(limma::removeBatchEffect(
+        x = get_dataset(cd),
+        batch = get_metadata(cd)$subject_ID
+      ))
+    )
   } else {
     # Multiple groups
-    dataset_corrected <- limma::removeBatchEffect(
-      x = get_dataset(cd),
-      batch = get_metadata(cd)$subject_ID,
-      group = get_metadata(cd)$group
+    out <- capture.output(
+      dataset_corrected <- suppressWarnings(limma::removeBatchEffect(
+        x = get_dataset(cd),
+        batch = get_metadata(cd)$subject_ID,
+        group = get_metadata(cd)$group
+      ))
     )
   }
+
+  if (verbose == TRUE) {
+    cat(out, sep = "\n")
+  }
+
   dataset(cd) <- dataset_corrected
   return(cd)
 }

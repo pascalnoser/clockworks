@@ -38,5 +38,8 @@ check_meta2d <- function(cd) {
   )
   cd_local <- order_samples(cd_local, sort_cols)
 
+  # Remove potential results to allow for filtering of CD object later on
+  results(cd_local) <- list()
+
   return(cd_local)
 }

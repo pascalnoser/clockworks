@@ -1103,8 +1103,9 @@ setReplaceMethod("colnames", "CircadianData", function(x, value) {
 #' @description
 #' Subsets the object by features (rows) and/or samples (columns) using the `[`
 #' operator. This method ensures that the `dataset` and `metadata` slots remain
-#' synchronized after subsetting. Also updates the experiment info, wave
-#' parameters, and results.
+#' synchronized after subsetting. Also updates the experiment info and wave
+#' parameters. Throws an error if results slot is not empty because subsetting would
+#' make the results invalid.
 #'
 #' @param x A \code{CircadianData} object.
 #' @param i Row indices or names (features).
@@ -1156,6 +1157,15 @@ setMethod(
   "[",
   c("CircadianData", "ANY", "ANY", "ANY"),
   function(x, i, j, ..., drop = FALSE) {
+    # Throw error if results slot is not empty
+    if (length(results(x)) > 0) {
+      stop(
+        "Cannot subset object because it would invalidate stored results. ",
+        "Consider subsetting first and re-running the analysis on the subsetted data.",
+        call. = FALSE
+      )
+    }
+
     # Handle missing indices - select all
     if (missing(i)) {
       i <- seq_len(nrow(x))
@@ -1208,64 +1218,102 @@ setMethod(
     }
 
     ## -- Wave Parameters Subsetting --
-    if (update_samples) {
-      # Subsetting by samples - wave parameters need to be recalculated
+
+    ### -- Check if wave parameters should be updated
+    # Check if metadata contains groups
+    has_group <- "group" %in% colnames(x@metadata)
+
+    # Initialise as TRUE
+    groups_unchanged <- TRUE
+
+    if (has_group && update_samples) {
+      # Get number of samples in each group before and after subsetting
+      old_group_counts <- table(x@metadata$group)
+      new_group_counts <- table(new_metadata$group)
+
+      # Get names of groups that were removed entirely
+      groups_removed <- setdiff(
+        names(old_group_counts),
+        names(new_group_counts)
+      )
+
+      # Check if any remaining groups lost samples
+      groups_in_both <- intersect(
+        names(old_group_counts),
+        names(new_group_counts)
+      )
+      groups_unchanged <- all(
+        old_group_counts[groups_in_both] == new_group_counts[groups_in_both]
+      )
+    }
+
+    update_wave_params <- update_samples && (!has_group || !groups_unchanged)
+
+    if (update_wave_params) {
       message(
         "Recalculating wave parameters for the subsetted data because samples were changed."
       )
     }
-
     # Only keep wave parameters for the selected features (i)
-    # Note: If `update_samples` is TRUE, the wave parameters will be recalculated
+    # Note: If `update_wave_params` is TRUE, the wave parameters will be recalculated
     # later in the function, so we don't need to subset them here.
     new_wave_params <- wave_params(x)
-    if (update_features && !update_samples) {
-      if (length(new_wave_params) > 0) {
-        features_to_keep <- rownames(x)[i]
-        new_wave_params <- lapply(new_wave_params, function(df) {
-          if (nrow(df) > 0) {
-            df[df$feature %in% features_to_keep, , drop = FALSE]
-          } else {
-            df
-          }
-        })
-      }
-    }
-
-    ## -- Results Subsetting --
-    # Only keep results of selected features
-    new_results <- results(x)
-    if (update_features && length(new_results) > 0) {
-      # Warn user that only formatted results will be subsetted and that p-values are no longer valid
-      warning(
-        "Subsetting formatted results to selected features. Original method outputs will not be modified.",
-        "\n",
-        "Adjusted p-values will not be recalculated after subsetting and may no longer be valid. ",
-        "Consider re-running rhythm detection methods on the subsetted data.",
-        call. = FALSE
-      )
-
+    if (update_features && !update_wave_params && length(new_wave_params) > 0) {
       features_to_keep <- rownames(x)[i]
-      for (method in names(new_results)) {
-        res_formatted <- new_results[[method]]$res_formatted
-        if (nrow(res_formatted) > 0) {
-          new_results[[method]]$res_formatted <- res_formatted[
-            res_formatted$feature %in% features_to_keep,
-            ,
-            drop = FALSE
-          ]
+      new_wave_params <- lapply(new_wave_params, function(df) {
+        if (nrow(df) > 0) {
+          df[df$feature %in% features_to_keep, , drop = FALSE]
+        } else {
+          df
         }
-      }
+      })
     }
 
-    # If samples are changed, warn the user that the results will no longer be valid and need to be re-run on the subsetted data
-    if (update_samples && length(results(x)) > 0) {
-      warning(
-        "Stored results are likely no longer valid because samples have been changed. ",
-        "Consider re-running rhythm detection methods on the subsetted data.",
-        call. = FALSE
-      )
+    # If any groups were removed entirely, remove the corresponding wave parameters
+    if (!update_wave_params && length(groups_removed) > 0) {
+      new_wave_params <- lapply(new_wave_params, function(df) {
+        if (nrow(df) > 0) {
+          df[!df$group %in% groups_removed, , drop = FALSE]
+        } else {
+          df
+        }
+      })
     }
+
+    # ## -- Results Subsetting --
+    # # Only keep results of selected features
+    # new_results <- results(x)
+    # if (update_features && length(new_results) > 0) {
+    #   # Warn user that only formatted results will be subsetted and that p-values are no longer valid
+    #   warning(
+    #     "Subsetting formatted results to selected features. Original method outputs will not be modified.",
+    #     "\n",
+    #     "Adjusted p-values will not be recalculated after subsetting and may no longer be valid. ",
+    #     "Consider re-running rhythm detection methods on the subsetted data.",
+    #     call. = FALSE
+    #   )
+
+    #   features_to_keep <- rownames(x)[i]
+    #   for (method in names(new_results)) {
+    #     res_formatted <- new_results[[method]]$res_formatted
+    #     if (nrow(res_formatted) > 0) {
+    #       new_results[[method]]$res_formatted <- res_formatted[
+    #         res_formatted$feature %in% features_to_keep,
+    #         ,
+    #         drop = FALSE
+    #       ]
+    #     }
+    #   }
+    # }
+
+    # # If samples are changed, warn the user that the results will no longer be valid and need to be re-run on the subsetted data
+    # if (update_samples && length(results(x)) > 0) {
+    #   warning(
+    #     "Stored results are likely no longer valid because samples have been changed. ",
+    #     "Consider re-running rhythm detection methods on the subsetted data.",
+    #     call. = FALSE
+    #   )
+    # }
 
     ## -- Create New Object and Update Experiment Info --
     # Create the new object
@@ -1275,8 +1323,8 @@ setMethod(
       dataset = new_dataset,
       metadata = new_metadata,
       # experiment_info = exp_info_old,
-      wave_params = new_wave_params,
-      results = new_results
+      # results = new_results,
+      wave_params = new_wave_params
     )
 
     # Recalculate delta t and update replicate numbers, but keep the rest
@@ -1290,7 +1338,7 @@ setMethod(
     )
 
     ## -- Recalculate wave parameters if needed --
-    if (update_samples) {
+    if (update_wave_params) {
       # Estimate wave parameters on the original data
       df_wave_params_orig <- estimate_wave_params(x_new)
 
@@ -1941,9 +1989,11 @@ setMethod(
 # ---- Filtering ----
 #' Filter Samples in a CircadianData Object
 #'
-#' Subsets a `CircadianData` object by rows of its metadata using a flexible
+#' Subsets a `CircadianData` object by columns of its metadata using a flexible
 #' filtering expression, similar to `dplyr::filter()`. Wave parameter estimates
-#' are recalculated after filtering to reflect the new data.
+#' are recalculated after filtering to reflect the new data. Filtering fails
+#' if results are already stored in the object, as these would no longer be valid after
+#' filtering.
 #'
 #' @param cd_obj A \code{CircadianData} object.
 #' @param filter_expr An expression that evaluates to a logical vector within
@@ -1991,6 +2041,15 @@ filter_samples <- function(cd_obj, filter_expr, recalc_delta_t = TRUE) {
   # Check that cd_obj is a CircadianData object
   if (!inherits(cd_obj, "CircadianData")) {
     stop("'cd_obj' must be an object of class CircadianData.", call. = FALSE)
+  }
+
+  # Check that there are no stored results, as these would no longer be valid after filtering
+  if (length(results(cd_obj)) > 0) {
+    stop(
+      "Cannot filter samples because it would invalidate stored results. ",
+      "Consider filtering first and re-running the analysis on the filtered data.",
+      call. = FALSE
+    )
   }
 
   mdata <- get_metadata(cd_obj)
@@ -2165,7 +2224,7 @@ setMethod("show", "CircadianData", function(object) {
     if (
       !is.null(w_params$batch_corrected) && nrow(w_params$batch_corrected) > 0
     ) {
-      cat(" (original and batch-corrected versions available)\n")
+      cat(" (original and batch-corrected versions)\n")
     }
   } else {
     cat(" [Not calculated]\n")
