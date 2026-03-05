@@ -4,7 +4,7 @@
 \alias{format_rain}
 \title{Format RAIN Results}
 \usage{
-format_rain(ls_res_groups, w_params, added_group)
+format_rain(ls_res_groups, w_params, t_min, deltat, period, added_group)
 }
 \arguments{
 \item{ls_res_groups}{A list with results from a RAIN rhythmicity
@@ -13,7 +13,13 @@ analysis, split into groups.}
 \item{w_params}{A data frame with results from a harmonic regression
 analysis.}
 
-\item{added_group}{If TRUE the "group" column will be removed}
+\item{t_min}{The minimum time point in the input data.}
+
+\item{period}{The period used for the RAIN analysis.}
+
+\item{added_group}{If TRUE the "group" column will be removed.}
+
+\item{detlat}{The time interval between consecutive time points in the input data.}
 }
 \value{
 A list of data frames containing the original and formatted results

@@ -4,15 +4,23 @@
 \alias{get_wave_params}
 \title{Extract Wave Parameters from a CircadianData Object}
 \usage{
-get_wave_params(cd)
+get_wave_params(cd, version = "auto")
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
+
+\item{version}{Character string specifying which wave parameters to return:
+\code{"batch_corrected"} or \code{"original"}. If \code{"auto"} (default),
+returns batch-corrected parameters if available, otherwise original. If
+batch-corrected parameters are requested but unavailable returns original
+parameters.}
 }
 \value{
 A data frame with estimated wave parameters
 }
 \description{
-\code{get_wave_params()} retrieves the estimated wave parameters stored inside a
-\code{CircadianData} object.
+Retrieves the wave parameters estimated by a harmonic regression stored inside a
+\code{CircadianData} object. If the experiment has repeated measures, the parameters
+are estimated both on the original data and on the data after removing subject
+batch effects. The \code{version} argument controls which of these to return.
 }

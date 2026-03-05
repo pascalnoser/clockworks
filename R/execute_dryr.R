@@ -19,6 +19,13 @@ execute_dryr <- function(inputs, grp, method_args = list()) {
     inputs$method <- NULL
     ls_res <- do.call(dryR::f_24, inputs)
   } else if (inputs$method == "dryseq_single") {
+    # Load DESeq2 if not already loaded, as it is required for dryseq_single
+    # Note: Using `@importFrom` is not enough, because `dryseq_single()` calls
+    # `DESeq()` instead of `DESeq2::DESeq()`
+    if (!"package:DESeq2" %in% search()) {
+      attachNamespace("DESeq2")
+    }
+
     inputs$method <- NULL
     ls_res <- do.call(dryR::dryseq_single, inputs)
   }

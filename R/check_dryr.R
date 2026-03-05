@@ -11,6 +11,8 @@ check_dryr <- function(cd) {
   cd_local <- cd
 
   # If we have repeated measures, remove subject batch effect
+  # TODO: Figure out what to do if we have count data and removing batch
+  # effects results in negative values
   if (cd_local$repeated_measures == TRUE) {
     cd_local <- remove_batch_effects(cd_local)
   }
@@ -28,6 +30,13 @@ check_dryr <- function(cd) {
     colnames(get_metadata(cd_local))
   )
   cd_local <- order_samples(cd_local, sort_cols)
+
+  # If data type is count, round the dataset to integers and make sure all values
+  # are non-negative
+  if (experiment_info(cd_local)$data_type == "count") {
+    dataset(cd_local) <- round(dataset(cd_local))
+    # dataset(cd_local)[dataset(cd_local) < 0] <- 0
+  }
 
   # Remove potential results to allow for filtering of CD object later on
   results(cd_local) <- list()

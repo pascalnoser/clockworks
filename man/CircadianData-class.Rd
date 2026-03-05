@@ -38,8 +38,10 @@ attributes).}
 
 \item{\code{experiment_info}}{A list for storing experiment-level parameters.}
 
-\item{\code{wave_params}}{A data frame containing estimated wave parameters of a
-cosine wave fit to each feature using a harmonic regression.}
+\item{\code{wave_params}}{A list of one or two data frames containing estimated wave parameters
+of a cosine wave fit to each feature using a harmonic regression. If the experiment
+has repeated measures, wave parameters are estimated both on the original data and on
+the data after removing subject batch effects, and both are stored in this slot.}
 
 \item{\code{results}}{A list for storing the output from various analysis functions.}
 }}

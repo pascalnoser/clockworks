@@ -22,8 +22,11 @@ A new \code{CircadianData} object containing only the samples that
 satisfy the \code{filter_expr}.
 }
 \description{
-Subsets a \code{CircadianData} object by rows of its metadata using a flexible
-filtering expression, similar to \code{dplyr::filter()}.
+Subsets a \code{CircadianData} object by columns of its metadata using a flexible
+filtering expression, similar to \code{dplyr::filter()}. Wave parameter estimates
+are recalculated after filtering to reflect the new data. Filtering fails
+if results are already stored in the object, as these would no longer be valid after
+filtering.
 }
 \examples{
 # --- Setup ----
