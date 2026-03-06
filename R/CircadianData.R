@@ -1218,14 +1218,12 @@ setMethod(
     }
 
     ## -- Wave Parameters Subsetting --
-
     ### -- Check if wave parameters should be updated
     # Check if metadata contains groups
     has_group <- "group" %in% colnames(x@metadata)
 
-    # Initialise as TRUE
-    groups_unchanged <- TRUE
-
+    # Check if any groups were removed entirely or if any remaining groups
+    # lost samples after subsetting
     if (has_group && update_samples) {
       # Get number of samples in each group before and after subsetting
       old_group_counts <- table(x@metadata$group)
@@ -1245,8 +1243,14 @@ setMethod(
       groups_unchanged <- all(
         old_group_counts[groups_in_both] == new_group_counts[groups_in_both]
       )
+    } else {
+      # If no groups or no samples were changed, set flags to indicate no change
+      groups_unchanged <- TRUE
+      groups_removed <- character(0)
     }
 
+    # Update wave parameters if samples were changed and either there are no
+    # groups or some remaining groups had samples removed
     update_wave_params <- update_samples && (!has_group || !groups_unchanged)
 
     if (update_wave_params) {
@@ -1254,6 +1258,20 @@ setMethod(
         "Recalculating wave parameters for the subsetted data because samples were changed."
       )
     }
+
+    ### -- Subset groups if necessary --
+    # If any groups were removed entirely, remove the corresponding wave parameters
+    if (!update_wave_params && length(groups_removed) > 0) {
+      new_wave_params <- lapply(new_wave_params, function(df) {
+        if (nrow(df) > 0) {
+          df[!df$group %in% groups_removed, , drop = FALSE]
+        } else {
+          df
+        }
+      })
+    }
+
+    ### -- Subset features if necessary --
     # Only keep wave parameters for the selected features (i)
     # Note: If `update_wave_params` is TRUE, the wave parameters will be recalculated
     # later in the function, so we don't need to subset them here.
@@ -1263,17 +1281,6 @@ setMethod(
       new_wave_params <- lapply(new_wave_params, function(df) {
         if (nrow(df) > 0) {
           df[df$feature %in% features_to_keep, , drop = FALSE]
-        } else {
-          df
-        }
-      })
-    }
-
-    # If any groups were removed entirely, remove the corresponding wave parameters
-    if (!update_wave_params && length(groups_removed) > 0) {
-      new_wave_params <- lapply(new_wave_params, function(df) {
-        if (nrow(df) > 0) {
-          df[!df$group %in% groups_removed, , drop = FALSE]
         } else {
           df
         }
