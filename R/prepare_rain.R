@@ -10,7 +10,7 @@
 #' @returns A list with inputs for `execute_rain()`
 prepare_rain <- function(cd, grp) {
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, group == grp)
+  cd_filt <- filter_samples(cd, group == grp, renormalise = FALSE)
 
   # Create list with inputs for execute method
   per <- cd_filt$period
@@ -20,7 +20,11 @@ prepare_rain <- function(cd, grp) {
     period = mean(per),
     period.delta = max(per) - mean(per),
     measure.sequence = cd_filt$n_replicates[[grp]],
-    method = ifelse(cd_filt$repeated_measures == TRUE, "longitudinal", "independent")
+    method = ifelse(
+      cd_filt$repeated_measures == TRUE,
+      "longitudinal",
+      "independent"
+    )
   )
 
   return(inputs)

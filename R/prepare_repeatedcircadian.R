@@ -10,7 +10,7 @@
 #' @returns A list with inputs for `execute_repeatedcircadian()`
 prepare_repeatedcircadian <- function(cd, grp) {
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, group == grp)
+  cd_filt <- filter_samples(cd, group == grp, renormalise = FALSE)
 
   # Create named list to return
   inputs <- list(

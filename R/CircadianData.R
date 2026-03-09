@@ -1366,16 +1366,6 @@ setMethod(
       }
     }
 
-    ## -- Renormalising library sizes if needed --
-    # If we have count data we need to renormalise the library size
-    if (experiment_info(x)$data_type == "count") {
-      x_new <- preprocess_counts(
-        x_new,
-        filter_counts = FALSE,
-        verbose = FALSE
-      )
-    }
-
     return(x_new)
   }
 )
@@ -2019,6 +2009,8 @@ setMethod(
 #' @param recalc_delta_t A logical value. If `TRUE`, the sampling interval
 #'   (`delta_t`) will be re-estimated from the remaining time points after
 #'   filtering. Defaults to `TRUE`.
+#' @param renormalise A logical value. If `TRUE` and the data type is "count",
+#'   library sizes will be re-normalised after filtering. Defaults to `TRUE`.
 #'
 #' @return A new \code{CircadianData} object containing only the samples that
 #'   satisfy the `filter_expr`.
@@ -2053,7 +2045,12 @@ setMethod(
 #' cd_filtered <- filter_samples(cd_obj, group == "Treated" & time < 12)
 #' print(get_metadata(cd_filtered))
 #'
-filter_samples <- function(cd_obj, filter_expr, recalc_delta_t = TRUE) {
+filter_samples <- function(
+  cd_obj,
+  filter_expr,
+  recalc_delta_t = TRUE,
+  renormalise = TRUE
+) {
   # --- 1. Manual Type Check ---
   # Check that cd_obj is a CircadianData object
   if (!inherits(cd_obj, "CircadianData")) {
@@ -2122,6 +2119,15 @@ filter_samples <- function(cd_obj, filter_expr, recalc_delta_t = TRUE) {
   # Optionally restore original delta t
   if (!recalc_delta_t) {
     experiment_info(filtered_obj)$delta_t = exp_info_old$delta_t
+  }
+
+  # --- 5. Renormalise library sizes if needed ---
+  if (experiment_info(filtered_obj)$data_type == "count" && renormalise) {
+    filtered_obj <- preprocess_counts(
+      filtered_obj,
+      filter_counts = FALSE,
+      verbose = FALSE
+    )
   }
 
   return(filtered_obj)

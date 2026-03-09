@@ -10,7 +10,7 @@
 #' @returns A list with inputs for `execute_meta2d()`
 prepare_meta2d <- function(cd, grp) {
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, group == grp)
+  cd_filt <- filter_samples(cd, group == grp, renormalise = FALSE)
 
   # Prepare data
   df_input <- data.frame(feature = rownames(cd_filt), get_dataset(cd_filt))

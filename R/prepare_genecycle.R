@@ -15,7 +15,7 @@ prepare_genecycle <- function(cd, grp) {
   replicates <- ifelse(any(unlist(cd$n_replicates) > 1), TRUE, FALSE)
 
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, group == grp)
+  cd_filt <- filter_samples(cd, group == grp, renormalise = FALSE)
 
   # If there are replicates, take median
   if (replicates == TRUE) {
@@ -47,11 +47,11 @@ prepare_genecycle <- function(cd, grp) {
       periodicity.time = mean(cd_filt$period)
     ),
     gtest = list(
-      y = NULL,  # Will be output of `robust.spectrum()`
+      y = NULL, # Will be output of `robust.spectrum()`
       perm = FALSE,
       # noOfPermutations = 300,
       algorithm = "rank",
-      t = timepoints  # Only relevant for "regression" but doesn't change anything for "rank"
+      t = timepoints # Only relevant for "regression" but doesn't change anything for "rank"
     )
   )
 
@@ -63,7 +63,7 @@ prepare_genecycle <- function(cd, grp) {
     # extracting index 1 on line 19, although index 2 would be much closer to
     # 1.9. It's just a quirk of indexing in R that vec[1.9] return the first
     # element of vec rather than an error.
-    inputs$gtest$index <- round(n_cycles*2 + 1)
+    inputs$gtest$index <- round(n_cycles * 2 + 1)
   }
 
   return(inputs)

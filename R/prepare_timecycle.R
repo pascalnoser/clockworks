@@ -12,7 +12,7 @@ prepare_timecycle <- function(cd, grp) {
   # TODO: Figure out what to do with `cores` argument of TimeCycle
 
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, group == grp)
+  cd_filt <- filter_samples(cd, group == grp, renormalise = FALSE)
 
   # Define number of replicates at each time point. Do NOT include time points
   # with 0 replicates, so don't use cd_filt$n_replicates which includes these if

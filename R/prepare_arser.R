@@ -15,7 +15,7 @@ prepare_arser <- function(cd, grp) {
   replicates <- ifelse(any(unlist(cd$n_replicates) > 1), TRUE, FALSE)
 
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, group == grp)
+  cd_filt <- filter_samples(cd, group == grp, renormalise = FALSE)
 
   # If there are replicates, take median
   if (replicates == TRUE) {

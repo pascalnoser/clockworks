@@ -10,10 +10,14 @@
 #' @returns A list with inputs for `execute_circan()`
 prepare_circan <- function(cd, grp) {
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, group == grp)
+  cd_filt <- filter_samples(cd, group == grp, renormalise = FALSE)
 
   # Prepare data (must be a data frame with features as first column)
-  df_data <- data.frame(feature = rownames(cd_filt), get_dataset(cd_filt), check.names = FALSE)
+  df_data <- data.frame(
+    feature = rownames(cd_filt),
+    get_dataset(cd_filt),
+    check.names = FALSE
+  )
 
   # Create list with inputs
   inputs <- list(
