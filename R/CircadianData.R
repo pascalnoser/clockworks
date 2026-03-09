@@ -1366,6 +1366,16 @@ setMethod(
       }
     }
 
+    ## -- Renormalising library sizes if needed --
+    # If we have count data we need to renormalise the library size
+    if (experiment_info(x)$data_type == "count") {
+      x_new <- preprocess_counts(
+        x_new,
+        filter_counts = FALSE,
+        verbose = FALSE
+      )
+    }
+
     return(x_new)
   }
 )
