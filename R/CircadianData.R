@@ -1260,6 +1260,7 @@ setMethod(
     }
 
     ### -- Subset groups if necessary --
+    new_wave_params <- wave_params(x)
     # If any groups were removed entirely, remove the corresponding wave parameters
     if (!update_wave_params && length(groups_removed) > 0) {
       new_wave_params <- lapply(new_wave_params, function(df) {
@@ -1275,7 +1276,6 @@ setMethod(
     # Only keep wave parameters for the selected features (i)
     # Note: If `update_wave_params` is TRUE, the wave parameters will be recalculated
     # later in the function, so we don't need to subset them here.
-    new_wave_params <- wave_params(x)
     if (update_features && !update_wave_params && length(new_wave_params) > 0) {
       features_to_keep <- rownames(x)[i]
       new_wave_params <- lapply(new_wave_params, function(df) {
