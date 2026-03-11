@@ -53,7 +53,7 @@ Remotes:
     diffCircadian/diffCircadian,
     naef-lab/dryR,
     nesscoder/TimeCycle,
-    RepeatedCircadian/RepeatedCircadian
+    RepeatedCircadian/RepeatedCircadian,
     krassowski/complex-upset@pull/217/head
 Depends: 
     R (>= 3.5)
