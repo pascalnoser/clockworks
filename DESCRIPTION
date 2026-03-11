@@ -1,7 +1,7 @@
 Package: clockworks
 Type: Package
 Title: Rhythmicity Detection in Time Series Data
-Version: 0.2.44
+Version: 0.2.45
 Authors@R: c(
     person(
       "Pascal", "Noser",
@@ -45,7 +45,8 @@ Imports:
     rlang,
     ggplot2,
     dplyr,
-    tidyr
+    tidyr,
+    ComplexUpset
 Remotes:
     AndreaRP/CircaN,
     cran/HarmonicRegression,
@@ -53,5 +54,6 @@ Remotes:
     naef-lab/dryR,
     nesscoder/TimeCycle,
     RepeatedCircadian/RepeatedCircadian
+    krassowski/complex-upset@pull/217/head
 Depends: 
     R (>= 3.5)

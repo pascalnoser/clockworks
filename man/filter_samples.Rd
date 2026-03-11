@@ -4,7 +4,7 @@
 \alias{filter_samples}
 \title{Filter Samples in a CircadianData Object}
 \usage{
-filter_samples(cd_obj, filter_expr, recalc_delta_t = TRUE)
+filter_samples(cd_obj, filter_expr, recalc_delta_t = TRUE, renormalise = TRUE)
 }
 \arguments{
 \item{cd_obj}{A \code{CircadianData} object.}
@@ -16,6 +16,9 @@ directly in the expression.}
 \item{recalc_delta_t}{A logical value. If \code{TRUE}, the sampling interval
 (\code{delta_t}) will be re-estimated from the remaining time points after
 filtering. Defaults to \code{TRUE}.}
+
+\item{renormalise}{A logical value. If \code{TRUE} and the data type is "count",
+library sizes will be re-normalised after filtering. Defaults to \code{TRUE}.}
 }
 \value{
 A new \code{CircadianData} object containing only the samples that

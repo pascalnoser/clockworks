@@ -2828,6 +2828,343 @@ plot_feature <- function(
 }
 
 
+#' Create UpSet Plots Comparing Rhythm Detection Results
+#'
+#' Generates UpSet plots to visualize the overlap of significant features
+#' (e.g., genes) across different rhythm detection methods or experimental groups..
+#'
+#' @param cd A \code{CircadianData} object containing results from rhythm
+#'   detection analyses.
+#' @param pval_adj_cutoff A numeric value between 0 and 1 specifying the
+#'   adjusted p-value threshold for considering a feature as significant.
+#'   Defaults to 0.05.
+#' @param n_features An alternative to `pval_adj_cutoff`. An integer specifying the
+#'   number of top features (ranked by adjusted p-value) to include in the plot for
+#'   each method/group. If provided, this will override the `pval_adj_cutoff`
+#'   filtering.
+#' @param compare A character string specifying what to compare: `"methods"`
+#'   (default) compares different rhythm detection methods within each group
+#'   (if there are any), while `"groups"` compares different experimental groups
+#'   within each method.
+#' @param groups An optional character vector of group names to include in the
+#'   plot(s). If `NULL` (default), all available groups are used.
+#' @param methods An optional character vector of method names to include in the
+#'   plot(s). If `NULL` (default), all available methods are used.
+#' @param n_intersections An integer specifying the maximum number of
+#'   intersections to display. Defaults to 10.
+#' @param include_all_sets A logical value. If `TRUE` (default), ensures the
+#'   intersection containing all sets is included in the plot.
+#' @param name A character string specifying the name to display for the sets in
+#'   the plot. Defaults to the value of `compare`.
+#' @param ... Additional arguments passed to \code{\link[ComplexUpset]{upset}}.
+#'
+#' @return
+#' If a single method/group combination is plotted, returns a single UpSet plot
+#' object (from \code{\link[ComplexUpset]{upset}}). If multiple combinations are
+#' compared, returns a named list of UpSet plot objects.
+#'
+#' @examples
+#' \dontrun{
+#'   # Compare significant features across rhythm detection methods
+#'   plot_upset(cd, pval_adj_cutoff = 0.05, compare = "methods")
+#'
+#'   # Compare significant features across experimental groups
+#'   plot_upset(cd, pval_adj_cutoff = 0.05, compare = "groups")
+#'
+#'   # Focus on specific methods
+#'   plot_upset(cd, methods = c("RAIN", "JTK_CYCLE"))
+#' }
+#'
+#' @importFrom ComplexUpset upset
+#' @export
+plot_upset <- function(
+  cd,
+  pval_adj_cutoff = 0.05,
+  n_features = NULL,
+  compare = c("methods", "groups"),
+  groups = NULL,
+  methods = NULL,
+  n_intersections = 10,
+  include_all_sets = TRUE,
+  name = compare,
+  ...
+) {
+  # --- 0. Input Validation ---
+  # Validate compare argument
+  compare <- match.arg(compare)
+
+  # Validate pval_adj_cutoff
+  if (
+    is.null(n_features) &&
+      (!is.numeric(pval_adj_cutoff) ||
+        length(pval_adj_cutoff) != 1 ||
+        is.na(pval_adj_cutoff) ||
+        pval_adj_cutoff < 0 ||
+        pval_adj_cutoff > 1)
+  ) {
+    stop(
+      "The 'pval_adj_cutoff' argument must be a single numeric value between 0 and 1."
+    )
+  }
+
+  # Validate n_features argument
+  if (!is.null(n_features)) {
+    if (
+      !is.numeric(n_features) ||
+        length(n_features) != 1 ||
+        is.na(n_features) ||
+        n_features <= 0 ||
+        n_features != as.integer(n_features)
+    ) {
+      stop("'n_features' must be a single positive integer.")
+    }
+  }
+
+  # Validate group argument
+  if (!is.null(groups)) {
+    if (!is.character(groups)) {
+      stop("'groups' must be a character vector.")
+    }
+  }
+
+  # Get available groups if group column exists in metadata
+  if ("group" %in% colnames(cd@metadata)) {
+    groups_avail <- unique(cd@metadata$group)
+  } else {
+    groups_avail <- FALSE
+  }
+
+  # Return early if group argument provided but group not found in metadata
+  if (
+    !is.null(groups) && !isFALSE(groups_avail) && !all(groups %in% groups_avail)
+  ) {
+    groups_missing <- setdiff(groups, groups_avail)
+    stop(
+      "Group(s) '",
+      paste(groups_missing, collapse = ", "),
+      "' not found in metadata. Available groups: ",
+      paste(groups_avail, collapse = ", ")
+    )
+  }
+
+  # Validate methods argument
+  if (!is.null(methods)) {
+    if (!is.character(methods)) {
+      stop("'methods' must be a character vector.")
+    }
+    available_methods <- names(results(cd))
+    missing_methods <- setdiff(methods, available_methods)
+    if (length(missing_methods) > 0) {
+      stop(
+        "The following methods were not found in results: ",
+        paste(missing_methods, collapse = ", ")
+      )
+    }
+  }
+
+  # Validate n_intersections
+  if (
+    !is.numeric(n_intersections) ||
+      length(n_intersections) != 1 ||
+      is.na(n_intersections) ||
+      n_intersections <= 0 ||
+      n_intersections != as.integer(n_intersections)
+  ) {
+    stop(
+      "The 'n_intersections' argument must be a single positive integer."
+    )
+  }
+
+  # Validate include_all_sets argument
+  if (
+    !is.logical(include_all_sets) ||
+      length(include_all_sets) != 1 ||
+      is.na(include_all_sets)
+  ) {
+    stop(
+      "The 'include_all_sets' argument must be a single logical value (TRUE or FALSE)."
+    )
+  }
+
+  # Return early if no results available
+  if (length(results(cd)) == 0) {
+    stop("No results available in the CircadianData object.")
+  }
+
+  # Return early if compare = "groups" but no or only one group in metadata, or only one group selected
+  if (compare == "groups" && isFALSE(groups_avail)) {
+    stop(
+      "Cannot compare groups because no 'group' column found in metadata."
+    )
+  }
+  if (compare == "groups" && length(groups_avail) == 1) {
+    stop(
+      "Cannot compare groups because only one group found in metadata."
+    )
+  }
+  if (compare == "groups" && !is.null(groups) && length(groups) == 1) {
+    stop(
+      "Cannot compare groups because only one group selected."
+    )
+  }
+
+  # Return early if compare = "methods" but only one method in results, or only one method selected
+  if (compare == "methods" && length(results(cd)) == 1) {
+    stop(
+      "Only one method found in results, so cannot compare methods. Found method: ",
+      paste(names(results(cd)), collapse = ", ")
+    )
+  }
+  if (compare == "methods" && !is.null(methods) && length(methods) == 1) {
+    stop(
+      "Cannot compare methods because only one method selected."
+    )
+  }
+
+  # --- 1. Prepare Data for Plotting --
+  # Get results
+  ls_res <- get_results(cd)
+
+  # Get list of significant/top features for each method and group
+  ls_features_mg <- lapply(ls_res, function(res_df) {
+    # Filter to top features or significant features based on arguments
+    if (!is.null(n_features)) {
+      df_filt <- res_df[order(res_df$pval_adj, na.last = TRUE), ]
+
+      # Take top features per group if group column exists
+      if ("group" %in% names(df_filt)) {
+        df_filt <- do.call(
+          rbind,
+          lapply(split(df_filt, df_filt$group), function(x) head(x, n_features))
+        )
+        rownames(df_filt) <- NULL
+      } else {
+        df_filt <- head(df_filt, n_features)
+      }
+    } else {
+      # If no n_features specified, filter by p-value cutoff
+      df_filt <- res_df[res_df$pval_adj < pval_adj_cutoff, ]
+    }
+
+    # Create a list of significant/top features for each group (or all samples if no group column)
+    ls_return <- list()
+    if (!isFALSE(groups_avail) && "group" %in% colnames(df_filt)) {
+      for (grp in groups_avail) {
+        ls_return[[grp]] <- df_filt$feature[df_filt$group == grp]
+      }
+    } else {
+      ls_return[["all_samples"]] <- df_filt$feature
+    }
+    return(ls_return)
+  })
+
+  # If 'methods' argument provided, filter to those methods
+  if (!is.null(methods)) {
+    ls_features_mg <- ls_features_mg[methods]
+  }
+
+  # If 'groups' argument provided, filter to those groups
+  if (!is.null(groups)) {
+    ls_features_mg <- lapply(ls_features_mg, function(group_list) {
+      group_list[groups]
+    })
+  }
+
+  # Get inverted version with groups as top-level and methods as sub-lists
+  ls_features_gm <- setNames(
+    lapply(names(ls_features_mg[[1]]), function(nm) {
+      lapply(ls_features_mg, `[[`, nm)
+    }),
+    names(ls_features_mg[[1]])
+  )
+
+  # Select which list to use based on 'compare' argument
+  ls_features <- switch(
+    compare,
+    methods = ls_features_gm,
+    groups = ls_features_mg
+  )
+
+  # Create binary matrices for each method/group combination
+  ls_binary <- lapply(ls_features, function(lst) {
+    # Get unique features across all lists in this method/group
+    unique_features <- unique(unlist(lst))
+
+    # Create a binary matrix for this method/group
+    mat <- sapply(lst, function(features) {
+      as.integer(unique_features %in% features)
+    })
+    rownames(mat) <- unique_features
+    return(as.data.frame(mat))
+  })
+
+  # --- 2. Generate UpSet Plot(s) ---
+  ls_plt_upset = list()
+  for (i_name in names(ls_features)) {
+    # Get the binary data frame for this method/group
+    binary_df <- ls_binary[[i_name]]
+
+    # Count number of features in each intersecting set
+    all_sets <- aggregate(
+      rep(1, nrow(binary_df)), # dummy variable for counting
+      as.list(binary_df), # group by all columns
+      length # count the number of rows in each group
+    )
+    colnames(all_sets)[ncol(all_sets)] <- "COUNT"
+    n_sets_total <- nrow(all_sets)
+
+    # Get top intersecting sets by count
+    top_sets <- head(all_sets[order(-all_sets$COUNT), ], n_intersections)
+    top_sets$COUNT <- NULL # Remove count from the data frame used for plotting
+
+    # Extract column names for each top intersection
+    top_intersections <- apply(
+      top_sets,
+      1,
+      function(x) names(x)[as.logical(x)],
+      simplify = FALSE
+    )
+
+    # Optionally include the full set intersection and move it to the first position
+    if (include_all_sets) {
+      set_all <- list(colnames(top_sets))
+      top_intersections <- unique(c(set_all, top_intersections))
+      top_intersections <- top_intersections[
+        1:min(n_intersections, length(top_intersections))
+      ]
+    }
+
+    # Handle edge-case where only one set is present
+    if (length(top_intersections) == 1) {
+      # The `intersections` argument in ComplexUpset expects either a list of intersections or
+      # one of "observed" or "all". For some reason, it throws an error if you give it a list
+      # of length 1. So in this edge case, we will just use "observed" to plot the single intersection.
+      top_intersections <- "observed"
+    }
+
+    # Create and return the upset plot
+    plt_upset <- ComplexUpset::upset(
+      as.data.frame(lapply(binary_df, as.logical)), # Convert to logical to avoid warning
+      colnames(binary_df),
+      sort_intersections = FALSE,
+      intersections = top_intersections,
+      name = name,
+      ...
+    )
+
+    # Save plot in list
+    ls_plt_upset[[i_name]] = plt_upset
+  }
+
+  # Return the list of upset plots or a single plot if only one was generated
+  if (length(ls_plt_upset) == 1) {
+    return(ls_plt_upset[[1]])
+  } else {
+    return(ls_plt_upset)
+  }
+}
+
+
 # TODO: Remove this base R plotting function at some point
 #' Plot Feature Values Over Time
 #'
