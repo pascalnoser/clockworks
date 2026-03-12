@@ -26,7 +26,7 @@ prepare_genecycle <- function(cd, grp) {
 
     ls_meds <- lapply(t_split, function(df) {
       sample_IDs <- rownames(df)
-      df_vals <- get_dataset(cd_filt)[, sample_IDs]
+      df_vals <- get_dataset(cd_filt)[, sample_IDs, drop = FALSE]
       apply(df_vals, 1, median)
     })
 

@@ -2851,7 +2851,7 @@ plot_feature <- function(
 #' @param methods An optional character vector of method names to include in the
 #'   plot(s). If `NULL` (default), all available methods are used.
 #' @param n_intersections An integer specifying the maximum number of
-#'   intersections to display. Defaults to 10.
+#'   intersections to display. Defaults to 20.
 #' @param include_all_sets A logical value. If `TRUE` (default), ensures the
 #'   intersection containing all sets is included in the plot.
 #' @param name A character string specifying the name to display for the sets in
@@ -2884,7 +2884,7 @@ plot_upset <- function(
   compare = c("methods", "groups"),
   groups = NULL,
   methods = NULL,
-  n_intersections = 10,
+  n_intersections = 20,
   include_all_sets = TRUE,
   name = compare,
   ...
@@ -2935,9 +2935,7 @@ plot_upset <- function(
   }
 
   # Return early if group argument provided but group not found in metadata
-  if (
-    !is.null(groups) && !isFALSE(groups_avail) && !all(groups %in% groups_avail)
-  ) {
+  if (!is.null(groups) && !all(groups %in% groups_avail)) {
     groups_missing <- setdiff(groups, groups_avail)
     stop(
       "Group(s) '",
