@@ -11,8 +11,10 @@ plot_upset(
   compare = c("methods", "groups"),
   groups = NULL,
   methods = NULL,
-  n_intersections = 10,
-  include_all_sets = TRUE
+  n_intersections = 20,
+  include_all_sets = TRUE,
+  name = compare,
+  ...
 )
 }
 \arguments{
@@ -40,10 +42,13 @@ plot(s). If \code{NULL} (default), all available groups are used.}
 plot(s). If \code{NULL} (default), all available methods are used.}
 
 \item{n_intersections}{An integer specifying the maximum number of
-intersections to display. Defaults to 10.}
+intersections to display. Defaults to 20.}
 
 \item{include_all_sets}{A logical value. If \code{TRUE} (default), ensures the
 intersection containing all sets is included in the plot.}
+
+\item{name}{A character string specifying the name to display for the sets in
+the plot. Defaults to the value of \code{compare}.}
 
 \item{...}{Additional arguments passed to \code{\link[ComplexUpset]{upset}}.}
 }
