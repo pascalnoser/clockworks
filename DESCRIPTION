@@ -1,7 +1,7 @@
 Package: clockworks
 Type: Package
 Title: Rhythmicity Detection in Time Series Data
-Version: 0.2.47
+Version: 0.2.48
 Authors@R: c(
     person(
       "Pascal", "Noser",
@@ -55,6 +55,6 @@ Remotes:
     naef-lab/dryR,
     nesscoder/TimeCycle,
     RepeatedCircadian/RepeatedCircadian,
-    krassowski/complex-upset@pull/217/head
+    krassowski/complex-upset
 Depends: 
     R (>= 3.5)

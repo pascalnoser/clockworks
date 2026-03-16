@@ -48,6 +48,9 @@ execute_rain_parallel <- function(inputs, grp, method_args = list()) {
   # Combine results into a single data frame
   df_res <- do.call(rbind, df_res_list)
 
+  # Restore original order of features
+  df_res <- df_res[match(colnames(inputs$x), rownames(df_res)), ]
+
   # Add feature IDs and group to results df (if not there already)
   df_res = data.frame(feature = colnames(inputs$x), df_res, group = grp)
 
