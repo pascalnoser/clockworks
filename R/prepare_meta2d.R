@@ -25,7 +25,7 @@ prepare_meta2d <- function(cd, grp) {
     maxper = max(cd_filt$period),
     # ARSdefaultPer = mean(cd_filt$period), # Must be minper < ARSdefaultPer > maxper
     parallelize = FALSE,
-    nCores = 1,
+    nCores = 1, # TODO: Leave at default value
     outputFile = FALSE,
     releaseNote = FALSE
   )

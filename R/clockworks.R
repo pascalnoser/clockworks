@@ -9,7 +9,7 @@
 #' @param method A string specifying the rhythmicity detection method to use.
 #'   Supported methods include "ARSER", "diffCircadian", "dryR",
 #'   "GeneCycle", "JTK_CYCLE", "RepeatedCircadian", "LimoRhyde" (limma or
-#'   voomLmFit), "LS" (Lomb-Scargle), "meta2d", "RAIN", and "TimeCycle".
+#'   voomLmFit), "LS" (Lomb-Scargle), "MetaCycle", "RAIN", and "TimeCycle".
 #' @param method_args A list of additional arguments to be passed directly to
 #'   the chosen analysis method. This allows for more advanced customisation of
 #'   the analysis.
@@ -21,9 +21,7 @@
 #'
 #' @export
 #'
-clockworks <- function(cd,
-                       method,
-                       method_args = list()) {
+clockworks <- function(cd, method, method_args = list()) {
   #  === Define analysis function ===
   method <- match.arg(
     method,
@@ -38,7 +36,9 @@ clockworks <- function(cd,
       "RepeatedCircadian",
       "LimoRhyde",
       "LS",
+      "MetaCycle",
       "meta2d",
+      "meta3d",
       "RAIN",
       "TimeCycle"
     )
@@ -55,22 +55,17 @@ clockworks <- function(cd,
   # TODO: Can probably remove this since `esimtate_wave_params()` is ran
   # whenever a new CD object is created now.
   w_params <- get_wave_params(cd)
-  if (nrow(w_params) == 0) {
+  if (length(w_params) == 0) {
     wave_params(cd) <- estimate_wave_params(cd)
   }
 
   # === Sort to ensure format of input ===
   # Sort by group, time, and subject ID
-  sort_cols <- intersect(c("time", "group", "subject_ID"), colnames(get_metadata(cd)))
+  sort_cols <- intersect(
+    c("time", "group", "subject_ID"),
+    colnames(get_metadata(cd))
+  )
   cd <- order_samples(cd, sort_cols)
-
-  # === Set up parallel processing ===
-  # Plan session for parallel processing
-  # TODO: Can probably run `parallelly::supportsMulticore()` and if TRUE use
-  # multicore instead of multisession
-  # TODO: Figure out if there is a way to check if the user has run `plan(...)`
-  # already so we can skip it
-  # future::plan(multisession, ceiling(parallelly::availableCores()/2))
 
   # === Run analysis ===
   # Run rhythmicity detection with chosen method
