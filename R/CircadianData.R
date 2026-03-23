@@ -1649,9 +1649,7 @@ setMethod("$<-", "CircadianData", function(x, name, value) {
 
 # ---- Estimating Wave Parameters ----
 
-# TODO: Probably export this function in case someone doesn't want to use the
-# package for rhythmicity detection but just for plotting
-# TODO: Explain stuff about relative amplitude
+# TODO: Explain stuff about relative amplitude in documentation
 
 #' Estimating cosine Wave Parameters
 #'
@@ -1665,8 +1663,6 @@ setMethod("$<-", "CircadianData", function(x, name, value) {
 #'   logCPM values before estimating the wave parameters. If "auto", logCPM will
 #'   be used if the data type is "count".
 #'
-#' @import HarmonicRegression
-#'
 #' @details
 #' The returned parameters correspond to the model \deqn{y = M + A
 #' cos(\frac{2\pi}{T} (t - \varphi))} With \eqn{M} the mesor, \eqn{A} the
@@ -1675,6 +1671,260 @@ setMethod("$<-", "CircadianData", function(x, name, value) {
 #'
 #' @returns A data frame with estimated cosine wave parameters for every feature.
 estimate_wave_params <- function(
+  cd_obj,
+  remove_batch_effects = FALSE,
+  logCPM = "auto"
+) {
+  if (!logCPM %in% c(TRUE, FALSE, "auto")) {
+    stop("Invalid value for logCPM. Must be TRUE, FALSE, or 'auto'.")
+  }
+
+  if (!inherits(cd_obj, "CircadianData")) {
+    stop("Input must be a CircadianData object.")
+  }
+
+  # If auto, log-transform if data type is count
+  if (logCPM == "auto") {
+    if (cd_obj$data_type == "count") {
+      logCPM <- TRUE
+    } else {
+      logCPM <- FALSE
+    }
+  }
+
+  # If logCPM is TRUE, convert to logCPM values first
+  if (isTRUE(logCPM)) {
+    cd_obj <- convert_to_cpm(cd_obj)
+  }
+
+  # If requested, remove batch effects first
+  if (isTRUE(remove_batch_effects)) {
+    cd_obj <- remove_batch_effects(cd_obj, verbose = FALSE)
+  }
+
+  # Get original meta data
+  mdata_orig <- get_metadata(cd_obj)
+
+  # Get minimum value for time
+  t_min <- min(mdata_orig$time)
+
+  # Get period
+  per <- mean(cd_obj$period)
+
+  # Add temporary group if there is no group column
+  if (is.na(cd_obj$n_groups)) {
+    mdata_tmp <- mdata_orig
+    mdata_tmp[["group"]] <- "tmp"
+    cd_obj@metadata <- mdata_tmp
+    add_groups <- FALSE
+  } else {
+    add_groups <- TRUE
+  }
+
+  # Get groups
+  groups <- unique(get_metadata(cd_obj)$group)
+
+  # Precompute angular frequency
+  omega <- 2 * pi / per
+
+  # Run regression for each group separately
+  ls_params <- lapply(groups, function(grp) {
+    # Filter cd object
+    mdata <- get_metadata(cd_obj)
+    sample_filt <- rownames(mdata[mdata$group == grp, ])
+
+    cd_filt <- cd_obj
+    cd_filt@dataset <- cd_obj@dataset[, sample_filt, drop = FALSE]
+    cd_filt@metadata <- cd_obj@metadata[sample_filt, , drop = FALSE]
+
+    # Extract data
+    mat <- get_dataset(cd_filt)
+    time <- get_metadata(cd_filt)[["time"]]
+
+    # ------------------------------------------------------------------
+    # No missing values -> fully vectorised solution (faster)
+    # ------------------------------------------------------------------
+    if (!any(is.na(mat))) {
+      # Transpose to samples x features
+      Y <- t(mat)
+
+      # Design matrix (same for all features)
+      X <- cbind(
+        1,
+        cos(omega * time),
+        sin(omega * time)
+      )
+
+      # Solve linear model using QR decomposition
+      # This computes coefficients for ALL features at once:
+      # beta = (X'X)^(-1) X'Y, but more numerically stable
+      beta <- qr.solve(X, Y) # 3 x features
+
+      # Extract coefficients
+      m <- beta[1, ]
+      a <- beta[2, ]
+      b <- beta[3, ]
+
+      # Convert to amplitude
+      amp <- sqrt(a^2 + b^2)
+
+      # Convert to phase (in hours, not radians)
+      phi_rad <- atan2(b, a) %% (2 * pi)
+      phi_time <- phi_rad * per / (2 * pi)
+
+      # Combine into matrix
+      res_mat <- cbind(
+        mesor = m,
+        amplitude = amp,
+        phase = phi_time
+      )
+
+      rownames(res_mat) <- rownames(mat)
+    } else {
+      # ------------------------------------------------------------------
+      # Fallback: handle missing values per feature
+      # ------------------------------------------------------------------
+
+      # Precompute full design matrix
+      X_full <- cbind(
+        1,
+        cos(omega * time),
+        sin(omega * time)
+      )
+
+      res_list <- apply(mat, 1, function(y) {
+        ok <- !is.na(y) & !is.na(time)
+
+        # Require at least 3 points
+        if (sum(ok) < 3) {
+          return(c(mesor = NA, amplitude = NA, phase = NA))
+        }
+
+        X <- X_full[ok, , drop = FALSE]
+        y_ok <- y[ok]
+
+        # Fit using QR solve
+        coefs <- qr.solve(X, y_ok)
+
+        m <- coefs[[1]]
+        a <- coefs[[2]]
+        b <- coefs[[3]]
+
+        amp <- sqrt(a^2 + b^2)
+
+        phi_rad <- atan2(b, a) %% (2 * pi)
+        phi_time <- phi_rad * per / (2 * pi)
+
+        c(mesor = m, amplitude = amp, phase = phi_time)
+      })
+
+      res_mat <- t(res_list)
+    }
+
+    # Create result data frame
+    df_res <- data.frame(
+      feature = rownames(res_mat),
+      period = per,
+      phase_estimate = res_mat[, "phase"]
+    )
+    rownames(df_res) <- NULL
+
+    # Add mesor and amplitude estimates
+    if (cd_obj$log_transformed == TRUE) {
+      # Get logarithmic base
+      b_log <- cd_obj$log_base
+
+      # Get estimates for amplitudes in log scale
+      log_amps <- res_mat[, "amplitude"]
+
+      # Get relative amplitude
+      lin_relative_amplitudes <- compute_relative_amplitude(log_amps, b_log)
+
+      # Add to data frame
+      # TODO: Be clear in documentation that in this case (i.e. with
+      # log-transformed data) the values you get for `mesor_estimate` and
+      # `amplitude_estimate` are in the log-scale, i.e. in the scale of the data
+      # the user provided, but the `relative_amplitude_estimate` is in the
+      # linear scale. We decided to do it this way because it seems appropriate
+      # to give the mesor and amplitude for the actual data the user provides.
+      # On the other hand, getting the relative amplitude in the linear scale is
+      # not a super trivial task (but it might still be of interest), so we
+      # provide that. The relative amplitude in the log-scale is easy to get by
+      # simply dividing the amplitude estimate by the mesor estimate.
+      df_res$mesor_estimate <- log_mesors
+      df_res$amplitude_estimate <- log_amps
+      df_res$relative_amplitude_estimate <- lin_relative_amplitudes
+
+      # ## More explicit way to compute relative amplitude
+      # # Get logarithmic base
+      # b <- cd_obj$log_base
+
+      # # Get estimates for mesor and amplitude in log scale
+      # log_mesors <- res_mat[, "mesor"]
+      # log_amps <- res_mat[, "amplitude"]
+
+      # # Get values for peak and trough
+      # log_peaks <- b^(log_mesors + log_amps)
+      # log_troughs <- b^(log_mesors - log_amps)
+
+      # # Get mesor and amplitude in linear scale
+      # lin_mesors <- (log_peaks + log_troughs) / 2
+      # lin_amplitudes <- (log_peaks - log_troughs) / 2
+
+      # # Get relative amplitude
+      # lin_relative_amplitudes <- lin_amplitudes / lin_mesors
+    } else {
+      df_res$mesor_estimate <- res_mat[, "mesor"]
+      df_res$amplitude_estimate <- res_mat[, "amplitude"]
+      df_res$relative_amplitude_estimate <-
+        df_res$amplitude_estimate / df_res$mesor_estimate
+    }
+
+    # Add group if original object had groups
+    if (add_groups == TRUE) {
+      df_res$group <- grp
+    }
+
+    return(df_res)
+  })
+
+  # Bind into data frame and return
+  df_params <- do.call(rbind, ls_params)
+
+  ## -- Add peak time
+  # Take phase estimates and shift them upward by repeated additions of the
+  # period until the values are greater than t_min. For example, if t_min is 18
+  # and one gene has a phase of 21 this remains unchanged, because the peak in
+  # the real data is at 21. If it has a phase of 5, the real peak is not at 5
+  # but at 29.
+  df_params$peak_time_estimate <- df_params$phase_estimate +
+    pmax(0, ceiling((t_min - df_params$phase_estimate) / per)) * per
+
+  # Rearrange columns
+  cols <- intersect(
+    c(
+      "feature",
+      "group",
+      "period",
+      "phase_estimate",
+      "peak_time_estimate",
+      "mesor_estimate",
+      "amplitude_estimate",
+      "relative_amplitude_estimate"
+    ),
+    colnames(df_params)
+  )
+
+  df_params <- df_params[, cols]
+
+  return(df_params)
+}
+
+# Old version using `HarmonicRegression` package. We keep it for now in case we want
+# to switch back to it, but the new version is faster because it skips all the
+# statistical tests and just gives the parameter estimates. It also means one less
+# dependency, especially since `HarmonicRegression` is not on CRAN.
+estimate_wave_params_HarmonicRegression <- function(
   cd_obj,
   remove_batch_effects = FALSE,
   logCPM = "auto"
@@ -1744,7 +1994,7 @@ estimate_wave_params <- function(
       inputtime = get_metadata(cd_filt)[["time"]],
       Tau = per,
       normalize = FALSE,
-      trend.eliminate = FALSE, # TODO: make this a variable,
+      trend.eliminate = FALSE,
       trend.degree = 1 # TODO: make this a variable
     )
 

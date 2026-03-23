@@ -10,13 +10,22 @@
 #'   \code{norm_factors} vector of length equal to the number of samples.
 #' @param log Logical, whether to return log2-transformed CPM values. Default is TRUE.
 #'
-#' @importFrom edgeR cpm
+#' @importFrom edgeR cpm normLibSizes DGEList
 #'
 #' @returns A `CircadianData` object with the dataset slot replaced by the CPM or
 #'   log-CPM values.
 convert_to_cpm <- function(cd, log = TRUE) {
   counts <- get_dataset(cd)
   meta <- get_metadata(cd)
+  group <- meta$group
+
+  # If normalization factors are missing, calculate them using edgeR's normLibSizes function
+  if (is.null(meta$norm_factors)) {
+    dge <- edgeR::DGEList(counts = counts, group = group)
+    dge <- edgeR::normLibSizes(dge)
+    meta$norm_factors <- dge$samples$norm.factors
+    metadata(cd) <- meta
+  }
 
   # Calculate CPM values using edgeR's cpm function with library size normalization
   lib_sizes = colSums(counts) * meta$norm_factors
