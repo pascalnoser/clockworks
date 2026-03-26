@@ -1253,11 +1253,11 @@ setMethod(
     # groups or some remaining groups had samples removed
     update_wave_params <- update_samples && (!has_group || !groups_unchanged)
 
-    if (update_wave_params) {
-      message(
-        "Recalculating wave parameters for the subsetted data because samples were changed."
-      )
-    }
+    # if (update_wave_params) {
+    #   message(
+    #     "Recalculating wave parameters for the subsetted data because samples were changed."
+    #   )
+    # }
 
     ### -- Subset groups if necessary --
     new_wave_params <- wave_params(x)
@@ -2566,7 +2566,6 @@ setMethod("show", "CircadianData", function(object) {
 #'
 #' @importFrom dplyr mutate count group_by ungroup distinct
 #' @importFrom tidyr complete
-#' @importFrom magrittr %>%
 #' @import ggplot2
 #' @export
 # TODO: PROVIDE AN EXAMPLE
@@ -2657,26 +2656,26 @@ plot_phase_estimates <- function(
   # Adjust initial offset if necessary to not remove any data
   initial_offset = max(initial_offset, tile_height / 2)
 
-  binned_density_df <- df_params %>%
+  binned_density_df <- df_params |>
     mutate(
       hour_bin = round(phase_estimate * n_bins / per) %% n_bins
-    ) %>%
-    count(group, hour_bin, name = "count") %>%
-    group_by(group) %>%
-    mutate(density = count / sum(count)) %>%
-    ungroup() %>%
+    ) |>
+    count(group, hour_bin, name = "count") |>
+    group_by(group) |>
+    mutate(density = count / sum(count)) |>
+    ungroup() |>
     complete(
       group,
       hour_bin = 0:(n_bins - 1),
       fill = list(count = 0, density = 0)
-    ) %>%
-    mutate(group = as.factor(group)) %>%
+    ) |>
+    mutate(group = as.factor(group)) |>
     mutate(group_numeric = initial_offset + (as.numeric(group) - 1) * step_size)
 
   # Create a data frame for the background border rings
-  ring_background_df <- binned_density_df %>%
+  ring_background_df <- binned_density_df |>
     # Get the unique numeric y-position for each group
-    distinct(group, group_numeric) %>%
+    distinct(group, group_numeric) |>
     mutate(
       # The height of our tiles is 1, so the edges are +/- 0.5 from the center
       ymin = group_numeric - tile_height / 2,
@@ -2816,8 +2815,11 @@ plot_phase_estimates <- function(
 #' @param plot_type Character. Plot individual points ("points") or means plus
 #'   standard deviations ("mean_sd").
 #' @param add_wave Logical. If `TRUE`, adds the cosine fit curve.
+#' @param add_line Logical. If `TRUE`, the points will be connected with lines.
 #' @param point_size Numeric. Size of the points.
 #' @param wave_linewidth Numeric. Line width of the cosine fit curve.
+#' @param linewidth Numeric. Line width of lines connecting points if `add_line`
+#'   is `TRUE`.
 #' @param groups Character vector or `NULL`. Restrict the plot to the selected
 #'   groups.
 #' @param background_cutoffs Numeric vector or `NULL`. Switches for alternating
@@ -2847,14 +2849,16 @@ plot_feature <- function(
   feature,
   plot_type = c("points", "mean_sd"),
   add_wave = TRUE,
+  add_line = FALSE,
   point_size = 3,
   wave_linewidth = 1,
+  linewidth = 1,
   groups = NULL,
   background_cutoffs = NULL,
   background_colors = c("white", "grey50"),
   background_alpha = 0.5,
   errorbar_linewidth = 0.6,
-  errorbar_width = 0.4
+  errorbar_width = 0.5
 ) {
   # --- 0. Extract Data ---
   # Convert to CPM if count data
@@ -2865,14 +2869,10 @@ plot_feature <- function(
   mdata <- cd@metadata
   dat <- cd@dataset
   w_params <- get_wave_params(cd)
+  has_group_col <- "group" %in% colnames(mdata)
+  has_repeated_measures <- "subject_ID" %in% colnames(mdata)
 
   # --- 1. Input Validation ---
-  # Validate time column
-  # TODO: Probably can remove this part?
-  if (!("time" %in% colnames(mdata))) {
-    stop("Metadata must contain a 'time' column for plotting.")
-  }
-
   # Validate feature argument
   if (!(is.character(feature) || is.numeric(feature)) || length(feature) != 1) {
     stop(
@@ -2890,11 +2890,22 @@ plot_feature <- function(
     feature <- rownames(cd)[feature]
   }
 
+  # Validate add_wave and add_line arguments
+  if (!is.logical(add_wave) || length(add_wave) != 1 || is.na(add_wave)) {
+    stop(
+      "'add_wave' must be a single logical value (TRUE or FALSE)."
+    )
+  }
+  if (!is.logical(add_line) || length(add_line) != 1 || is.na(add_line)) {
+    stop(
+      "'add_line' must be a single logical value (TRUE or FALSE)."
+    )
+  }
+
   # Validate plot_type argument
   plot_type <- match.arg(plot_type)
 
   # Validate groups argument
-  has_group_col <- "group" %in% colnames(mdata)
   if (!is.null(groups)) {
     if (!has_group_col) {
       stop("'groups' was provided, but metadata has no 'group' column.")
@@ -2909,6 +2920,13 @@ plot_feature <- function(
         "The following groups were not found in metadata: ",
         paste(missing_groups, collapse = ", ")
       )
+    }
+  }
+
+  # Validate background_cutoffs
+  if (!is.null(background_cutoffs)) {
+    if (!is.numeric(background_cutoffs)) {
+      stop("'background_cutoffs' must be a numeric vector.")
     }
   }
 
@@ -2937,6 +2955,12 @@ plot_feature <- function(
     df_plot$group <- factor("all_samples")
   }
 
+  if (has_repeated_measures) {
+    df_plot$subject_ID <- mdata$subject_ID
+  } else {
+    df_plot$subject_ID <- seq_len(nrow(df_plot))
+  }
+
   # Filter to group if requested
   if (!is.null(groups)) {
     df_plot <- df_plot[df_plot$group %in% groups, , drop = FALSE]
@@ -2952,18 +2976,16 @@ plot_feature <- function(
   multiple_groups <- dplyr::n_distinct(df_plot$group) > 1
 
   # Get mean and standard deviation
-  if (plot_type == "mean_sd") {
-    summary_df <- df_plot %>%
-      dplyr::group_by(time, group) %>%
-      dplyr::summarise(
-        mean = mean(value),
-        sd = sd(value),
-        .groups = "drop"
-      )
-  }
+  summary_df <- df_plot |>
+    dplyr::group_by(time, group) |>
+    dplyr::summarise(
+      mean = mean(value),
+      sd = sd(value),
+      .groups = "drop"
+    )
 
   # --- 3. Begin ggplot ---
-  p <- ggplot() +
+  p <- ggplot(df_plot, aes(x = time, y = value)) +
     theme_bw() +
     labs(title = paste0("Expression of ", feature))
 
@@ -2996,11 +3018,11 @@ plot_feature <- function(
 
   # --- 5. Add Cosine Wave (Behind Points) ---
   if (add_wave && nrow(w_params) > 0) {
-    wp <- w_params %>%
+    wp <- w_params |>
       dplyr::filter(feature == !!feature)
 
     if (!is.null(groups)) {
-      wp <- wp %>% dplyr::filter(group %in% groups)
+      wp <- wp |> dplyr::filter(group %in% groups)
     }
 
     if (has_group_col == FALSE) {
@@ -3010,8 +3032,8 @@ plot_feature <- function(
     if (nrow(wp) > 0) {
       time_grid <- seq(min(df_plot$time), max(df_plot$time), length.out = 400)
 
-      wave_df <- wp %>%
-        rowwise() %>%
+      wave_df <- wp |>
+        rowwise() |>
         do({
           tibble(
             time = time_grid,
@@ -3020,13 +3042,13 @@ plot_feature <- function(
                 cos(2 * pi * (time_grid - .$phase_estimate) / .$period),
             group = .$group
           )
-        }) %>%
+        }) |>
         ungroup()
 
       p <- p +
         geom_line(
           data = wave_df,
-          aes(x = time, y = value, colour = group),
+          aes(colour = group),
           linewidth = wave_linewidth
         )
 
@@ -3038,30 +3060,105 @@ plot_feature <- function(
 
   # --- 6. Add Points ---
   if (plot_type == "points") {
+    # Add lines connecting points if requested
+    if (add_line) {
+      if (has_repeated_measures) {
+        if (multiple_groups) {
+          # Connect points from the same subject, coloured by group
+          p <- p +
+            geom_line(
+              aes(group = subject_ID, colour = group),
+              linewidth = linewidth
+            )
+        } else {
+          # Connect points from the same subject, coloured by subject_ID
+          p <- p +
+            geom_line(
+              aes(group = subject_ID, colour = subject_ID),
+              linewidth = linewidth
+            )
+        }
+      } else {
+        # Connect all points from the same group, coloured by group
+        p <- p +
+          geom_line(
+            data = summary_df,
+            aes(x = time, y = mean, group = group, colour = group),
+            inherit.aes = FALSE,
+            linewidth = linewidth
+          )
+        # If only one group, remove legend for lines
+        if (!multiple_groups) {
+          p <- p + guides(colour = "none", group = "none")
+        }
+      }
+    }
+
     # Plot individual points
-    p <- p +
-      geom_point(
-        data = df_plot,
-        aes(x = time, y = value, fill = group),
-        shape = 21,
-        size = point_size,
-        colour = "black"
-      )
+    if (has_repeated_measures) {
+      if (multiple_groups) {
+        # Points coloured by group
+        p <- p +
+          geom_point(
+            aes(fill = group),
+            shape = 21,
+            size = point_size,
+            colour = "black"
+          )
+      } else {
+        # Points coloured by subject_ID
+        p <- p +
+          geom_point(
+            aes(fill = subject_ID),
+            shape = 21,
+            size = point_size,
+            colour = "black"
+          ) +
+          guides(fill = guide_legend(title = "Subject ID"))
+      }
+    } else {
+      # Points coloured by group
+      p <- p +
+        geom_point(
+          aes(fill = group),
+          shape = 21,
+          size = point_size,
+          colour = "black"
+        )
+    }
   } else if (plot_type == "mean_sd") {
     # Error bars
     p <- p +
       geom_errorbar(
         data = summary_df,
         aes(x = time, ymin = mean - sd, ymax = mean + sd),
+        inherit.aes = FALSE,
         width = errorbar_width,
         linewidth = errorbar_linewidth
       )
+
+    # Lines connecting mean points
+    if (add_line) {
+      # Connect mean points from the same group, coloured by group
+      p <- p +
+        geom_line(
+          data = summary_df,
+          aes(x = time, y = mean, group = group, colour = group),
+          inherit.aes = FALSE,
+          linewidth = linewidth
+        )
+      # If only one group, remove legend for lines
+      if (!multiple_groups) {
+        p <- p + guides(colour = "none", group = "none")
+      }
+    }
 
     # Mean points
     p <- p +
       geom_point(
         data = summary_df,
         aes(x = time, y = mean, fill = group),
+        inherit.aes = FALSE,
         shape = 21,
         size = point_size,
         colour = "black"

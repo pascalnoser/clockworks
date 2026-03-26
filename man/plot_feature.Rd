@@ -9,14 +9,16 @@ plot_feature(
   feature,
   plot_type = c("points", "mean_sd"),
   add_wave = TRUE,
+  add_line = FALSE,
   point_size = 3,
   wave_linewidth = 1,
+  linewidth = 1,
   groups = NULL,
   background_cutoffs = NULL,
   background_colors = c("white", "grey50"),
   background_alpha = 0.5,
   errorbar_linewidth = 0.6,
-  errorbar_width = 0.4
+  errorbar_width = 0.5
 )
 }
 \arguments{
@@ -30,9 +32,14 @@ standard deviations ("mean_sd").}
 
 \item{add_wave}{Logical. If \code{TRUE}, adds the cosine fit curve.}
 
+\item{add_line}{Logical. If \code{TRUE}, the points will be connected with lines.}
+
 \item{point_size}{Numeric. Size of the points.}
 
 \item{wave_linewidth}{Numeric. Line width of the cosine fit curve.}
+
+\item{linewidth}{Numeric. Line width of lines connecting points if \code{add_line}
+is \code{TRUE}.}
 
 \item{groups}{Character vector or \code{NULL}. Restrict the plot to the selected
 groups.}
