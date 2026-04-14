@@ -5,8 +5,6 @@
 #'
 #' @param cd A `CircadianData` object
 #'
-#' @importFrom limorhyde limorhyde
-#'
 #' @returns A `CircadianData` object
 check_limorhyde <- function(cd) {
   # Create local copy of cd to prevent accidental changes to main object
@@ -14,14 +12,15 @@ check_limorhyde <- function(cd) {
 
   # Get sine and cosine component
   df_meta_temp <- get_metadata(cd_local)
-  limo <- limorhyde::limorhyde(
-    time = get_metadata(cd_local)$time,
-    colnamePrefix = "time_",
-    period = mean(cd_local$period)
+  df_meta_temp$time_sin <- sin(
+    2 * pi / mean(cd_local$period) * df_meta_temp$time
+  )
+  df_meta_temp$time_cos <- cos(
+    2 * pi / mean(cd_local$period) * df_meta_temp$time
   )
 
   # Add to meta data
-  metadata(cd_local) <- cbind(get_metadata(cd_local), limo)
+  metadata(cd_local) <- df_meta_temp
 
   # Make sure samples are ordered by time and group (and subject ID if relevant)
   sort_cols <- intersect(
