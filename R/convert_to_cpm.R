@@ -29,7 +29,7 @@ convert_to_cpm <- function(cd, log = TRUE) {
 
   # Calculate CPM values using edgeR's cpm function with library size normalization
   lib_sizes = colSums(counts) * meta$norm_factors
-  logCPM = edgeR::cpm(counts, lib.size = lib_sizes, log = log)
+  cpm_values = edgeR::cpm(counts, lib.size = lib_sizes, log = log)
 
   # # Manual calculation of CPM values
   # lib_sizes = colSums(counts) * meta$norm_factors
@@ -50,8 +50,8 @@ convert_to_cpm <- function(cd, log = TRUE) {
   # # Calculate log CPM
   # logCPM_manual = sweep(counts_with_prior, 2, lib_sizes / 1e6, FUN = "/") |> log2()
 
-  # Replace dataset in CD object with logCPM values
-  dataset(cd) <- logCPM
+  # Replace dataset in CD object with CPM values
+  dataset(cd) <- cpm_values
 
   return(cd)
 }

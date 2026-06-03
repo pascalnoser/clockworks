@@ -1834,7 +1834,8 @@ estimate_wave_params <- function(
       # Get logarithmic base
       b_log <- cd_obj$log_base
 
-      # Get estimates for amplitudes in log scale
+      # Get estimates for mesor and amplitudes in log scale
+      log_mesors <- res_mat[, "mesor"]
       log_amps <- res_mat[, "amplitude"]
 
       # Get relative amplitude
