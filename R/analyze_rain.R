@@ -24,7 +24,6 @@ analyze_rain <- function(cd, method_args = list()) {
 
     # Run rhythmicity analysis
     df_res_grp <- execute_rain(inputs, grp, method_args)
-    # df_res_grp <- execute_rain_parallel(inputs, grp, method_args)
 
     # Add to list
     ls_res_groups[[grp]] <- df_res_grp

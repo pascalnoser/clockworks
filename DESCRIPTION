@@ -1,7 +1,7 @@
 Package: clockworks
 Type: Package
 Title: Rhythmicity Detection in Time Series Data
-Version: 0.2.53
+Version: 0.2.54
 Authors@R: c(
     person(
       "Pascal", "Noser",
@@ -33,7 +33,7 @@ Imports:
     edgeR,
     future.apply,
     RepeatedCircadian,
-    rain,
+    prain,
     TimeCycle,
     future,
     future.apply,
@@ -55,5 +55,6 @@ Remotes:
     nesscoder/TimeCycle,
     RepeatedCircadian/RepeatedCircadian,
     krassowski/complex-upset
+    pascalnoser/prain
 Depends: 
     R (>= 3.5)

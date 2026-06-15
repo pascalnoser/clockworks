@@ -12,7 +12,7 @@ execute_rain(inputs, grp, method_args = list())
 
 \item{grp}{Group that is analysed}
 
-\item{method_args}{Additional parameters passed to \code{rain::rain}}
+\item{method_args}{Additional parameters passed to \code{prain::rain}}
 }
 \value{
 A data frame
