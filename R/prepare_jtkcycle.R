@@ -32,5 +32,8 @@ prepare_jtkcycle <- function(cd, grp) {
     releaseNote = FALSE # Probably set to FALSE?
   )
 
+  # Add info about missing values
+  inputs$df_valid <- count_valid(cd_filt)
+
   return(inputs)
 }

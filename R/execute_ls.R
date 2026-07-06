@@ -12,13 +12,55 @@ execute_ls <- function(inputs, grp, method_args = list()) {
   # Combine and overwrite inputs with method_args
   inputs <- utils::modifyList(inputs, method_args)
 
+  # Handle missing data
+  dat <- inputs$inDF[, -1]
+  n_valid <- rowSums(!is.na(dat))
+  if (any(n_valid <= 1)) {
+    feature_order <- rownames(dat)
+    invalid_features <- rownames(dat)[n_valid <= 1]
+    warning(
+      "The features listed below have insufficient values for rhythmicity analysis and will be excluded.\n - ",
+      paste(invalid_features, collapse = "\n - "),
+      call. = FALSE
+    )
+    inputs$inDF <- inputs$inDF[n_valid > 1, ]
+  }
+
   # Run rhythmicity analysis
   ls_res <- do.call(MetaCycle::meta2d, inputs)
 
-  # Add feature IDs and group to results
+  # Add group to results
   ls_res <- lapply(ls_res, function(x) {
     if (is.data.frame(x)) cbind(x, group = grp)
   })
+
+  # Add excluded features back to results with NA values
+  if (any(n_valid <= 1)) {
+    invalid_features <- rownames(dat)[n_valid <= 1]
+    for (i in seq_along(ls_res)) {
+      res <- ls_res[[i]]
+      if (is.data.frame(res)) {
+        # Add rows with NaN values for excluded features
+        missing_rows <- data.frame(matrix(
+          NA,
+          nrow = length(invalid_features),
+          ncol = ncol(res)
+        ))
+
+        # Set column names and add group and feature identifiers
+        colnames(missing_rows) <- colnames(res)
+        missing_rows$group <- grp
+        missing_rows$CycID <- invalid_features
+
+        # Combine the results with the missing rows and ensure the order of features is preserved
+        res <- rbind(res, missing_rows)
+        res <- res[order(match(res$CycID, feature_order)), ]
+        rownames(res) <- as.character(seq_len(nrow(res)))
+
+        ls_res[[i]] <- res
+      }
+    }
+  }
 
   # Return results
   return(ls_res)

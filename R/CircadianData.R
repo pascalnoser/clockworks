@@ -1211,10 +1211,10 @@ setMethod(
 
     # Reset levels for group and subject ID to prevent empty levels
     if ("group" %in% colnames(new_metadata)) {
-      new_metadata$group = factor(new_metadata$group)
+      new_metadata$group <- factor(new_metadata$group)
     }
     if ("subject_ID" %in% colnames(new_metadata)) {
-      new_metadata$subject_ID = factor(new_metadata$subject_ID)
+      new_metadata$subject_ID <- factor(new_metadata$subject_ID)
     }
 
     ## -- Wave Parameters Subsetting --
@@ -1335,7 +1335,7 @@ setMethod(
     )
 
     # Recalculate delta t and update replicate numbers, but keep the rest
-    x_new = add_experiment_info(
+    x_new <- add_experiment_info(
       cd_obj = x_new,
       period = exp_info_old$period,
       data_type = exp_info_old$data_type,
@@ -1479,22 +1479,6 @@ add_experiment_info <- function(
   # --- Repeated measures ---
   exp_info$repeated_measures <- "subject_ID" %in% meta_cnames
 
-  # --- Replicate info ---
-  # Make sure to show all time points in every group
-  t_unique <- sort(unique(mdata$time))
-  if (!is.na(exp_info$n_groups)) {
-    exp_info$n_replicates <- tapply(
-      mdata$time,
-      mdata$group,
-      function(g_time) {
-        table(factor(g_time, levels = t_unique))
-      },
-      simplify = FALSE
-    )
-  } else {
-    exp_info$n_replicates <- table(factor(mdata$time, levels = t_unique))
-  }
-
   # --- Sampling interval ---
   if (estimate_delta_t) {
     # Extract time differences
@@ -1542,6 +1526,27 @@ add_experiment_info <- function(
   } else {
     # Sampling interval NA or NULL
     exp_info$n_cycles <- NA
+  }
+
+  # --- Missing Data ---
+  dat <- cd_obj@dataset
+  overall_missing_fraction <- sum(is.na(dat)) / (nrow(dat) * ncol(dat))
+  exp_info$missing_data_fraction <- overall_missing_fraction
+
+  # --- Replicate info ---
+  # Make sure to show all time points in every group
+  t_unique <- sort(unique(mdata$time))
+  if (!is.na(exp_info$n_groups)) {
+    exp_info$n_replicates <- tapply(
+      mdata$time,
+      mdata$group,
+      function(g_time) {
+        table(factor(g_time, levels = t_unique))
+      },
+      simplify = FALSE
+    )
+  } else {
+    exp_info$n_replicates <- table(factor(mdata$time, levels = t_unique))
   }
 
   # === 3. Put the updated list back into the object ===
@@ -2369,7 +2374,7 @@ filter_samples <- function(
 
   # Optionally restore original delta t
   if (!recalc_delta_t) {
-    experiment_info(filtered_obj)$delta_t = exp_info_old$delta_t
+    experiment_info(filtered_obj)$delta_t <- exp_info_old$delta_t
   }
 
   # --- 5. Renormalise library sizes if needed ---
@@ -2652,10 +2657,10 @@ plot_phase_estimates <- function(
   }
 
   # Fix tile height at 1
-  tile_height = 1
+  tile_height <- 1
 
   # Adjust initial offset if necessary to not remove any data
-  initial_offset = max(initial_offset, tile_height / 2)
+  initial_offset <- max(initial_offset, tile_height / 2)
 
   binned_density_df <- df_params |>
     mutate(
@@ -3445,7 +3450,7 @@ plot_upset <- function(
   })
 
   # --- 2. Generate UpSet Plot(s) ---
-  ls_plt_upset = list()
+  ls_plt_upset <- list()
   for (i_name in names(ls_features)) {
     # Get the binary data frame for this method/group
     binary_df <- ls_binary[[i_name]]
@@ -3499,7 +3504,7 @@ plot_upset <- function(
     )
 
     # Save plot in list
-    ls_plt_upset[[i_name]] = plt_upset
+    ls_plt_upset[[i_name]] <- plt_upset
   }
 
   # Return the list of upset plots or a single plot if only one was generated
@@ -3662,7 +3667,7 @@ setMethod(
     plot_args <- list()
 
     # Set default shape
-    plot_args$pch = 21
+    plot_args$pch <- 21
 
     # Set default labels and title
     plot_args$xlab <- "Time"

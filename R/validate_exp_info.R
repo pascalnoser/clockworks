@@ -13,7 +13,8 @@ validate_exp_info <- function(cd_obj) {
     "repeated_measures",
     "n_replicates",
     "delta_t",
-    "n_cycles"
+    "n_cycles",
+    "missing_data_fraction"
   )
   exp_info <- names(experiment_info(cd_obj))
   missing_info <- setdiff(exp_info_required, exp_info)
@@ -32,7 +33,10 @@ validate_exp_info <- function(cd_obj) {
     )
   }
 
-  if (cd_obj$log_transformed == TRUE && (is.null(cd_obj$log_base) || !is.numeric(cd_obj$log_base))) {
+  if (
+    cd_obj$log_transformed == TRUE &&
+      (is.null(cd_obj$log_base) || !is.numeric(cd_obj$log_base))
+  ) {
     stop(
       "If `log_transformed` is TRUE, `log_base` must be a single numeric value."
     )

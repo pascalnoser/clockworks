@@ -14,6 +14,27 @@ execute_meta2d <- function(inputs, grp, method_args = list()) {
   # Combine and overwrite inputs with method_args
   inputs <- utils::modifyList(inputs, method_args)
 
+  # Handle missing data
+  dat <- inputs$inDF[, -1]
+  df_valid <- inputs$df_valid
+  inputs$df_valid <- NULL # Remove df_valid from inputs to avoid passing it to meta2d
+
+  # Identify features with insufficient valid values for rhythmicity analysis
+  invalid_features <- row.names(df_valid[
+    df_valid$n_nonNA < 3 | df_valid$n_timepoints < 2,
+  ])
+
+  if (length(invalid_features) > 0) {
+    feature_order <- rownames(dat)
+    warning(
+      "The features listed below have insufficient values for rhythmicity analysis and will be excluded.\n - ",
+      paste(invalid_features, collapse = "\n - "),
+      call. = FALSE
+    )
+    # Remove invalid features from the input data frame
+    inputs$inDF <- inputs$inDF[!rownames(inputs$inDF) %in% invalid_features, ]
+  }
+
   # Run rhythmicity analysis
   ls_res <- do.call(MetaCycle::meta2d, inputs)
 
@@ -21,6 +42,33 @@ execute_meta2d <- function(inputs, grp, method_args = list()) {
   ls_res <- lapply(ls_res, function(x) {
     if (is.data.frame(x)) cbind(x, group = grp)
   })
+
+  # Add excluded features back to results with NA values
+  if (length(invalid_features) > 0) {
+    for (i in seq_along(ls_res)) {
+      res <- ls_res[[i]]
+      if (is.data.frame(res)) {
+        # Add rows with NaN values for excluded features
+        missing_rows <- data.frame(matrix(
+          NA,
+          nrow = length(invalid_features),
+          ncol = ncol(res)
+        ))
+
+        # Set column names and add group and feature identifiers
+        colnames(missing_rows) <- colnames(res)
+        missing_rows$group <- grp
+        missing_rows$CycID <- invalid_features
+
+        # Combine the results with the missing rows and ensure the order of features is preserved
+        res <- rbind(res, missing_rows)
+        res <- res[order(match(res$CycID, feature_order)), ]
+        rownames(res) <- as.character(seq_len(nrow(res)))
+
+        ls_res[[i]] <- res
+      }
+    }
+  }
 
   # Return results
   return(ls_res)
