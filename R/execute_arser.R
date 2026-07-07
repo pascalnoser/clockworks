@@ -4,18 +4,43 @@
 #'   `prepare_arser()`
 #' @param grp Group that is being analysed
 #' @param method_args Additional parameters passed to `MetaCycle::meta2d()`
+#' @param missing_data_fraction Fraction of missing data in the dataset.
 #'
 #' @importFrom MetaCycle meta2d
 #'
 #' @returns A list
-execute_arser <- function(inputs, grp, method_args = list()) {
+execute_arser <- function(
+  inputs,
+  grp,
+  method_args = list(),
+  missing_data_fraction = 0
+) {
   # TODO: Figure out what to do about `parallelize` and `nCores`
 
   # Combine and overwrite inputs with method_args
   inputs <- utils::modifyList(inputs, method_args)
 
+  # Handle missing data ----
+  if (missing_data_fraction > 0) {
+    dat <- inputs$inDF[, -1]
+
+    # Identify features with insufficient valid values for rhythmicity analysis
+    invalid_features <- names(which(rowSums(is.na(dat)) > 0))
+
+    if (length(invalid_features) > 0) {
+      feature_order <- rownames(dat)
+      warning(
+        "The features listed below have insufficient values for rhythmicity analysis and will be excluded.\n - ",
+        paste(invalid_features, collapse = "\n - "),
+        call. = FALSE
+      )
+      # Remove invalid features from the input data frame
+      inputs$inDF <- inputs$inDF[!rownames(inputs$inDF) %in% invalid_features, ]
+    }
+  }
+
   # Ensure `cycMethod = "ARS"` and print message if set manually
-  inputs$cycMethod = "ARS"
+  inputs$cycMethod <- "ARS"
   if (!is.null(method_args$cycMethod) && method_args$cycMethod != "ARS") {
     message(
       paste0(
@@ -36,6 +61,33 @@ execute_arser <- function(inputs, grp, method_args = list()) {
   ls_res <- lapply(ls_res, function(x) {
     if (is.data.frame(x)) cbind(x, group = grp)
   })
+
+  # Add excluded features back to results with NA values
+  if (length(invalid_features) > 0) {
+    for (i in seq_along(ls_res)) {
+      res <- ls_res[[i]]
+      if (is.data.frame(res)) {
+        # Add rows with NA values for excluded features
+        missing_rows <- data.frame(matrix(
+          NA,
+          nrow = length(invalid_features),
+          ncol = ncol(res)
+        ))
+
+        # Set column names and add group and feature identifiers
+        colnames(missing_rows) <- colnames(res)
+        missing_rows$group <- grp
+        missing_rows$CycID <- invalid_features
+
+        # Combine the results with the missing rows and ensure the order of features is preserved
+        res <- rbind(res, missing_rows)
+        res <- res[order(match(res$CycID, feature_order)), ]
+        rownames(res) <- as.character(seq_len(nrow(res)))
+
+        ls_res[[i]] <- res
+      }
+    }
+  }
 
   # Return results
   return(ls_res)

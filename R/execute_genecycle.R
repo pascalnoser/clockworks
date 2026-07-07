@@ -5,11 +5,17 @@
 #' @param grp Group that is analysed
 #' @param method_args, Additional parameters passed to
 #'   `GeneCycle::robust.spectrum()` and `GeneCycle::robust.g.test()`
+#' @param missing_data_fraction Fraction of missing data in the dataset.
 #'
 #' @importFrom GeneCycle robust.spectrum robust.g.test
 #'
 #' @returns A data frame
-execute_genecycle <- function(inputs, grp, method_args = list()) {
+execute_genecycle <- function(
+  inputs,
+  grp,
+  method_args = list(),
+  missing_data_fraction = 0
+) {
   # TODO: In the main clockworks function, inform the user that if they want to
   # run 'rank' GeneCycle with an unknown period they should set `index = NA` in
   # method_args. If they want to run 'regression' GeneCycle with an unknown
@@ -18,13 +24,37 @@ execute_genecycle <- function(inputs, grp, method_args = list()) {
   # this case, whatever is defined as `period` in `clockworks()` will be
   # ignored for GeneCycle.
 
+  # Handle missing data ----
+  if (missing_data_fraction > 0) {
+    dat <- inputs$spectrum$x
+    cols_no_consecutive <- apply(dat, 2, function(x) {
+      idx <- which(!is.na(x))
+      !any(diff(idx) == 1)
+    })
+    invalid_features <- colnames(dat)[cols_no_consecutive]
+
+    if (length(invalid_features) > 0) {
+      feature_order <- colnames(dat)
+      warning(
+        "The features listed below will be excluded because they have no consecutive non-NA values.\n - ",
+        paste(invalid_features, collapse = "\n - "),
+        call. = FALSE
+      )
+      # Remove invalid features from the input data frame
+      inputs$spectrum$x <- dat[, !colnames(dat) %in% invalid_features]
+    }
+  }
+
   # Combine method_args with user input ----
   # Get list of possible arguments for the two functions
   spectrum_argnames <- formalArgs(GeneCycle::robust.spectrum)
   gtest_argnames <- formalArgs(GeneCycle::robust.g.test)
 
   # Get user input
-  spectrum_user_args <- method_args[intersect(spectrum_argnames, names(method_args))]
+  spectrum_user_args <- method_args[intersect(
+    spectrum_argnames,
+    names(method_args)
+  )]
   gtest_user_args <- method_args[intersect(gtest_argnames, names(method_args))]
 
   # Overwrite default inputs with user inputs
@@ -33,12 +63,15 @@ execute_genecycle <- function(inputs, grp, method_args = list()) {
 
   # If user set 'index = NA' remove it (NA or NULL do not work, index just needs
   # to be missing for expected behaviour)
-  if (is.na(gtest_inputs$index)) gtest_inputs$index <- NULL
-
+  if (is.na(gtest_inputs$index)) {
+    gtest_inputs$index <- NULL
+  }
 
   # Determine how to run analysis ----
-  algorithm <- spectrum_inputs$algorithm  # Note: Could also be gtest_inputs$algorithm
-  if (algorithm == "regression") gtest_inputs$perm <- TRUE
+  algorithm <- spectrum_inputs$algorithm # Note: Could also be gtest_inputs$algorithm
+  if (algorithm == "regression") {
+    gtest_inputs$perm <- TRUE
+  }
   approach <- ifelse(gtest_inputs$perm == TRUE, "permutation", "montecarlo")
   known_period <- switch(
     algorithm,
@@ -65,28 +98,39 @@ execute_genecycle <- function(inputs, grp, method_args = list()) {
     # Delete file created by robust.spectrum()
     unlink(paste0("g_pop_length_", nrow(y), ".txt"))
     unlink(paste0("g_pop_length_", nrow(y), "indexed.txt"))
-
   } else if (algorithm == "rank" && approach == "permutation") {
     y <- do.call(GeneCycle::robust.spectrum, spectrum_inputs)
     gtest_inputs$y <- y
     gtest_inputs$x <- spectrum_inputs$x
     pvals <- do.call(GeneCycle::robust.g.test, gtest_inputs)
-
   } else if (algorithm == "regression" && known_period == FALSE) {
     y <- do.call(GeneCycle::robust.spectrum, spectrum_inputs)
     gtest_inputs$y <- y
     gtest_inputs$x <- spectrum_inputs$x
     pvals <- do.call(GeneCycle::robust.g.test, gtest_inputs)
-
   } else if (algorithm == "regression" && known_period == TRUE) {
     # In this (and only this) case, `robust.spectrum` returns p-values.
     pvals <- do.call(GeneCycle::robust.spectrum, spectrum_inputs)
   }
 
   # Add feature IDs and group to results df (if not there already)
-  df_res = data.frame(feature = colnames(inputs$spectrum$x),
-                      group = grp,
-                      pval = pvals)
+  df_res <- data.frame(
+    feature = colnames(inputs$spectrum$x),
+    group = grp,
+    pval = pvals
+  )
+
+  # Add exluded features back to results with NA values
+  if (length(invalid_features) > 0) {
+    missing_rows <- data.frame(
+      feature = invalid_features,
+      group = grp,
+      pval = NA
+    )
+    df_res <- rbind(df_res, missing_rows)
+    df_res <- df_res[order(match(df_res$feature, feature_order)), ]
+    rownames(df_res) <- as.character(seq_len(nrow(df_res)))
+  }
 
   # Return results
   return(df_res)

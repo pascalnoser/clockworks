@@ -23,7 +23,12 @@ analyze_arser <- function(cd, method_args = list()) {
     inputs <- prepare_arser(cd_local, grp)
 
     # Run rhythmicity analysis
-    ls_res_grp <- execute_arser(inputs, grp, method_args)
+    ls_res_grp <- execute_arser(
+      inputs,
+      grp,
+      method_args,
+      get_experiment_info(cd_local)$missing_data_fraction
+    )
 
     # Add to list
     ls_res_groups[[grp]] <- ls_res_grp
