@@ -21,6 +21,7 @@ execute_arser <- function(
   inputs <- utils::modifyList(inputs, method_args)
 
   # Handle missing data ----
+  invalid_features <- character(0)
   if (missing_data_fraction > 0) {
     dat <- inputs$inDF[, -1]
 
