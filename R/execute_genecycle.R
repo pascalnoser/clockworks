@@ -25,6 +25,7 @@ execute_genecycle <- function(
   # ignored for GeneCycle.
 
   # Handle missing data ----
+  invalid_features <- character(0)
   if (missing_data_fraction > 0) {
     dat <- inputs$spectrum$x
     cols_no_consecutive <- apply(dat, 2, function(x) {

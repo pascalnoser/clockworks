@@ -10,6 +10,15 @@ check_arser <- function(cd) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
+  # Fail early if all features have one or more missing values
+  dat <- get_dataset(cd_local)
+  if (all(rowSums(is.na(dat)) > 0)) {
+    stop(
+      "All features have one or more missing values. ",
+      "ARSER cannot be run on this dataset."
+    )
+  }
+
   # Turn to logCPM values if we have count data
   if (cd_local$data_type == "count") {
     cd_local <- convert_to_cpm(cd_local, log = TRUE)

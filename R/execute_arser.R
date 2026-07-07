@@ -27,6 +27,17 @@ execute_arser <- function(
     # Identify features with insufficient valid values for rhythmicity analysis
     invalid_features <- names(which(rowSums(is.na(dat)) > 0))
 
+    # Fail early if all features have insufficient values
+    if (length(invalid_features) == nrow(dat)) {
+      warning(
+        "All features of group ",
+        grp,
+        " have insufficient values for rhythmicity analysis. ",
+        "Skipping rhythmicity detection for this group."
+      )
+      return(NULL)
+    }
+
     if (length(invalid_features) > 0) {
       feature_order <- rownames(dat)
       warning(
