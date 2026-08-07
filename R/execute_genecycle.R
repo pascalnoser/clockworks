@@ -103,6 +103,16 @@ execute_genecycle <- function(
     y <- do.call(GeneCycle::robust.spectrum, spectrum_inputs)
     gtest_inputs$y <- y
     gtest_inputs$x <- spectrum_inputs$x
+
+    # Temporarily replace GeneCycle's internal spearman() function to
+    # avoid NA values when some expression values are identical
+    old_spearman <- get("spearman", envir = asNamespace("GeneCycle"))
+    assignInNamespace("spearman", safe_spearman, ns = "GeneCycle")
+    on.exit(
+      assignInNamespace("spearman", old_spearman, ns = "GeneCycle"),
+      add = TRUE
+    )
+
     pvals <- do.call(GeneCycle::robust.g.test, gtest_inputs)
   } else if (algorithm == "regression" && known_period == FALSE) {
     y <- do.call(GeneCycle::robust.spectrum, spectrum_inputs)

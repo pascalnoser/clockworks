@@ -22,10 +22,10 @@ execute_rain <- function(inputs, grp, method_args = list()) {
   }
 
   # Run rhythmicity analysis
-  df_res = do.call(prain::rain, inputs)
+  df_res <- do.call(prain::rain, inputs)
 
   # Add feature IDs and group to results df (if not there already)
-  df_res = data.frame(feature = colnames(inputs$x), df_res, group = grp)
+  df_res <- data.frame(feature = colnames(inputs$x), df_res, group = grp)
 
   # Return results
   return(df_res)
