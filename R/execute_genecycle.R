@@ -25,6 +25,7 @@ execute_genecycle <- function(
   # ignored for GeneCycle.
 
   # Handle missing data ----
+  feature_order <- colnames(inputs$spectrum$x)
   invalid_features <- character(0)
   if (missing_data_fraction > 0) {
     dat <- inputs$spectrum$x
@@ -35,7 +36,6 @@ execute_genecycle <- function(
     invalid_features <- colnames(dat)[cols_no_consecutive]
 
     if (length(invalid_features) > 0) {
-      feature_order <- colnames(dat)
       warning(
         "The features listed below will be excluded because they have no consecutive non-NA values.\n - ",
         paste(invalid_features, collapse = "\n - "),
@@ -81,9 +81,31 @@ execute_genecycle <- function(
     stop("'algorithm' must be 'rank' or 'regression'.")
   )
 
-  # cat("\nalgorithm:\t", algorithm)
-  # cat("\napproach:\t", approach)
-  # cat("\nknown_period:\t", known_period)
+  # Handle constant features ----
+  # Note: These features need to be removed for the rank-based permutation approach
+  constant_features <- character(0)
+  if (algorithm == "rank" && approach == "permutation") {
+    dat <- spectrum_inputs$x
+    cols_constant <- apply(dat, 2, function(x) {
+      x_obs <- x[!is.na(x)]
+      length(x_obs) == 0 || sd(x_obs) == 0
+    })
+    constant_features <- colnames(dat)[cols_constant]
+
+    if (length(constant_features) > 0) {
+      warning(
+        "The rank-based algorithm of GeneCycle cannot handle constant time-series when using the ",
+        "permutation-based approach. The features listed below are constant and will therefore be ",
+        "excluded from the analysis and assigned a p-value of 1.\n - ",
+        paste(constant_features, collapse = "\n - "),
+        call. = FALSE
+      )
+      spectrum_inputs$x <- dat[,
+        !colnames(dat) %in% constant_features,
+        drop = FALSE
+      ]
+    }
+  }
 
   # Run analysis ----
   # Note: Whether the period is known or not for rank-based approach is
@@ -126,7 +148,7 @@ execute_genecycle <- function(
 
   # Add feature IDs and group to results df (if not there already)
   df_res <- data.frame(
-    feature = colnames(inputs$spectrum$x),
+    feature = colnames(spectrum_inputs$x),
     group = grp,
     pval = pvals
   )
@@ -137,6 +159,18 @@ execute_genecycle <- function(
       feature = invalid_features,
       group = grp,
       pval = NA
+    )
+    df_res <- rbind(df_res, missing_rows)
+    df_res <- df_res[order(match(df_res$feature, feature_order)), ]
+    rownames(df_res) <- as.character(seq_len(nrow(df_res)))
+  }
+
+  # Add constant features back to results with p-value of 1
+  if (length(constant_features) > 0) {
+    missing_rows <- data.frame(
+      feature = constant_features,
+      group = grp,
+      pval = 1
     )
     df_res <- rbind(df_res, missing_rows)
     df_res <- df_res[order(match(df_res$feature, feature_order)), ]
