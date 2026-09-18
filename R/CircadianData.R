@@ -193,7 +193,7 @@ setValidity("CircadianData", function(object) {
 #'   "count" or "norm". Defaults to "norm" if not already set.
 #' @param filter_counts A logical value specifying whether lowly expressed
 #'   features should be filtered out from count data using edgeR's `filterByExpr`
-#'   function. Has no effect if `data_type` is not "count". Defaults to `TRUE`.
+#'   function. Has no effect if `data_type` is not "count". Defaults to `FALSE`.
 #' @param log_transformed A logical value specifying if the input data is
 #'   log-transformed. This has no influence on the rhythmicity analysis itself
 #'   but is used to calculate the relative amplitude in the original scale of
@@ -236,7 +236,7 @@ CircadianData <- function(
   colname_subject = NULL,
   period = 24,
   data_type = "norm",
-  filter_counts = TRUE,
+  filter_counts = FALSE,
   log_transformed = FALSE,
   log_base = NULL
 ) {

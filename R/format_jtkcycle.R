@@ -28,7 +28,7 @@ format_jtkcycle <- function(
   res_original <- lapply(method_names, function(x) {
     dfs <- lapply(ls_res_groups, `[[`, x)
     df_combined <- do.call(rbind, dfs)
-    rownames(df_combined) = NULL
+    rownames(df_combined) <- NULL
     return(df_combined)
   })
   names(res_original) <- method_names
@@ -82,8 +82,10 @@ format_jtkcycle <- function(
     })
   }
 
-  # Set period estimate to NA if it is 0
+  # Set wave param estimates to NA if estimated period is 0
   res_formatted$period_estimate[res_formatted$period_estimate == 0] <- NA
+  res_formatted$phase_estimate[res_formatted$period_estimate == 0] <- NA
+  res_formatted$amplitude_estimate[res_formatted$period_estimate == 0] <- NA
 
   return(list(res_original = res_original, res_formatted = res_formatted))
 }

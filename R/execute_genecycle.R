@@ -165,12 +165,12 @@ execute_genecycle <- function(
     rownames(df_res) <- as.character(seq_len(nrow(df_res)))
   }
 
-  # Add constant features back to results with p-value of 1
+  # Add constant features back to results with p-value of NA
   if (length(constant_features) > 0) {
     missing_rows <- data.frame(
       feature = constant_features,
       group = grp,
-      pval = 1
+      pval = NA
     )
     df_res <- rbind(df_res, missing_rows)
     df_res <- df_res[order(match(df_res$feature, feature_order)), ]
