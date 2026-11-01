@@ -4,12 +4,15 @@
 \alias{analyze_timecycle}
 \title{Detect rhythmicity with TimeCycle}
 \usage{
-analyze_timecycle(cd, method_args = list())
+analyze_timecycle(cd, method_args = list(), remove_batch_effects = TRUE)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
 \item{method_args}{Additional parameters passed to \verb{<TimeCycle::TimeCycle()>}}
+
+\item{remove_batch_effects}{Logical. If \code{TRUE} and the data contain repeated
+measures, subject batch effects are removed before the analysis.}
 }
 \value{
 A list with the original and formatted results of the TimeCycle

@@ -13,6 +13,11 @@
 #' @param method_args A list of additional arguments to be passed directly to
 #'   the chosen analysis method. This allows for more advanced customisation of
 #'   the analysis.
+#' @param remove_batch_effects Logical. If `TRUE` (default) and the data contain
+#'   repeated measures (`colname_subject`), subject effects are removed with
+#'   `limma::removeBatchEffect()` before running methods that cannot model
+#'   subjects themselves. Ignored by methods that model subjects (LimoRhyde,
+#'   RepeatedCircadian, MetaCycle/meta3d).
 #'
 #' @details Additional details coming soon...
 #'
@@ -21,7 +26,12 @@
 #'
 #' @export
 #'
-clockworks <- function(cd, method, method_args = list()) {
+clockworks <- function(
+  cd,
+  method,
+  method_args = list(),
+  remove_batch_effects = TRUE
+) {
   #  === Define analysis function ===
   method <- match.arg(
     method,
@@ -69,7 +79,12 @@ clockworks <- function(cd, method, method_args = list()) {
 
   # === Run analysis ===
   # Run rhythmicity detection with chosen method
-  rhythmicity_results <- analyze_fn(cd, method_args)
+  # Only methods that cannot model subjects themselves remove batch effects
+  if ("remove_batch_effects" %in% names(formals(analyze_fn))) {
+    rhythmicity_results <- analyze_fn(cd, method_args, remove_batch_effects)
+  } else {
+    rhythmicity_results <- analyze_fn(cd, method_args)
+  }
 
   # Add to CD object
   results(cd)[[method]] <- rhythmicity_results

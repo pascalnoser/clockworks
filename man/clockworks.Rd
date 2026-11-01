@@ -4,7 +4,7 @@
 \alias{clockworks}
 \title{Streamlined Rhythmicity Analysis of Time Series Data}
 \usage{
-clockworks(cd, method, method_args = list())
+clockworks(cd, method, method_args = list(), remove_batch_effects = TRUE)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object with added experiment info.}
@@ -17,6 +17,12 @@ voomLmFit), "LS" (Lomb-Scargle), "MetaCycle", "RAIN", and "TimeCycle".}
 \item{method_args}{A list of additional arguments to be passed directly to
 the chosen analysis method. This allows for more advanced customisation of
 the analysis.}
+
+\item{remove_batch_effects}{Logical. If \code{TRUE} (default) and the data contain
+repeated measures (\code{colname_subject}), subject effects are removed with
+\code{limma::removeBatchEffect()} before running methods that cannot model
+subjects themselves. Ignored by methods that model subjects (LimoRhyde,
+RepeatedCircadian, MetaCycle/meta3d).}
 }
 \value{
 A \code{CircadianData} object including the results of a rhythmicity

@@ -4,11 +4,14 @@
 #'
 #' @param cd A `CircadianData` object.
 #' @param method_args Additional parameters passed to `<method_function>`
+#' @param remove_batch_effects Logical. If `TRUE` and the data contain repeated
+#'   measures, subject batch effects are removed before the analysis.
 #'
 #' @returns A data frame with the results of the Lomb-Scargle analysis.
-analyze_ls <- function(cd, method_args = list()) {
+analyze_ls <- function(cd, method_args = list(),
+                       remove_batch_effects = TRUE) {
   # Check if cd object contains necessary columns and add them if not
-  cd_local <- check_ls(cd)
+  cd_local <- check_ls(cd, remove_batch_effects)
 
   # Remove group column later if added temporarily by check
   added_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)

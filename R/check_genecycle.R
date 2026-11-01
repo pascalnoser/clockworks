@@ -4,9 +4,11 @@
 #' data columns necessary to run rhythmicity detection with GeneCycle.
 #'
 #' @param cd A `CircadianData` object
+#' @param remove_batch_effects Logical. If `TRUE` and the data contain repeated
+#'   measures, subject batch effects are removed before the analysis.
 #'
 #' @returns A `CircadianData` object
-check_genecycle <- function(cd) {
+check_genecycle <- function(cd, remove_batch_effects = TRUE) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
@@ -15,8 +17,9 @@ check_genecycle <- function(cd) {
     cd_local <- convert_to_cpm(cd_local, log = TRUE)
   }
 
-  # If we have repeated measures, remove subject batch effect
-  if (cd_local$repeated_measures == TRUE) {
+  # If we have repeated measures, remove subject batch effect (unless turned
+  # off by the user)
+  if (cd_local$repeated_measures == TRUE && isTRUE(remove_batch_effects)) {
     cd_local <- remove_batch_effects(cd_local)
   }
 

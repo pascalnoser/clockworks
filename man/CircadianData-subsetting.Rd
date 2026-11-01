@@ -3,7 +3,6 @@
 \name{CircadianData-subsetting}
 \alias{CircadianData-subsetting}
 \alias{[,CircadianData,ANY,ANY,ANY-method}
-\alias{[.CircadianData}
 \title{Subset a CircadianData Object}
 \usage{
 \S4method{[}{CircadianData,ANY,ANY,ANY}(x, i, j, ..., drop = FALSE)

@@ -12,7 +12,7 @@ execute_timecycle <- function(inputs, grp, method_args = list()) {
   # Combine and overwrite inputs with method_args
   inputs <- utils::modifyList(inputs, method_args)
 
-  if (inputs$maxLag == 3 && !"maxLag" %in% method_args) {
+  if (inputs$maxLag == 3 && !"maxLag" %in% names(method_args)) {
     message(
       "Running TimeCycle with 'maxLag = 3' instead of 5 (default) because ",
       "sampling interval is greater than 2, or the number of cycles is less ",

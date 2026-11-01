@@ -12,8 +12,8 @@ execute_repeatedcircadian(inputs, grp, method_args = list())
 
 \item{grp}{Group that is analysed}
 
-\item{method_args}{Additional parameters passed to
-\code{RepeatedCircadian::rpt_rhythmicity()}}
+\item{method_args}{Additional parameters passed to \code{rpt_rhythmicity()}
+(clockworks' copy of \code{RepeatedCircadian::rpt_rhythmicity()})}
 }
 \value{
 A data frame

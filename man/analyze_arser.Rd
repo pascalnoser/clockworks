@@ -4,12 +4,15 @@
 \alias{analyze_arser}
 \title{Detect rhythmicity with ARSER}
 \usage{
-analyze_arser(cd, method_args = list())
+analyze_arser(cd, method_args = list(), remove_batch_effects = TRUE)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
 \item{method_args}{Additional parameters passed to \code{MetaCycle::meta2d()}}
+
+\item{remove_batch_effects}{Logical. If \code{TRUE} and the data contain repeated
+measures, subject batch effects are removed before the analysis.}
 }
 \value{
 A data frame with the results of the ARSER analysis.

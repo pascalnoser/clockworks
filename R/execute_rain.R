@@ -13,7 +13,7 @@ execute_rain <- function(inputs, grp, method_args = list()) {
   inputs <- utils::modifyList(inputs, method_args)
 
   # Inform user that we are overwriting RAIN's default behaviour
-  if (inputs$method == "longitudinal" && !"method" %in% method_args) {
+  if (inputs$method == "longitudinal" && !"method" %in% names(method_args)) {
     message(
       "Running RAIN with 'method = \"longitudinal\"' because the data contain ",
       "repeated measures. If you want to change this, set 'method_args = ",

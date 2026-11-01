@@ -4,12 +4,15 @@
 \alias{analyze_genecycle}
 \title{Detect rhythmicity with GeneCycle}
 \usage{
-analyze_genecycle(cd, method_args = list())
+analyze_genecycle(cd, method_args = list(), remove_batch_effects = TRUE)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
 \item{method_args}{Additional parameters passed to \code{GeneCycle:robust.g.test()}}
+
+\item{remove_batch_effects}{Logical. If \code{TRUE} and the data contain repeated
+measures, subject batch effects are removed before the analysis.}
 }
 \value{
 A list with the original and formatted results of the GeneCycle analysis.

@@ -4,10 +4,13 @@
 \alias{check_arser}
 \title{ARSER CircadianData check}
 \usage{
-check_arser(cd)
+check_arser(cd, remove_batch_effects = TRUE)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object}
+
+\item{remove_batch_effects}{Logical. If \code{TRUE} and the data contain repeated
+measures, subject batch effects are removed before the analysis.}
 }
 \value{
 A \code{CircadianData} object

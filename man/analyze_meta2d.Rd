@@ -4,12 +4,15 @@
 \alias{analyze_meta2d}
 \title{Detect rhythmicity with meta2d}
 \usage{
-analyze_meta2d(cd, method_args = list())
+analyze_meta2d(cd, method_args = list(), remove_batch_effects = TRUE)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
 \item{method_args}{Additional parameters passed to \code{MetaCycle::meta2d()}}
+
+\item{remove_batch_effects}{Logical. If \code{TRUE} and the data contain repeated
+measures, subject batch effects are removed before the analysis.}
 }
 \value{
 A data frame with the results of the meta2d analysis.

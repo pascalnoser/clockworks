@@ -13,7 +13,7 @@ CircadianData(
   colname_subject = NULL,
   period = 24,
   data_type = "norm",
-  filter_counts = TRUE,
+  filter_counts = FALSE,
   log_transformed = FALSE,
   log_base = NULL
 )
@@ -50,7 +50,7 @@ Defaults to 24.}
 
 \item{filter_counts}{A logical value specifying whether lowly expressed
 features should be filtered out from count data using edgeR's \code{filterByExpr}
-function. Has no effect if \code{data_type} is not "count". Defaults to \code{TRUE}.}
+function. Has no effect if \code{data_type} is not "count". Defaults to \code{FALSE}.}
 
 \item{log_transformed}{A logical value specifying if the input data is
 log-transformed. This has no influence on the rhythmicity analysis itself

@@ -33,42 +33,69 @@ import(ggplot2)
 import(nlme)
 import(prain)
 importFrom(ComplexUpset,upset)
-importFrom(DESeq2,DESeq)
-importFrom(DESeq2,DESeqDataSetFromMatrix)
-importFrom(DESeq2,counts)
-importFrom(DESeq2,results)
-importFrom(GeneCycle,robust.g.test)
-importFrom(GeneCycle,robust.spectrum)
-importFrom(MetaCycle,meta2d)
-importFrom(MetaCycle,meta3d)
-importFrom(RepeatedCircadian,rpt_rhythmicity)
+importFrom(DESeq2,
+  DESeq,
+  DESeqDataSetFromMatrix,
+  counts,
+  results
+)
+importFrom(GeneCycle,
+  robust.g.test,
+  robust.spectrum
+)
+importFrom(MetaCycle,
+  meta2d,
+  meta3d
+)
 importFrom(TimeCycle,TimeCycle)
-importFrom(dplyr,count)
-importFrom(dplyr,distinct)
-importFrom(dplyr,do)
-importFrom(dplyr,filter)
-importFrom(dplyr,group_by)
-importFrom(dplyr,mutate)
-importFrom(dplyr,n_distinct)
-importFrom(dplyr,pull)
-importFrom(dplyr,rowwise)
-importFrom(dplyr,ungroup)
-importFrom(dryR,dryseq_single)
-importFrom(dryR,f_24)
-importFrom(edgeR,DGEList)
-importFrom(edgeR,cpm)
-importFrom(edgeR,filterByExpr)
-importFrom(edgeR,normLibSizes)
-importFrom(edgeR,voomLmFit)
-importFrom(future.apply,future_apply)
-importFrom(future.apply,future_lapply)
-importFrom(limma,duplicateCorrelation)
-importFrom(limma,eBayes)
-importFrom(limma,lmFit)
-importFrom(limma,removeBatchEffect)
-importFrom(limma,topTable)
-importFrom(rlang,enquo)
-importFrom(rlang,eval_tidy)
-importFrom(rlang,quo_text)
+importFrom(dplyr,
+  count,
+  distinct,
+  do,
+  filter,
+  group_by,
+  mutate,
+  n_distinct,
+  pull,
+  rowwise,
+  ungroup
+)
+importFrom(dryR,
+  dryseq_single,
+  f_24
+)
+importFrom(edgeR,
+  DGEList,
+  cpm,
+  filterByExpr,
+  normLibSizes,
+  voomLmFit
+)
+importFrom(future.apply,
+  future_apply,
+  future_lapply
+)
+importFrom(limma,
+  duplicateCorrelation,
+  eBayes,
+  lmFit,
+  removeBatchEffect,
+  topTable
+)
+importFrom(lme4,
+  .makeCC,
+  lmer,
+  lmerControl
+)
+importFrom(lmtest,lrtest)
+importFrom(pbkrtest,
+  KRmodcomp,
+  getKR
+)
+importFrom(rlang,
+  enquo,
+  eval_tidy,
+  quo_text
+)
 importFrom(tibble,tibble)
 importFrom(tidyr,complete)

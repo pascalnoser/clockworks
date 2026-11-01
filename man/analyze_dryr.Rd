@@ -4,13 +4,16 @@
 \alias{analyze_dryr}
 \title{Detect rhythmicity with dryR}
 \usage{
-analyze_dryr(cd, method_args = list())
+analyze_dryr(cd, method_args = list(), remove_batch_effects = TRUE)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
 \item{method_args}{Additional parameters passed to \code{dryR::f_24()} or
 \code{dryR::dryseq_single()}}
+
+\item{remove_batch_effects}{Logical. If \code{TRUE} and the data contain repeated
+measures, subject batch effects are removed before the analysis.}
 }
 \value{
 A list with the original and formatted results of the dryR analysis.

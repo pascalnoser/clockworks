@@ -4,10 +4,13 @@
 \alias{check_genecycle}
 \title{GeneCycle CircadianData check}
 \usage{
-check_genecycle(cd)
+check_genecycle(cd, remove_batch_effects = TRUE)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object}
+
+\item{remove_batch_effects}{Logical. If \code{TRUE} and the data contain repeated
+measures, subject batch effects are removed before the analysis.}
 }
 \value{
 A \code{CircadianData} object

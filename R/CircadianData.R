@@ -1116,9 +1116,7 @@ setReplaceMethod("colnames", "CircadianData", function(x, value) {
 #' @return A new, subsetted \code{CircadianData} object.
 #'
 #' @name CircadianData-subsetting
-#' @aliases
-#' [,CircadianData,ANY,ANY,ANY-method
-#' [.CircadianData
+#' @aliases [,CircadianData,ANY,ANY,ANY-method
 #'
 #' @examples
 #' # Sample Data
@@ -1578,9 +1576,6 @@ add_experiment_info <- function(
 #' }
 #'
 #' @name CircadianData-subset-expinfo
-#' @aliases [[,CircadianData,character,missing-method
-#'   [[<-,CircadianData,character,missing-method $,CircadianData-method
-#'   $<-,CircadianData-method
 #' @examples
 #' data("cw_data", package = "clockworks")
 #' data("cw_metadata", package = "clockworks")
