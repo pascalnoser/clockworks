@@ -6,11 +6,11 @@
 <!-- badges: start -->
 
 [![](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![](https://img.shields.io/badge/devel%20version-0.2.29-blue.svg)](https://github.com/pascalnoser/clockworks)
+[![](https://img.shields.io/badge/devel%20version-0.2.64-blue.svg)](https://github.com/pascalnoser/clockworks)
 [![](https://img.shields.io/github/languages/code-size/pascalnoser/clockworks.svg)](https://github.com/pascalnoser/clockworks)
 <!-- badges: end -->
 
-<img src="man/figures/clockworks_logo_v2.png" width="150" align="right"/>
+<img src="man/figures/clockworks_logo.png" width="150" align="right"/>
 
 > clockworks is an R package for streamlined rhythmicity detection in
 > time-series data. It serves as a wrapper for several popular analysis
@@ -63,8 +63,6 @@ Below is an example workflow using the synthetic data mentioned above:
 
 ``` r
 library(clockworks)
-#> Warning: replacing previous import 'lme4::lmer' by 'lmerTest::lmer' when
-#> loading 'RepeatedCircadian'
 
 # Load example data and meta data
 data("cw_data")
@@ -142,6 +140,15 @@ print(cd)
 #>  $ log_transformed: [1] FALSE
 #>  $ n_groups: [1] 2
 #>  $ repeated_measures: [1] FALSE
+#>  $ delta_t: [1] 2
+#>  $ n_cycles:
+#>     $A
+#>     [1] 2
+#>     
+#>     $B
+#>     [1] 2
+#>      
+#>  $ missing_data_fraction: [1] 0
 #>  $ n_replicates:
 #>     $A
 #>     
@@ -152,14 +159,6 @@ print(cd)
 #>     
 #>      0  2  4  6  8 10 12 14 16 18 20 22 24 26 28 30 32 34 36 38 40 42 44 46 
 #>      2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2 
-#>      
-#>  $ delta_t: [1] 2
-#>  $ n_cycles:
-#>     $A
-#>     [1] 2
-#>     
-#>     $B
-#>     [1] 2
 #>      
 #> 
 #> Wave Parameters:
@@ -185,7 +184,7 @@ p <- plot_feature(
 print(p)
 ```
 
-<img src="man/figures/plot_feature-1.png" width="75%" />
+<img src="man/figures/plot_feature-1.png" alt="" width="75%" />
 
 Since this is a ggplot2 object, it can be modified very easily.
 
@@ -209,20 +208,20 @@ columns across all methods will be returned:
 # Extract formatted (standardised) results
 res <- get_results(cd)
 head(res$RAIN)
-#>   feature group period_estimate         pval     pval_adj method hr_period
-#> 1 Gene_01     A              24 5.280247e-32 5.280247e-31   RAIN        24
-#> 2 Gene_02     A              24 2.513425e-29 1.256713e-28   RAIN        24
-#> 3 Gene_03     A              24 1.795976e-01 2.993293e-01   RAIN        24
-#> 4 Gene_04     A              24 8.390387e-02 2.097597e-01   RAIN        24
-#> 5 Gene_05     A              24 8.537546e-01 8.537546e-01   RAIN        24
-#> 6 Gene_06     A              24 2.138942e-02 7.129806e-02   RAIN        24
-#>   hr_phase_estimate hr_peak_time_estimate hr_mesor_estimate
-#> 1        11.4090051            11.4090051          4.301432
-#> 2         6.4617936             6.4617936          4.576863
-#> 3        13.9199917            13.9199917          5.886923
-#> 4         0.4821957             0.4821957          6.297386
-#> 5        13.3053857            13.3053857          6.056194
-#> 6         6.3201412             6.3201412          6.025998
+#>   feature group period_estimate phase_estimate         pval     pval_adj method
+#> 1 Gene_01     A              24             12 5.280247e-32 5.280247e-31   RAIN
+#> 2 Gene_02     A              24              6 2.513425e-29 1.256713e-28   RAIN
+#> 3 Gene_03     A              24             18 1.795976e-01 2.993293e-01   RAIN
+#> 4 Gene_04     A              24              2 8.390387e-02 2.097597e-01   RAIN
+#> 5 Gene_05     A              24              8 8.537546e-01 8.537546e-01   RAIN
+#> 6 Gene_06     A              24              6 2.138942e-02 7.129806e-02   RAIN
+#>   hr_period hr_phase_estimate hr_peak_time_estimate hr_mesor_estimate
+#> 1        24        11.4090051            11.4090051          4.301432
+#> 2        24         6.4617936             6.4617936          4.576863
+#> 3        24        13.9199917            13.9199917          5.886923
+#> 4        24         0.4821957             0.4821957          6.297386
+#> 5        24        13.3053857            13.3053857          6.056194
+#> 6        24         6.3201412             6.3201412          6.025998
 #>   hr_amplitude_estimate hr_relative_amplitude_estimate
 #> 1             0.7053057                     0.16396996
 #> 2             1.4168445                     0.30956671
