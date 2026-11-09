@@ -3176,6 +3176,257 @@ plot_feature <- function(
 }
 
 
+#' Plot a heatmap of feature expression over time
+#'
+#' Draws a heatmap with one row per feature and one column per time point.
+#' Samples taken at the same time point are averaged and, by default, every
+#' feature is z-scored across time so that rows with very different expression
+#' levels become comparable. Features are ordered by their phase, so rhythmic
+#' features appear as a diagonal band.
+#'
+#' @param cd A `CircadianData` object.
+#' @param features Character vector of feature names to include. If `NULL`
+#'   (default), all features are used (before any filtering by `method`).
+#' @param method Character. Name of a method in the results of `cd`. If given,
+#'   only features with an adjusted p-value below `pval_adj_cutoff` for this
+#'   method are shown. Note that this only affects *which* features are shown,
+#'   not how they are ordered (see `phase_from`). Default is `NULL` (no
+#'   filtering).
+#' @param pval_adj_cutoff Numeric. Adjusted p-value threshold used when
+#'   `method` is given. Defaults to 0.05.
+#' @param phase_from Character. Which phase estimates are used to order the
+#'   features. `"HR"` (default) uses the phases from the harmonic regression
+#'   that is available for every feature (see [get_wave_params()]).
+#'   `"method"` uses the phase estimates reported by the method given in
+#'   `method`, which therefore has to be provided and has to report phase
+#'   estimates.
+#' @param scale Logical. If `TRUE` (default), each feature is z-scored across
+#'   time points.
+#' @param groups Character. Name of the group to plot. Only needed if the
+#'   metadata contains more than one group, in which case exactly one group has
+#'   to be selected.
+#'
+#' @return A ggplot object. The colour scale and all other plot elements can be
+#'   modified like for any other ggplot object, e.g. by adding
+#'   `scale_fill_gradient2()` or `theme()`.
+#'
+#' @examples
+#' \dontrun{
+#'   # All features, ordered by the phase from harmonic regression
+#'   plot_heatmap(cd)
+#'
+#'   # Only features that are rhythmic according to RAIN
+#'   plot_heatmap(cd, method = "RAIN", pval_adj_cutoff = 0.05)
+#'
+#'   # Same features, but ordered by the phase estimated by RAIN
+#'   plot_heatmap(cd, method = "RAIN", phase_from = "method")
+#' }
+#'
+#' @import ggplot2
+#'
+#' @export
+plot_heatmap <- function(
+  cd,
+  features = NULL,
+  method = NULL,
+  pval_adj_cutoff = 0.05,
+  phase_from = c("HR", "method"),
+  scale = TRUE,
+  groups = NULL
+) {
+  # --- 1. Input Validation ---
+  phase_from <- match.arg(phase_from)
+
+  if (!is.logical(scale) || length(scale) != 1 || is.na(scale)) {
+    stop("'scale' must be a single logical value (TRUE or FALSE).")
+  }
+  if (phase_from == "method" && is.null(method)) {
+    stop("'method' must be provided if `phase_from = \"method\"`.")
+  }
+  if (!is.null(method)) {
+    if (!is.character(method) || length(method) != 1) {
+      stop("'method' must be a single character string.")
+    }
+    if (!method %in% names(results(cd))) {
+      stop("Method '", method, "' not found in results.")
+    }
+    if (
+      !is.numeric(pval_adj_cutoff) ||
+        length(pval_adj_cutoff) != 1 ||
+        is.na(pval_adj_cutoff) ||
+        pval_adj_cutoff < 0 ||
+        pval_adj_cutoff > 1
+    ) {
+      stop("'pval_adj_cutoff' must be a single numeric value between 0 and 1.")
+    }
+  }
+  if (!is.null(features)) {
+    if (!is.character(features)) {
+      stop("'features' must be a character vector.")
+    }
+    missing_features <- setdiff(features, rownames(cd))
+    if (length(missing_features) > 0) {
+      stop(
+        "The following features were not found in the dataset: ",
+        paste(utils::head(missing_features, 5), collapse = ", ")
+      )
+    }
+  }
+
+  # Convert to CPM if count data
+  if (experiment_info(cd)$data_type == "count") {
+    cd <- convert_to_cpm(cd)
+  }
+  mdata <- cd@metadata
+  dat <- cd@dataset
+
+  # Select group (if any)
+  has_group_col <- "group" %in% colnames(mdata)
+  group_sel <- NULL
+  sample_idx <- seq_len(nrow(mdata))
+  if (has_group_col) {
+    avail_groups <- unique(as.character(mdata$group))
+    if (is.null(groups)) {
+      if (length(avail_groups) > 1) {
+        stop(
+          "Metadata contains more than one group. Please select exactly one ",
+          "with the 'groups' argument. Available groups: ",
+          paste(avail_groups, collapse = ", ")
+        )
+      }
+      group_sel <- avail_groups
+    } else {
+      if (length(groups) != 1 || !groups %in% avail_groups) {
+        stop(
+          "'groups' must be a single group found in the metadata. ",
+          "Available groups: ",
+          paste(avail_groups, collapse = ", ")
+        )
+      }
+      group_sel <- groups
+      sample_idx <- which(as.character(mdata$group) == group_sel)
+    }
+  } else if (!is.null(groups)) {
+    stop("'groups' was provided, but metadata has no 'group' column.")
+  }
+
+  # --- 2. Select features ---
+  feats <- if (is.null(features)) rownames(dat) else features
+
+  df_res <- NULL
+  if (!is.null(method)) {
+    df_res <- get_results(cd, method, type = "formatted")
+    if (!is.null(group_sel) && "group" %in% colnames(df_res)) {
+      df_res <- df_res[as.character(df_res$group) == group_sel, , drop = FALSE]
+    }
+    sig_features <- df_res$feature[
+      !is.na(df_res$pval_adj) & df_res$pval_adj < pval_adj_cutoff
+    ]
+    feats <- feats[feats %in% sig_features]
+  }
+  if (length(feats) == 0) {
+    stop("No features left to plot after filtering.")
+  }
+
+  # --- 3. Average samples per time point and (optionally) z-score ---
+  times_all <- mdata$time[sample_idx]
+  times <- sort(unique(times_all))
+  dat_sel <- dat[feats, sample_idx, drop = FALSE]
+  mat <- do.call(
+    cbind,
+    lapply(times, function(t) {
+      rowMeans(dat_sel[, times_all == t, drop = FALSE], na.rm = TRUE)
+    })
+  )
+  rownames(mat) <- feats
+  colnames(mat) <- times
+
+  if (scale) {
+    row_means <- rowMeans(mat, na.rm = TRUE)
+    row_sds <- apply(mat, 1, stats::sd, na.rm = TRUE)
+    mat <- (mat - row_means) / row_sds
+    mat[!is.finite(mat)] <- 0 # constant features
+  }
+
+  # --- 4. Order features by phase ---
+  if (phase_from == "HR") {
+    w_params <- get_wave_params(cd)
+    if (nrow(w_params) == 0) {
+      stop(
+        "No wave parameters available to order features by phase. ",
+        "Please run `wave_params(cd) <- estimate_wave_params(cd)` and retry."
+      )
+    }
+    if (!is.null(group_sel) && "group" %in% colnames(w_params)) {
+      w_params <- w_params[
+        as.character(w_params$group) == group_sel,
+        ,
+        drop = FALSE
+      ]
+    }
+    idx <- match(rownames(mat), w_params$feature)
+    phase <- w_params$phase_estimate[idx] %% w_params$period[idx]
+  } else {
+    if (
+      !"phase_estimate" %in% colnames(df_res) ||
+        all(is.na(df_res$phase_estimate))
+    ) {
+      stop("Method '", method, "' does not report phase estimates.")
+    }
+    phase <- df_res$phase_estimate[match(rownames(mat), df_res$feature)]
+  }
+  mat <- mat[order(phase, na.last = TRUE), , drop = FALSE]
+
+  # --- 5. Create plot ---
+  n_feat <- nrow(mat)
+  df_plot <- data.frame(
+    time = rep(times, each = n_feat),
+    y = rep(rev(seq_len(n_feat)), times = length(times)), # first feature on top
+    value = as.vector(mat)
+  )
+
+  regular_times <- length(times) < 2 ||
+    all(abs(diff(times) - diff(times)[1]) < 1e-8)
+
+  p <- ggplot(df_plot, aes(x = time, y = y, fill = value))
+  if (regular_times) {
+    p <- p + geom_raster()
+  } else {
+    p <- p + geom_tile()
+  }
+
+  # Diverging colour scale. Z-scores beyond +-3 are shown in the extreme colours
+  scale_limits <- if (scale) c(-3, 3) else NULL
+  p <- p +
+    scale_fill_gradientn(
+      colours = c(
+        "#2166AC",
+        "#67A9CF",
+        "#D1E5F0",
+        "#F7F7F7",
+        "#FDDBC7",
+        "#EF8A62",
+        "#B2182B"
+      ),
+      limits = scale_limits,
+      oob = function(x, range) pmin(pmax(x, range[1]), range[2]),
+      name = if (scale) "Z-score" else "Expression"
+    ) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    labs(x = "Time", y = paste0("Features (n = ", n_feat, ")")) +
+    theme_minimal() +
+    theme(
+      panel.grid = element_blank(),
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.ticks.x = element_line()
+    )
+
+  return(p)
+}
+
+
 #' Create UpSet Plots Comparing Rhythm Detection Results
 #'
 #' Generates UpSet plots to visualize the overlap of significant features

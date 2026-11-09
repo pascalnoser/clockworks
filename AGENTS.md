@@ -12,10 +12,10 @@
 ## Key Dependencies
 
 **Wrapped rhythmicity methods** (each has its own `analyze_*.R` pipeline):
-CircaN, GeneCycle, MetaCycle, prain (ARSER), TimeCycle, diffCircadian, dryR, HarmonicRegression.
-RepeatedCircadian is only in Suggests: clockworks uses its own copy of `rpt_rhythmicity()` (see Open decisions).
+CircaN, GeneCycle, MetaCycle, prain (ARSER), TimeCycle, diffCircadian, dryR, RepeatedCircadian, HarmonicRegression.
+RepeatedCircadian must be at least commit 1cb4f66 (05.11.2026); older versions fail with lme4 >= 2.0.
 
-**Supporting packages**: edgeR, limma, lme4, lmtest, pbkrtest, DESeq2, nlme, dplyr, tidyr, readr, rlang, ggplot2, ComplexUpset, future, future.apply, methods
+**Supporting packages**: edgeR, limma, DESeq2, nlme, dplyr, tidyr, readr, rlang, ggplot2, ComplexUpset, future, future.apply, methods
 
 ---
 
@@ -142,7 +142,6 @@ Every `format_*` function produces a data frame with at least these columns:
 | `count_valid()` | `count_valid.R` | Count non-NA values and unique timepoints per feature |
 | `convert_to_cpm()` | `convert_to_cpm.R` | edgeR-based CPM/log-CPM normalisation |
 | `remove_batch_effects()` | `remove_batch_effects.R` | limma `removeBatchEffect()` for repeated measures (design: one mean per time point and group; per group if subjects are nested in groups) |
-| `rpt_rhythmicity()` | `rpt_rhythmicity.R` | Copy of `RepeatedCircadian::rpt_rhythmicity()` that works with lme4 >= 2.0 |
 | `estimate_wave_params()` | `CircadianData.R` | Harmonic regression (cosine fit) across all features |
 | `compute_relative_amplitude()` | `compute_relative_amplitude.R` | Back-transform amplitude when data is log-transformed |
 
@@ -221,12 +220,6 @@ rain_res <- get_results(cd, method = "RAIN")  # data frame for one method
 Benchmark results for these come from ClockWorksBenchmark (`paper_Norm_rep`); see the
 "clockworks, repeated measures" item in its AGENTS.md.
 
-- **Own copy of `rpt_rhythmicity()`** (`R/rpt_rhythmicity.R`, added 01.11.2026).
-  `RepeatedCircadian::rpt_rhythmicity()` fails for every feature with lme4 >= 2.0, because it passes
-  `formals(isSingular)$tol` (now the call `getSingTol()`) to `lme4::.makeCC()`. The copy uses
-  `tol = 1e-4` and gives identical results (checked on 300 fits, LR and F, incl. singular fits, NAs and
-  unbalanced designs). An issue was to be reported upstream. If RepeatedCircadian is fixed, consider
-  switching back and moving it from Suggests to Imports again.
 - **RAIN `method = "longitudinal"` vs `"independent"`.** `prepare_rain()` uses `"longitudinal"` whenever
   there are repeated measures (also with 1 subject). Neither mode uses subject IDs; small simulations
   suggest `"independent"` has more power and better calibration on 24 h designs. Choose the default

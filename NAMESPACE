@@ -13,6 +13,7 @@ export(get_results)
 export(get_wave_params)
 export(order_samples)
 export(plot_feature)
+export(plot_heatmap)
 export(plot_phase_estimates)
 export(plot_upset)
 exportClasses(CircadianData)
@@ -47,6 +48,7 @@ importFrom(MetaCycle,
   meta2d,
   meta3d
 )
+importFrom(RepeatedCircadian,rpt_rhythmicity)
 importFrom(TimeCycle,TimeCycle)
 importFrom(dplyr,
   count,
@@ -81,16 +83,6 @@ importFrom(limma,
   lmFit,
   removeBatchEffect,
   topTable
-)
-importFrom(lme4,
-  .makeCC,
-  lmer,
-  lmerControl
-)
-importFrom(lmtest,lrtest)
-importFrom(pbkrtest,
-  KRmodcomp,
-  getKR
 )
 importFrom(rlang,
   enquo,
