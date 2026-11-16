@@ -22,7 +22,16 @@ CircadianData(
 \item{dataset}{A data frame or numeric matrix with features as rows and
 samples as columns. Must have column names (sample IDs).}
 
-\item{metadata}{A data frame containing sample annotations.}
+\item{metadata}{A data frame containing sample annotations. The columns
+given by \code{colname_time}, \code{colname_group} and \code{colname_subject} are renamed
+to the standard names \code{time}, \code{group} and \code{subject_ID}, and the sample IDs
+(\code{colname_sample}) become the row names. All other columns (e.g. sex or
+tissue) are kept unchanged after the standard columns and can be used in
+\code{filter_samples()}. These additional columns must not use a name that
+clockworks uses internally: \code{time}, \code{group}, \code{subject_ID}, \code{norm_factors},
+\code{.internal_sample_id}, \code{ind}, \code{sample}, \code{replicate}, \code{time_replicate},
+\code{time_sin}, \code{time_cos} or \code{SampleID}. Otherwise an error is thrown and the
+column has to be renamed (or mapped via the matching \verb{colname_*} argument).}
 
 \item{colname_sample}{A character string specifying the name of the column in
 \code{metadata} that contains the sample IDs. These IDs must be unique and match
@@ -78,7 +87,8 @@ meta_df <- data.frame(
   sample_id = paste0("Sample", 1:8),
   zeitgeber_time = rep(c(0,6,12,18), each=2),
   condition = rep(c("WT", "KO"), 4),
-  mouse_id = rep(1:4, 2)
+  mouse_id = rep(1:4, 2),
+  sex = rep(c("F", "M"), each = 4)
 )
 
 # Create the object, mapping user column names to standard internal names
@@ -92,7 +102,8 @@ cd_obj <- CircadianData(
 )
 
 print(cd_obj)
-# Note how metadata columns have been renamed and standardized
+# Note how metadata columns have been renamed and standardized. The
+# additional column `sex` is kept after the standard columns.
 head(get_metadata(cd_obj))
 
 }

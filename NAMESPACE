@@ -84,6 +84,7 @@ importFrom(limma,
   topTable
 )
 importFrom(rlang,
+  .env,
   enquo,
   eval_tidy,
   quo_text

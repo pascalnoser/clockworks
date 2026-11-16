@@ -11,7 +11,11 @@ filter_samples(cd_obj, filter_expr, recalc_delta_t = TRUE, renormalise = TRUE)
 
 \item{filter_expr}{An expression that evaluates to a logical vector within
 the context of the object's metadata. Use meta data column names
-directly in the expression.}
+directly in the expression: the standard columns \code{time}, \code{group} and
+\code{subject_ID}, as well as any additional columns of the \code{metadata} passed
+to \code{CircadianData()} (e.g. \code{sex == "F"}). To refer to a variable of the
+calling environment that has the same name as a metadata column, use
+\code{.env$name}.}
 
 \item{recalc_delta_t}{A logical value. If \code{TRUE}, the sampling interval
 (\code{delta_t}) will be re-estimated from the remaining time points after

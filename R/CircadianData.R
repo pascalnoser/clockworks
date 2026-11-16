@@ -172,7 +172,16 @@ setValidity("CircadianData", function(object) {
 #'
 #' @param dataset A data frame or numeric matrix with features as rows and
 #'   samples as columns. Must have column names (sample IDs).
-#' @param metadata A data frame containing sample annotations.
+#' @param metadata A data frame containing sample annotations. The columns
+#'   given by `colname_time`, `colname_group` and `colname_subject` are renamed
+#'   to the standard names `time`, `group` and `subject_ID`, and the sample IDs
+#'   (`colname_sample`) become the row names. All other columns (e.g. sex or
+#'   tissue) are kept unchanged after the standard columns and can be used in
+#'   `filter_samples()`. These additional columns must not use a name that
+#'   clockworks uses internally: `time`, `group`, `subject_ID`, `norm_factors`,
+#'   `.internal_sample_id`, `ind`, `sample`, `replicate`, `time_replicate`,
+#'   `time_sin`, `time_cos` or `SampleID`. Otherwise an error is thrown and the
+#'   column has to be renamed (or mapped via the matching `colname_*` argument).
 #' @param colname_time A character string specifying the name of the column in
 #'   `metadata` that contains the time information (e.g., collection time). This
 #'   column must be numeric.
@@ -212,7 +221,8 @@ setValidity("CircadianData", function(object) {
 #'   sample_id = paste0("Sample", 1:8),
 #'   zeitgeber_time = rep(c(0,6,12,18), each=2),
 #'   condition = rep(c("WT", "KO"), 4),
-#'   mouse_id = rep(1:4, 2)
+#'   mouse_id = rep(1:4, 2),
+#'   sex = rep(c("F", "M"), each = 4)
 #' )
 #'
 #' # Create the object, mapping user column names to standard internal names
@@ -226,7 +236,8 @@ setValidity("CircadianData", function(object) {
 #' )
 #'
 #' print(cd_obj)
-#' # Note how metadata columns have been renamed and standardized
+#' # Note how metadata columns have been renamed and standardized. The
+#' # additional column `sex` is kept after the standard columns.
 #' head(get_metadata(cd_obj))
 #'
 CircadianData <- function(
@@ -335,10 +346,14 @@ CircadianData <- function(
   ## -- 1.2 Ensure it's a data frame and not e.g. a tibble or data.table --
   metadata <- as.data.frame(metadata)
 
+  # Column names as given by the user (before adding `.internal_sample_id`)
+  user_cnames <- colnames(metadata)
+
   ## -- 1.3 Check if columns are present --
   ### 1.3a Required columns (`colname_sample` and `colname_time`)
   # Handle case where sample IDs are in the rownames
-  if (colname_sample == "rownames") {
+  sample_ids_from_rownames <- colname_sample == "rownames"
+  if (sample_ids_from_rownames) {
     if (is.null(rownames(metadata))) {
       stop(
         "`colname_sample` is 'rownames', but metadata has no row names.",
@@ -400,6 +415,21 @@ CircadianData <- function(
     )
   }
 
+  ## -- 1.3c Check additional columns for clashes with internal column names --
+  # Use the user's column names and the original `colname_sample` so that a
+  # user column called `.internal_sample_id` is caught, while the one added
+  # for `colname_sample = "rownames"` is not treated as an additional column
+  colname_sample_user <- if (sample_ids_from_rownames) "rownames" else colname_sample
+  mapped_cols <- c(colname_sample_user, colname_time, colname_group, colname_subject)
+  if (anyDuplicated(mapped_cols) > 0) {
+    stop(
+      "`colname_sample`, `colname_time`, `colname_group` and `colname_subject` ",
+      "must refer to different columns.",
+      call. = FALSE
+    )
+  }
+  extra_cols <- check_extra_metadata_cols(user_cnames, mapped_cols)
+
   ## -- 1.4 Check if the values in colname_time are numeric --
   if (!is.numeric(metadata[[colname_time]])) {
     stop(
@@ -451,21 +481,7 @@ CircadianData <- function(
     colname_subject <- NULL
   }
 
-  ## -- 1.7 Warn the user that additional columns will be ignored --
-  ignored_cols <- setdiff(
-    cnames,
-    c(colname_time, colname_sample, colname_group, colname_subject)
-  )
-  if (length(ignored_cols) > 0) {
-    message_cols <- paste0(
-      "\nThe following columns in `metadata` will be ignored: ",
-      paste(ignored_cols, collapse = ", ")
-    )
-
-    message(paste0(message_cols, "\n"))
-  }
-
-  ## -- 1.8 Standardize Metadata: Select and rename columns ---
+  ## -- 1.7 Standardize Metadata: Select and rename columns ---
   # TODO: Enforce type `factor` for group and subject ID?
   final_meta <- data.frame(row.names = as.character(metadata[[colname_sample]]))
   final_meta$time <- metadata[[colname_time]]
@@ -474,6 +490,12 @@ CircadianData <- function(
   }
   if (!is.null(colname_subject)) {
     final_meta$subject_ID <- as.factor(metadata[[colname_subject]])
+  }
+
+  ## -- 1.8 Keep additional columns (unchanged, after the standard columns) --
+  # Names were checked for clashes with internal column names in 1.2b
+  for (col in extra_cols) {
+    final_meta[[col]] <- metadata[[col]]
   }
 
   # === 2. Dataset Processing and Validation ===
@@ -2071,7 +2093,11 @@ setMethod(
 #' @param cd_obj A \code{CircadianData} object.
 #' @param filter_expr An expression that evaluates to a logical vector within
 #'   the context of the object's metadata. Use meta data column names
-#'   directly in the expression.
+#'   directly in the expression: the standard columns `time`, `group` and
+#'   `subject_ID`, as well as any additional columns of the `metadata` passed
+#'   to `CircadianData()` (e.g. `sex == "F"`). To refer to a variable of the
+#'   calling environment that has the same name as a metadata column, use
+#'   `.env$name`.
 #' @param recalc_delta_t A logical value. If `TRUE`, the sampling interval
 #'   (`delta_t`) will be re-estimated from the remaining time points after
 #'   filtering. Defaults to `TRUE`.
@@ -2081,7 +2107,7 @@ setMethod(
 #' @return A new \code{CircadianData} object containing only the samples that
 #'   satisfy the `filter_expr`.
 #'
-#' @importFrom rlang enquo eval_tidy quo_text
+#' @importFrom rlang enquo eval_tidy quo_text .env
 #' @export
 #' @examples
 #' # --- Setup ----

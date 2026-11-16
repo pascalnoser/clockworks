@@ -10,7 +10,7 @@
 #' @returns A list with inputs for `execute_circan()`
 prepare_circan <- function(cd, grp) {
   # Filter CD object by group
-  cd_filt <- filter_samples(cd, group == grp, renormalise = FALSE)
+  cd_filt <- filter_samples(cd, group == .env$grp, renormalise = FALSE)
 
   # Prepare data (must be a data frame with features as first column)
   df_data <- data.frame(
