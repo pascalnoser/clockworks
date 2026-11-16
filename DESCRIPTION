@@ -56,6 +56,9 @@ Remotes:
     RepeatedCircadian/RepeatedCircadian,
     krassowski/complex-upset,
     pascalnoser/prain
-Depends: 
+Depends:
     R (>= 3.5)
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.1

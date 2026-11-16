@@ -1777,6 +1777,9 @@ estimate_wave_params <- function(
         cos(omega * time),
         sin(omega * time)
       )
+      # Set floating point noise (e.g. sin(pi) = 1.2e-16) to 0. Otherwise the
+      # rank check below misses a sin or cos column that should be 0
+      X[abs(X) < 1e-10] <- 0
 
       # Solve linear model using QR decomposition
       # This computes coefficients for ALL features at once:
@@ -1822,6 +1825,8 @@ estimate_wave_params <- function(
         cos(omega * time),
         sin(omega * time)
       )
+      # Set floating point noise to 0 (see above)
+      X_full[abs(X_full) < 1e-10] <- 0
 
       res_list <- apply(mat, 1, function(y) {
         ok <- !is.na(y) & !is.na(time)
