@@ -4,11 +4,11 @@
 #' data columns necessary to run rhythmicity detection with dryR.
 #'
 #' @param cd A `CircadianData` object
-#' @param remove_batch_effects Logical. If `TRUE` and the data contain repeated
+#' @param batch_correction Logical. If `TRUE` and the data contain repeated
 #'   measures, subject batch effects are removed before the analysis.
 #'
 #' @returns A `CircadianData` object
-check_dryr <- function(cd, remove_batch_effects = TRUE) {
+check_dryr <- function(cd, batch_correction = TRUE) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
@@ -19,7 +19,7 @@ check_dryr <- function(cd, remove_batch_effects = TRUE) {
   # off by the user)
   # TODO: Figure out what to do if we have count data and removing batch
   # effects results in negative values
-  if (cd_local$repeated_measures == TRUE && isTRUE(remove_batch_effects)) {
+  if (cd_local$repeated_measures == TRUE && isTRUE(batch_correction)) {
     cd_local <- remove_batch_effects(cd_local)
   }
 
@@ -45,7 +45,7 @@ check_dryr <- function(cd, remove_batch_effects = TRUE) {
   }
 
   # Remove potential results to allow for filtering of CD object later on
-  results(cd_local) <- list()
+  cd_local@results <- list()
 
   return(cd_local)
 }

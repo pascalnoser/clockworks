@@ -2,7 +2,7 @@
 
 ## Package Overview
 
-- **Package**: `clockworks` (v0.2.62)
+- **Package**: `clockworks` (version: see `DESCRIPTION`)
 - **Author**: Pascal Noser (noser.pascal95@gmail.com)
 - **License**: MIT
 - **Purpose**: A unified wrapper for multiple circadian-rhythm / rhythmicity-detection R packages. Provides consistent input/output formatting so that 13 different detection methods can be run with a single function call and return comparable, standardised results.
@@ -43,17 +43,19 @@ CircadianData(
   colname_time,     # column in metadata with numeric time values
   colname_group     = NULL,
   colname_subject   = NULL,
-  data_type         = "normalized",   # or "count"
-  log_transformed   = TRUE,
-  period            = c(20, 28)       # expected circadian period range in hours
+  period            = 24,       # single value, range c(min, max), or NA (no period)
+  data_type         = "norm",   # or "count"
+  filter_counts     = FALSE,    # edgeR::filterByExpr() for count data
+  log_transformed   = FALSE,
+  log_base          = NULL      # defaults to 2 if log_transformed = TRUE
 )
 ```
 
 The constructor:
-1. Maps user column names to internal standardised names (`time`, `group`, `subject`).
+1. Maps user column names to internal standardised names (`time`, `group`, `subject_ID`).
 2. Validates that dataset columns match metadata rows.
 3. Auto-calculates `experiment_info` (delta_t, n_cycles, n_replicates, etc.).
-4. Runs `estimate_wave_params()` — harmonic regression on all features — and stores results in `@wave_params`.
+4. Runs `estimate_wave_params()` — harmonic regression on all features — and stores results in `@wave_params` (skipped if `period = NA`).
 
 ---
 
@@ -62,7 +64,7 @@ The constructor:
 | Function | Description |
 |----------|-------------|
 | `CircadianData(...)` | Constructor — creates and validates a `CircadianData` object |
-| `clockworks(cd, method, method_args = list(), remove_batch_effects = TRUE)` | Run a rhythmicity-detection method; returns updated `cd` |
+| `clockworks(cd, method, method_args = list(), batch_correction = TRUE)` | Run a rhythmicity-detection method; returns updated `cd` |
 | `get_results(cd, method = NULL)` | Extract results list (or a specific method's data frame) |
 | `get_dataset(cd)` | Return `@dataset` matrix |
 | `get_metadata(cd)` | Return `@metadata` data frame |
@@ -199,7 +201,7 @@ cd <- CircadianData(
   colname_time   = "Time",
   colname_group  = "Group",
   colname_subject = "Subject_ID",
-  data_type      = "normalized",
+  data_type      = "norm",
   log_transformed = TRUE,
   period         = c(20, 28)
 )
@@ -224,7 +226,7 @@ Benchmark results for these come from ClockWorksBenchmark (`paper_Norm_rep`); se
   there are repeated measures (also with 1 subject). Neither mode uses subject IDs; small simulations
   suggest `"independent"` has more power and better calibration on 24 h designs. Choose the default
   after the benchmark comparison.
-- **Subject batch removal on or off by default.** `clockworks(remove_batch_effects = TRUE)` is the current
+- **Subject batch removal on or off by default.** `clockworks(batch_correction = TRUE)` is the current
   default. After removal, methods test as if samples were independent and do not lose the
   n_subjects - 1 degrees of freedom used for the subject means, so parametric methods (diffCircadian,
   dryR) are slightly anti-conservative. Decide from the benchmark.

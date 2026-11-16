@@ -37,8 +37,7 @@ importFrom(ComplexUpset,upset)
 importFrom(DESeq2,
   DESeq,
   DESeqDataSetFromMatrix,
-  counts,
-  results
+  counts
 )
 importFrom(GeneCycle,
   robust.g.test,

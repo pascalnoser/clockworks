@@ -4,14 +4,14 @@
 \alias{analyze_ls}
 \title{Detect rhythmicity with Lomb-Scargle}
 \usage{
-analyze_ls(cd, method_args = list(), remove_batch_effects = TRUE)
+analyze_ls(cd, method_args = list(), batch_correction = TRUE)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object.}
 
 \item{method_args}{Additional parameters passed to \verb{<method_function>}}
 
-\item{remove_batch_effects}{Logical. If \code{TRUE} and the data contain repeated
+\item{batch_correction}{Logical. If \code{TRUE} and the data contain repeated
 measures, subject batch effects are removed before the analysis.}
 }
 \value{

@@ -45,7 +45,7 @@ check_circan <- function(cd) {
   cd_local <- order_samples(cd_local, c("time", "group", "ind"))
 
   # Remove potential results to allow for filtering of CD object later on
-  results(cd_local) <- list()
+  cd_local@results <- list()
 
   return(cd_local)
 }

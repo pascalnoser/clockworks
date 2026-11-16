@@ -4,12 +4,12 @@
 \alias{check_diffcircadian}
 \title{diffCircadian CircadianData check}
 \usage{
-check_diffcircadian(cd, remove_batch_effects = TRUE)
+check_diffcircadian(cd, batch_correction = TRUE)
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object}
 
-\item{remove_batch_effects}{Logical. If \code{TRUE} and the data contain repeated
+\item{batch_correction}{Logical. If \code{TRUE} and the data contain repeated
 measures, subject batch effects are removed before the analysis.}
 }
 \value{

@@ -4,12 +4,12 @@
 \alias{estimate_wave_params}
 \title{Estimating cosine Wave Parameters}
 \usage{
-estimate_wave_params(cd_obj, remove_batch_effects = FALSE, logCPM = "auto")
+estimate_wave_params(cd_obj, batch_correction = FALSE, logCPM = "auto")
 }
 \arguments{
 \item{cd_obj}{A \code{CircadianData} object}
 
-\item{remove_batch_effects}{Logical. If \code{TRUE}, subject batch effects will be
+\item{batch_correction}{Logical. If \code{TRUE}, subject batch effects will be
 removed before estimating the wave parameters.}
 
 \item{logCPM}{Logical or "auto". If \code{TRUE}, the data will be converted to

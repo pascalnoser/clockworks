@@ -4,13 +4,16 @@
 \alias{check_genecycle}
 \title{GeneCycle CircadianData check}
 \usage{
-check_genecycle(cd, remove_batch_effects = TRUE)
+check_genecycle(cd, batch_correction = TRUE, method_args = list())
 }
 \arguments{
 \item{cd}{A \code{CircadianData} object}
 
-\item{remove_batch_effects}{Logical. If \code{TRUE} and the data contain repeated
+\item{batch_correction}{Logical. If \code{TRUE} and the data contain repeated
 measures, subject batch effects are removed before the analysis.}
+
+\item{method_args}{The \code{method_args} passed to \code{clockworks()}. Used to check
+if GeneCycle is run without a period (no warning about a period range).}
 }
 \value{
 A \code{CircadianData} object

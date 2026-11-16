@@ -49,7 +49,7 @@ check_limorhyde <- function(cd) {
   }
 
   # Remove potential results to allow for filtering of CD object later on
-  results(cd_local) <- list()
+  cd_local@results <- list()
 
   return(cd_local)
 }

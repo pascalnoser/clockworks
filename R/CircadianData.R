@@ -634,7 +634,7 @@ CircadianData <- function(
   if (cd_obj$repeated_measures == TRUE) {
     df_wave_params_corrected <- estimate_wave_params(
       cd_obj,
-      remove_batch_effects = TRUE
+      batch_correction = TRUE
     )
     wave_params(cd_obj) <- list(
       original = df_wave_params_orig,
@@ -824,22 +824,6 @@ get_wave_params <- function(cd, version = "auto") {
 
 
 ## ---- Results ----
-### ---- Internal S4 Methods ----
-setGeneric("results", function(x) standardGeneric("results"))
-
-setMethod("results", "CircadianData", function(x) x@results)
-
-setGeneric("results<-", function(x, value) standardGeneric("results<-"))
-
-setReplaceMethod("results", "CircadianData", function(x, value) {
-  if (!is.list(value)) {
-    stop("'value' must be a list.")
-  }
-  x@results <- value
-  validObject(x)
-  x
-})
-
 ### ---- Exported Accessor ----
 #' Extract Results From a CircadianData Object
 #'
@@ -888,7 +872,7 @@ get_results <- function(
   type <- match.arg(type)
 
   # Extract available methods
-  methods_available <- names(results(cd))
+  methods_available <- names(cd@results)
 
   # Throw error if no results available
   if (length(methods_available) == 0) {
@@ -907,7 +891,7 @@ get_results <- function(
 
   # Helper to extract for a single method
   extract_one <- function(m) {
-    res <- results(cd)[[m]]
+    res <- cd@results[[m]]
     switch(
       type,
       formatted = res$res_formatted,
@@ -928,7 +912,7 @@ get_results <- function(
       return(extract_one(methods_available[1]))
     } else {
       # Return the whole slot
-      return(results(cd))
+      return(cd@results)
     }
   }
 
@@ -1185,7 +1169,7 @@ setMethod(
   c("CircadianData", "ANY", "ANY", "ANY"),
   function(x, i, j, ..., drop = FALSE) {
     # Throw error if results slot is not empty
-    if (length(results(x)) > 0) {
+    if (length(x@results) > 0) {
       stop(
         "Cannot subset object because it would invalidate stored results. ",
         "Consider subsetting first and re-running the analysis on the subsetted data.",
@@ -1316,7 +1300,7 @@ setMethod(
 
     # ## -- Results Subsetting --
     # # Only keep results of selected features
-    # new_results <- results(x)
+    # new_results <- x@results
     # if (update_features && length(new_results) > 0) {
     #   # Warn user that only formatted results will be subsetted and that p-values are no longer valid
     #   warning(
@@ -1341,7 +1325,7 @@ setMethod(
     # }
 
     # # If samples are changed, warn the user that the results will no longer be valid and need to be re-run on the subsetted data
-    # if (update_samples && length(results(x)) > 0) {
+    # if (update_samples && length(x@results) > 0) {
     #   warning(
     #     "Stored results are likely no longer valid because samples have been changed. ",
     #     "Consider re-running rhythm detection methods on the subsetted data.",
@@ -1381,7 +1365,7 @@ setMethod(
       if (x_new$repeated_measures == TRUE) {
         df_wave_params_corrected <- estimate_wave_params(
           x_new,
-          remove_batch_effects = TRUE
+          batch_correction = TRUE
         )
         wave_params(x_new) <- list(
           original = df_wave_params_orig,
@@ -1689,7 +1673,7 @@ setMethod("$<-", "CircadianData", function(x, name, value) {
 #' each feature using harmonic regression.
 #'
 #' @param cd_obj A `CircadianData` object
-#' @param remove_batch_effects Logical. If `TRUE`, subject batch effects will be
+#' @param batch_correction Logical. If `TRUE`, subject batch effects will be
 #'   removed before estimating the wave parameters.
 #' @param logCPM Logical or "auto". If `TRUE`, the data will be converted to
 #'   logCPM values before estimating the wave parameters. If "auto", logCPM will
@@ -1704,7 +1688,7 @@ setMethod("$<-", "CircadianData", function(x, name, value) {
 #' @returns A data frame with estimated cosine wave parameters for every feature.
 estimate_wave_params <- function(
   cd_obj,
-  remove_batch_effects = FALSE,
+  batch_correction = FALSE,
   logCPM = "auto"
 ) {
   if (!logCPM %in% c(TRUE, FALSE, "auto")) {
@@ -1730,7 +1714,7 @@ estimate_wave_params <- function(
   }
 
   # If requested, remove batch effects first
-  if (isTRUE(remove_batch_effects)) {
+  if (isTRUE(batch_correction)) {
     cd_obj <- remove_batch_effects(cd_obj, verbose = FALSE)
   }
 
@@ -1978,7 +1962,7 @@ estimate_wave_params <- function(
 # dependency, especially since `HarmonicRegression` is not on CRAN.
 estimate_wave_params_HarmonicRegression <- function(
   cd_obj,
-  remove_batch_effects = FALSE,
+  batch_correction = FALSE,
   logCPM = "auto"
 ) {
   logCPM <- match.arg(logCPM, c(TRUE, FALSE, "auto"))
@@ -2002,7 +1986,7 @@ estimate_wave_params_HarmonicRegression <- function(
   }
 
   # If requested, remove batch effects first
-  if (isTRUE(remove_batch_effects)) {
+  if (isTRUE(batch_correction)) {
     cd_obj <- remove_batch_effects(cd_obj, verbose = FALSE)
   }
 
@@ -2296,7 +2280,7 @@ setMethod(
       metadata = new_metadata,
       experiment_info = experiment_info(x),
       wave_params = wave_params(x),
-      results = results(x)
+      results = x@results
     )
   }
 )
@@ -2367,7 +2351,7 @@ filter_samples <- function(
   }
 
   # Check that there are no stored results, as these would no longer be valid after filtering
-  if (length(results(cd_obj)) > 0) {
+  if (length(cd_obj@results) > 0) {
     stop(
       "Cannot filter samples because it would invalidate stored results. ",
       "Consider filtering first and re-running the analysis on the filtered data.",
@@ -2564,7 +2548,7 @@ setMethod("show", "CircadianData", function(object) {
 
   # --- Results Info ---
   cat("\nResults:\n")
-  res <- results(object)
+  res <- object@results
   if (length(res) > 0) {
     cat(" Stored results for:", paste(names(res), collapse = ", "), "\n")
   } else {
@@ -2666,7 +2650,7 @@ plot_phase_estimates <- function(
   }
 
   # --- 2. p-value filtering ---
-  res_methods <- names(results(cd))
+  res_methods <- names(cd@results)
 
   if (pval_adj_cutoff < 1 & is.na(method)) {
     if (length(res_methods) == 1) {
@@ -3179,8 +3163,7 @@ plot_feature <- function(
             shape = 21,
             size = point_size,
             colour = "black"
-          ) +
-          guides(fill = guide_legend(title = "Subject ID"))
+          )
       }
     } else {
       # Points coloured by group
@@ -3231,10 +3214,21 @@ plot_feature <- function(
       )
   }
 
-  p <- p + scale_fill_discrete(name = "group")
+  # With one group and repeated measures, points are coloured by subject, so
+  # keep that legend (and hide the duplicate one of the subject lines)
+  fill_by_subject <- plot_type == "points" &&
+    has_repeated_measures &&
+    !multiple_groups
 
-  if (!multiple_groups) {
-    p <- p + guides(fill = "none")
+  if (fill_by_subject) {
+    p <- p +
+      scale_fill_discrete(name = "Subject ID") +
+      guides(colour = "none")
+  } else {
+    p <- p + scale_fill_discrete(name = "group")
+    if (!multiple_groups) {
+      p <- p + guides(fill = "none")
+    }
   }
 
   return(p)
@@ -3312,7 +3306,7 @@ plot_heatmap <- function(
     if (!is.character(method) || length(method) != 1) {
       stop("'method' must be a single character string.")
     }
-    if (!method %in% names(results(cd))) {
+    if (!method %in% names(cd@results)) {
       stop("Method '", method, "' not found in results.")
     }
     if (
@@ -3618,7 +3612,7 @@ plot_upset <- function(
     if (!is.character(methods)) {
       stop("'methods' must be a character vector.")
     }
-    available_methods <- names(results(cd))
+    available_methods <- names(cd@results)
     missing_methods <- setdiff(methods, available_methods)
     if (length(missing_methods) > 0) {
       stop(
@@ -3653,7 +3647,7 @@ plot_upset <- function(
   }
 
   # Return early if no results available
-  if (length(results(cd)) == 0) {
+  if (length(cd@results) == 0) {
     stop("No results available in the CircadianData object.")
   }
 
@@ -3675,10 +3669,10 @@ plot_upset <- function(
   }
 
   # Return early if compare = "methods" but only one method in results, or only one method selected
-  if (compare == "methods" && length(results(cd)) == 1) {
+  if (compare == "methods" && length(cd@results) == 1) {
     stop(
       "Only one method found in results, so cannot compare methods. Found method: ",
-      paste(names(results(cd)), collapse = ", ")
+      paste(names(cd@results), collapse = ", ")
     )
   }
   if (compare == "methods" && !is.null(methods) && length(methods) == 1) {
@@ -3690,7 +3684,7 @@ plot_upset <- function(
   # --- 1. Prepare Data for Plotting --
   # Get results (always as a named list, `get_results()` returns a data frame
   # if there is only one method)
-  ls_res <- lapply(results(cd), `[[`, "res_formatted")
+  ls_res <- lapply(cd@results, `[[`, "res_formatted")
 
   # Get list of significant/top features for each method and group
   ls_features_mg <- lapply(ls_res, function(res_df) {

@@ -4,11 +4,11 @@
 #' data columns necessary to run rhythmicity detection with ARSER.
 #'
 #' @param cd A `CircadianData` object
-#' @param remove_batch_effects Logical. If `TRUE` and the data contain repeated
+#' @param batch_correction Logical. If `TRUE` and the data contain repeated
 #'   measures, subject batch effects are removed before the analysis.
 #'
 #' @returns A `CircadianData` object
-check_arser <- function(cd, remove_batch_effects = TRUE) {
+check_arser <- function(cd, batch_correction = TRUE) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
@@ -28,7 +28,7 @@ check_arser <- function(cd, remove_batch_effects = TRUE) {
 
   # If we have repeated measures, remove subject batch effect (unless turned
   # off by the user)
-  if (cd_local$repeated_measures == TRUE && isTRUE(remove_batch_effects)) {
+  if (cd_local$repeated_measures == TRUE && isTRUE(batch_correction)) {
     cd_local <- remove_batch_effects(cd_local)
   }
 
@@ -80,7 +80,7 @@ check_arser <- function(cd, remove_batch_effects = TRUE) {
   }
 
   # Remove potential results to allow for filtering of CD object later on
-  results(cd_local) <- list()
+  cd_local@results <- list()
 
   return(cd_local)
 }

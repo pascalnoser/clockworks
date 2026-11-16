@@ -42,8 +42,10 @@ designs.}
 
 \item{period}{A numeric vector of length 1 or 2 specifying the period range
 of interest. If \code{clockworks()} is ran with a method that requires a single
-value and \code{period} is a vector of length 2, the mean value will be used.
-Defaults to 24.}
+value and \code{period} is a vector of length 2, the mean value will be used
+(with a warning). Use \code{NA} if no period should be defined. In that case,
+the wave parameters are not estimated and only methods that do not need a
+period (GeneCycle) can be used. Defaults to 24.}
 
 \item{data_type}{A character string specifying the data type. Must be one of
 "count" or "norm". Defaults to "norm" if not already set.}

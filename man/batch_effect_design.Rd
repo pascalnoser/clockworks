@@ -13,7 +13,8 @@ batch_effect_design(time, group, subject, period)
 
 \item{subject}{Vector of subject IDs}
 
-\item{period}{Period used for the fallback harmonic regression design}
+\item{period}{Period used for the fallback harmonic regression design
+(\code{NA} if no period is defined, then this fallback is skipped)}
 }
 \value{
 A design matrix
