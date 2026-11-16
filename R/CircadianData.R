@@ -104,7 +104,7 @@ setValidity("CircadianData", function(object) {
   )
 
   if (length(exp_info) > 0) {
-    if (!is.na(exp_info$n_groups) && exp_info$n_groups > 1) {
+    if (isTRUE(exp_info$n_groups > 1)) {
       required_cols <- c(required_cols, "group")
     }
   }
@@ -187,8 +187,10 @@ setValidity("CircadianData", function(object) {
 #'   designs.
 #' @param period A numeric vector of length 1 or 2 specifying the period range
 #'   of interest. If `clockworks()` is ran with a method that requires a single
-#'   value and `period` is a vector of length 2, the mean value will be used.
-#'   Defaults to 24.
+#'   value and `period` is a vector of length 2, the mean value will be used
+#'   (with a warning). Use `NA` if no period should be defined. In that case,
+#'   the wave parameters are not estimated and only methods that do not need a
+#'   period (GeneCycle) can be used. Defaults to 24.
 #' @param data_type A character string specifying the data type. Must be one of
 #'   "count" or "norm". Defaults to "norm" if not already set.
 #' @param filter_counts A logical value specifying whether lowly expressed
@@ -276,12 +278,7 @@ CircadianData <- function(
   }
 
   # Check period
-  if (!is.numeric(period) || length(period) > 2) {
-    stop(
-      "'period' must be a numeric vector of length 1 or 2.",
-      call. = FALSE
-    )
-  }
+  check_period(period)
 
   # Check data_type
   if (!data_type %in% c("count", "norm")) {
@@ -301,6 +298,18 @@ CircadianData <- function(
   ) {
     stop(
       "'filter_counts' must be a logical value (TRUE or FALSE).",
+      call. = FALSE
+    )
+  }
+
+  # Check log_transformed
+  if (
+    !is.logical(log_transformed) ||
+      length(log_transformed) != 1 ||
+      is.na(log_transformed)
+  ) {
+    stop(
+      "'log_transformed' must be a logical value (TRUE or FALSE).",
       call. = FALSE
     )
   }
@@ -398,9 +407,18 @@ CircadianData <- function(
         "Column '",
         colname_time,
         "' of `metadata` is of type ",
-        class(metadata[[colname_time]]),
+        paste(class(metadata[[colname_time]]), collapse = "/"),
         ". The column defined as `colname_time` in `metadata` must be of type numeric."
       ),
+      call. = FALSE
+    )
+  }
+  if (any(!is.finite(metadata[[colname_time]]))) {
+    stop(
+      "Column '",
+      colname_time,
+      "' of `metadata` contains missing or non-finite values. ",
+      "Please remove these samples or provide their time.",
       call. = FALSE
     )
   }
@@ -515,6 +533,27 @@ CircadianData <- function(
     )
   }
 
+  if (anyDuplicated(dset_samples) > 0) {
+    stop(
+      "Column names (sample IDs) of 'dataset' must be unique. Duplicated: ",
+      paste(unique(dset_samples[duplicated(dset_samples)]), collapse = ", "),
+      call. = FALSE
+    )
+  }
+  if (anyDuplicated(rownames(dataset)) > 0) {
+    stop(
+      "Row names (feature IDs) of 'dataset' must be unique. Duplicated: ",
+      paste(
+        utils::head(
+          unique(rownames(dataset)[duplicated(rownames(dataset))]),
+          5
+        ),
+        collapse = ", "
+      ),
+      call. = FALSE
+    )
+  }
+
   missing_in_meta <- setdiff(dset_samples, meta_samples)
   if (length(missing_in_meta) > 0) {
     stop(
@@ -577,6 +616,17 @@ CircadianData <- function(
   validate_exp_info(cd_obj)
 
   # === 7. Run Harmonic Regression ===
+  # The harmonic regression needs a period, so skip it if there is none
+  if (is_no_period(cd_obj$period)) {
+    warning(
+      "No period defined (`period = NA`). The wave parameters (harmonic ",
+      "regression) will not be estimated, and only methods that do not need a ",
+      "period (GeneCycle) can be used with `clockworks()`.",
+      call. = FALSE
+    )
+    return(cd_obj)
+  }
+
   # Estimate wave parameters on original data
   df_wave_params_orig <- estimate_wave_params(cd_obj)
 
@@ -991,26 +1041,14 @@ setReplaceMethod("dimnames", "CircadianData", function(x, value) {
   if (!is.list(value) || length(value) != 2) {
     stop("'value' must be a list of length 2 (row names, column names).")
   }
-  rn <- value[[1]] # Feature names
-  cn <- value[[2]] # Sample names
-
-  if (!is.null(rn)) {
-    if (length(rn) != nrow(x)) {
-      stop("Incorrect number of row names (features) provided.")
-    }
-    rownames(x@dataset) <- rn
+  # Delegate to the rownames/colnames methods so that wave parameters and
+  # results are kept in sync as well
+  if (!is.null(value[[1]])) {
+    rownames(x) <- value[[1]]
   }
-  if (!is.null(cn)) {
-    if (length(cn) != ncol(x)) {
-      stop("Incorrect number of column names (samples) provided.")
-    }
-    # Sync names
-    colnames(x@dataset) <- cn
-    rownames(x@metadata) <- cn
+  if (!is.null(value[[2]])) {
+    colnames(x) <- value[[2]]
   }
-
-  # Check validity after modification
-  validObject(x)
   x
 })
 
@@ -1023,54 +1061,45 @@ setReplaceMethod("rownames", "CircadianData", function(x, value) {
   if (length(value) != nrow(x)) {
     stop("Incorrect number of row names (features) provided.")
   }
+  if (anyNA(value) || anyDuplicated(value) > 0) {
+    stop("Row names (features) must be unique and not NA.")
+  }
+  value <- as.character(value)
+  old_names <- rownames(x@dataset)
+
+  # Map old to new feature names by name, not by position, because wave
+  # parameters and results are not necessarily in the order of the dataset
+  rename <- function(features) {
+    idx <- match(features, old_names)
+    out <- as.character(features)
+    out[!is.na(idx)] <- value[idx[!is.na(idx)]]
+    out
+  }
+
   # -- Dataset --
   rownames(x@dataset) <- value
 
   # -- Wave parameters --
-  if (length(wave_params(x)) > 0) {
-    for (version in names(wave_params(x))) {
-      w_params <- wave_params(x)[[version]]
-      if (nrow(w_params) > 0) {
-        if ("group" %in% colnames(w_params)) {
-          # Split by group, update feature names, recombine
-          split_params <- split(w_params, w_params$group)
-          split_params <- lapply(split_params, function(df) {
-            df$feature <- value
-            df
-          })
-          w_params <- do.call(rbind, split_params)
-          rownames(w_params) <- NULL
-        } else {
-          w_params$feature <- value
-        }
-      }
-      wave_params(x)[[version]] <- w_params
+  for (version in names(x@wave_params)) {
+    w_params <- x@wave_params[[version]]
+    if (nrow(w_params) > 0) {
+      w_params$feature <- rename(w_params$feature)
+      x@wave_params[[version]] <- w_params
     }
   }
 
   # -- Results --
-  if (length(results(x)) > 0) {
+  if (length(x@results) > 0) {
     # Warn user that feature names will only be updated in formatted results
     warning(
       "Updating feature names in formatted results only. Original method outputs will not be modified.",
       call. = FALSE
     )
-    for (method in names(results(x))) {
-      res_formatted <- results(x)[[method]]$res_formatted
-      if (nrow(res_formatted) > 0) {
-        if ("group" %in% colnames(res_formatted)) {
-          # Split by group, update feature names, recombine
-          split_results <- split(res_formatted, res_formatted$group)
-          split_results <- lapply(split_results, function(df) {
-            df$feature <- value
-            df
-          })
-          res_formatted <- do.call(rbind, split_results)
-          rownames(res_formatted) <- NULL
-        } else {
-          res_formatted$feature <- value
-        }
-        results(x)[[method]]$res_formatted <- res_formatted
+    for (method in names(x@results)) {
+      res_formatted <- x@results[[method]]$res_formatted
+      if (is.data.frame(res_formatted) && nrow(res_formatted) > 0) {
+        res_formatted$feature <- rename(res_formatted$feature)
+        x@results[[method]]$res_formatted <- res_formatted
       }
     }
   }
@@ -1343,7 +1372,8 @@ setMethod(
     )
 
     ## -- Recalculate wave parameters if needed --
-    if (update_wave_params) {
+    # Note: Not possible without a period
+    if (update_wave_params && !is_no_period(x_new$period)) {
       # Estimate wave parameters on the original data
       df_wave_params_orig <- estimate_wave_params(x_new)
 
@@ -1415,9 +1445,7 @@ add_experiment_info <- function(
 
   # --- Period ---
   if (!is.null(period)) {
-    if (!is.numeric(period) || !(length(period) %in% c(1, 2))) {
-      stop("'period' must be a numeric vector of length 1 or 2.", call. = FALSE)
-    }
+    check_period(period)
     exp_info$period <- period
   } else if (is.null(exp_info$period)) {
     message("`period` not provided. Using default value of 24.")
@@ -1480,16 +1508,20 @@ add_experiment_info <- function(
   # --- Sampling interval ---
   if (estimate_delta_t) {
     # Extract time differences
-    delta_ts <- diff(sort(unique(mdata$time)))
+    # Round to avoid floating point differences (e.g. 2.4 - 2.0 != 0.4)
+    delta_ts <- round(diff(sort(unique(mdata$time))), 10)
     if (length(delta_ts) == 0) {
       exp_info$delta_t <- NA
     } else {
       delta_freqs <- sort(table(delta_ts), decreasing = TRUE)
       delta_t_unique <- as.numeric(names(delta_freqs))
       most_common <- delta_t_unique[1]
+      # Other intervals must be multiples of the most common one (with a
+      # tolerance for floating point errors, e.g. 0.8 %% 0.4 != 0)
+      ratios <- delta_t_unique[-1] / most_common
       if (
         length(delta_t_unique) == 1 ||
-          all(delta_t_unique[-1] %% most_common == 0)
+          all(abs(ratios - round(ratios)) < 1e-6)
       ) {
         exp_info$delta_t <- most_common
       } else {
@@ -1709,6 +1741,13 @@ estimate_wave_params <- function(
   t_min <- min(mdata_orig$time)
 
   # Get period
+  if (is_no_period(cd_obj$period)) {
+    stop(
+      "The wave parameters cannot be estimated without a period. Please set ",
+      "a `period` (e.g. with `add_experiment_info()`).",
+      call. = FALSE
+    )
+  }
   per <- mean(cd_obj$period)
 
   # Add temporary group if there is no group column
@@ -1758,7 +1797,15 @@ estimate_wave_params <- function(
       # Solve linear model using QR decomposition
       # This computes coefficients for ALL features at once:
       # beta = (X'X)^(-1) X'Y, but more numerically stable
-      beta <- qr.solve(X, Y) # 3 x features
+      # If the design is rank deficient (e.g. fewer than 3 distinct phases),
+      # the wave parameters cannot be estimated and are set to NA
+      qr_X <- qr(X)
+      if (qr_X$rank < ncol(X)) {
+        beta <- matrix(NA_real_, nrow = ncol(X), ncol = ncol(Y))
+      } else {
+        beta <- qr.coef(qr_X, Y) # 3 x features
+      }
+      beta <- matrix(beta, nrow = ncol(X)) # Keep matrix shape for 1 feature
 
       # Extract coefficients
       m <- beta[1, ]
@@ -1803,8 +1850,12 @@ estimate_wave_params <- function(
         X <- X_full[ok, , drop = FALSE]
         y_ok <- y[ok]
 
-        # Fit using QR solve
-        coefs <- qr.solve(X, y_ok)
+        # Fit using QR decomposition, NA if the design is rank deficient
+        qr_X <- qr(X)
+        if (qr_X$rank < ncol(X)) {
+          return(c(mesor = NA, amplitude = NA, phase = NA))
+        }
+        coefs <- qr.coef(qr_X, y_ok)
 
         m <- coefs[[1]]
         a <- coefs[[2]]
@@ -1962,6 +2013,13 @@ estimate_wave_params_HarmonicRegression <- function(
   t_min <- min(mdata_orig$time)
 
   # Get period
+  if (is_no_period(cd_obj$period)) {
+    stop(
+      "The wave parameters cannot be estimated without a period. Please set ",
+      "a `period` (e.g. with `add_experiment_info()`).",
+      call. = FALSE
+    )
+  }
   per <- mean(cd_obj$period)
 
   # Add temporary group if there is no group column
@@ -2597,11 +2655,13 @@ plot_phase_estimates <- function(
   df_params <- get_wave_params(cd)
   per <- mean(experiment_info(cd)$period)
 
-  # Stop and tell user to run wave fit if not done so
-  if (ncol(df_params) == 0) {
+  # Wave parameters are estimated when the object is created, unless no period
+  # is defined
+  if (is_no_period(experiment_info(cd)$period)) {
     stop(
-      "No wave parameters detected. Please run ",
-      "`wave_parameters(cd) <- estimate_wave_params(cd)` and retry."
+      "Phase estimates are not available because no period is defined ",
+      "(`period = NA`). Create the object with a period to use this plot.",
+      call. = FALSE
     )
   }
 
@@ -2634,8 +2694,12 @@ plot_phase_estimates <- function(
     } else {
       # Get results
       df_res <- get_results(cd, method, type = "formatted")
-      # Filter by adjusted p-value
-      df_res <- df_res[df_res$pval_adj < pval_adj_cutoff, ]
+      # Filter by adjusted p-value (a cutoff of 1 keeps all features)
+      if (pval_adj_cutoff < 1) {
+        df_res <- df_res[
+          !is.na(df_res$pval_adj) & df_res$pval_adj < pval_adj_cutoff,
+        ]
+      }
       # Filter wave params data frame
       df_params <- df_params[
         paste(df_params$feature, df_params$group) %in%
@@ -2980,8 +3044,8 @@ plot_feature <- function(
   summary_df <- df_plot |>
     dplyr::group_by(time, group) |>
     dplyr::summarise(
-      mean = mean(value),
-      sd = sd(value),
+      mean = mean(value, na.rm = TRUE),
+      sd = stats::sd(value, na.rm = TRUE),
       .groups = "drop"
     )
 
@@ -3018,7 +3082,8 @@ plot_feature <- function(
   }
 
   # --- 5. Add Cosine Wave (Behind Points) ---
-  if (add_wave && nrow(w_params) > 0) {
+  # No wave parameters if no period is defined
+  if (add_wave && !is.null(w_params) && nrow(w_params) > 0) {
     wp <- w_params |>
       dplyr::filter(feature == !!feature)
 
@@ -3350,13 +3415,17 @@ plot_heatmap <- function(
 
   # --- 4. Order features by phase ---
   if (phase_from == "HR") {
-    w_params <- get_wave_params(cd)
-    if (nrow(w_params) == 0) {
+    # Wave parameters are estimated when the object is created, unless no
+    # period is defined
+    if (is_no_period(experiment_info(cd)$period)) {
       stop(
-        "No wave parameters available to order features by phase. ",
-        "Please run `wave_params(cd) <- estimate_wave_params(cd)` and retry."
+        "Features cannot be ordered by the harmonic regression phase because ",
+        "no period is defined (`period = NA`). Use `phase_from = \"method\"` ",
+        "with a method that reports phase estimates instead.",
+        call. = FALSE
       )
     }
+    w_params <- get_wave_params(cd)
     if (!is.null(group_sel) && "group" %in% colnames(w_params)) {
       w_params <- w_params[
         as.character(w_params$group) == group_sel,
@@ -3619,8 +3688,9 @@ plot_upset <- function(
   }
 
   # --- 1. Prepare Data for Plotting --
-  # Get results
-  ls_res <- get_results(cd)
+  # Get results (always as a named list, `get_results()` returns a data frame
+  # if there is only one method)
+  ls_res <- lapply(results(cd), `[[`, "res_formatted")
 
   # Get list of significant/top features for each method and group
   ls_features_mg <- lapply(ls_res, function(res_df) {
@@ -3640,7 +3710,9 @@ plot_upset <- function(
       }
     } else {
       # If no n_features specified, filter by p-value cutoff
-      df_filt <- res_df[res_df$pval_adj < pval_adj_cutoff, ]
+      df_filt <- res_df[
+        !is.na(res_df$pval_adj) & res_df$pval_adj < pval_adj_cutoff,
+      ]
     }
 
     # Create a list of significant/top features for each group (or all samples if no group column)
@@ -3687,11 +3759,19 @@ plot_upset <- function(
     # Get unique features across all lists in this method/group
     unique_features <- unique(unlist(lst))
 
-    # Create a binary matrix for this method/group
-    mat <- sapply(lst, function(features) {
-      as.integer(unique_features %in% features)
-    })
-    rownames(mat) <- unique_features
+    # Create a binary matrix for this method/group (vapply keeps the matrix
+    # shape if there are 0 or 1 features)
+    mat <- vapply(
+      lst,
+      function(features) as.integer(unique_features %in% features),
+      integer(length(unique_features))
+    )
+    mat <- matrix(
+      mat,
+      nrow = length(unique_features),
+      ncol = length(lst),
+      dimnames = list(unique_features, names(lst))
+    )
     return(as.data.frame(mat))
   })
 
@@ -3700,6 +3780,17 @@ plot_upset <- function(
   for (i_name in names(ls_features)) {
     # Get the binary data frame for this method/group
     binary_df <- ls_binary[[i_name]]
+
+    # Skip if no features pass the filter in any set
+    if (nrow(binary_df) == 0) {
+      warning(
+        "No significant features for '",
+        i_name,
+        "'. Skipping this plot.",
+        call. = FALSE
+      )
+      next
+    }
 
     # Count number of features in each intersecting set
     all_sets <- aggregate(
