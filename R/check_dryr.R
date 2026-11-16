@@ -12,6 +12,9 @@ check_dryr <- function(cd, remove_batch_effects = TRUE) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
+  # dryR can only test a single period, so use the mean if a range is given
+  cd_local <- use_mean_period(cd_local, "dryR")
+
   # If we have repeated measures, remove subject batch effect (unless turned
   # off by the user)
   # TODO: Figure out what to do if we have count data and removing batch

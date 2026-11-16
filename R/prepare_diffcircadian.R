@@ -49,7 +49,7 @@ prepare_diffcircadian <- function(cd) {
   # Create named list to return
   inputs <- list(
     dat = df_reshaped,
-    period = mean(cd$period),
+    period = cd$period,
     method = "LR",
     FN = TRUE
   )

@@ -45,7 +45,7 @@ prepare_arser <- function(cd, grp) {
     timepoints = timepoints,
     minper = min(cd_filt$period),
     maxper = max(cd_filt$period),
-    ARSdefaultPer = mean(cd_filt$period), # Must be minper < ARSdefaultPer > maxper
+    ARSdefaultPer = mean(cd_filt$period), # Must be minper <= ARSdefaultPer <= maxper
     cycMethod = "ARS",
     parallelize = FALSE,
     nCores = 1,

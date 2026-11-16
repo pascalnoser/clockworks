@@ -10,6 +10,9 @@ check_repeatedcircadian <- function(cd) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
+  # RepeatedCircadian can only test a single period, so use the mean if a range is given
+  cd_local <- use_mean_period(cd_local, "RepeatedCircadian")
+
   # If for some reason the user has picked this method but there are no repeated
   # measures, throw an error.
   if (cd_local$repeated_measures == FALSE) {

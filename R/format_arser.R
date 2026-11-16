@@ -10,11 +10,13 @@
 #'   is `TRUE`.
 #'
 #' @returns A list of data frames containing the original and formatted results
-format_arser <- function(ls_res_groups,
-                         w_params,
-                         added_group,
-                         log_transformed = FALSE,
-                         log_base = 2) {
+format_arser <- function(
+  ls_res_groups,
+  w_params,
+  added_group,
+  log_transformed = FALSE,
+  log_base = 2
+) {
   # TODO: Probably remove `log_transformed` and `log_base` parameters since we
   # will likely only report the relative amplitude from the harmonic regression.
   # Alternatively, uncomment the relative amplitude calculation below.
@@ -24,7 +26,7 @@ format_arser <- function(ls_res_groups,
   res_original <- lapply(method_names, function(x) {
     dfs <- lapply(ls_res_groups, `[[`, x)
     df_combined <- do.call(rbind, dfs)
-    rownames(df_combined) = NULL
+    rownames(df_combined) <- NULL
     return(df_combined)
   })
   names(res_original) <- method_names
@@ -43,13 +45,16 @@ format_arser <- function(ls_res_groups,
   # }
 
   # Create formatted results data frame
+  # Note: If the chosen period is a range instead of just one number and ARSER found multiple
+  # fits with different periods, then the period, phase, and amplitude in df_meta are automatically
+  # the ones corresponding to the component with the highest amplitude
   res_formatted <- data.frame(
     feature = df_ars$CycID,
     group = df_ars$group,
-    period_estimate = as.numeric(df_ars$period),
-    phase_estimate = as.numeric(df_ars$phase), # Identical to ARS_adjphase from df_meta
+    period_estimate = df_meta$ARS_period,
+    phase_estimate = df_meta$ARS_adjphase,
     mesor_estimate = df_ars$mean,
-    amplitude_estimate = as.numeric(df_ars$amplitude),
+    amplitude_estimate = df_meta$ARS_amplitude,
     # relative_amplitude_estimate = rel_amp,
     pval = df_ars$pvalue,
     pval_adj = df_ars$fdr_BH,
@@ -57,21 +62,23 @@ format_arser <- function(ls_res_groups,
   )
 
   # Add wave parameters
-  merge_cols <- intersect(c("feature", "group"), colnames(w_params))
-  colnames(w_params) <- paste0("hr_", colnames(w_params))
-  res_formatted <- merge(
-    x = res_formatted,
-    y = w_params,
-    by.x = merge_cols,
-    by.y = paste0("hr_", merge_cols),
-    all.x = TRUE, # should not make a difference but just to be safe
-    sort = FALSE
-  )
+  # Note: No longer added because the wave parameters are stored in the
+  # `wave_params` slot of the CircadianData object (see `get_wave_params()`)
+  # merge_cols <- intersect(c("feature", "group"), colnames(w_params))
+  # colnames(w_params) <- paste0("hr_", colnames(w_params))
+  # res_formatted <- merge(
+  #   x = res_formatted,
+  #   y = w_params,
+  #   by.x = merge_cols,
+  #   by.y = paste0("hr_", merge_cols),
+  #   all.x = TRUE, # should not make a difference but just to be safe
+  #   sort = FALSE
+  # )
 
   # Remove group column if added temporarily by check function at the start
   if (added_group == TRUE) {
     res_formatted$group <- NULL
-    res_original <- lapply(res_original, function(df){
+    res_original <- lapply(res_original, function(df) {
       df$group <- NULL
       return(df)
     })

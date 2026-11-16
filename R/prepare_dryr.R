@@ -17,7 +17,7 @@ prepare_dryr <- function(cd, grp) {
     inputs <- list(
       data = get_dataset(cd_filt),
       time = get_metadata(cd_filt)$time,
-      period = mean(cd_filt$period),
+      period = cd_filt$period,
       method = "f_24" # will be removed later
     )
   } else if (cd_filt$data_type == "count") {
@@ -30,7 +30,7 @@ prepare_dryr <- function(cd, grp) {
     inputs <- list(
       countData = get_dataset(cd_filt),
       time = get_metadata(cd_filt)$time,
-      period = mean(cd_filt$period),
+      period = cd_filt$period,
       group = get_metadata(cd_filt)$group,
       single = grp,
       method = "dryseq_single" # will be removed later

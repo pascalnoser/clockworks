@@ -37,7 +37,7 @@ prepare_timecycle <- function(cd, grp) {
   inputs <- list(
     data = get_dataset(cd_filt),
     repLabel = repLabel,
-    period = mean(cd_filt$period),
+    period = cd_filt$period,
     # cores = 1, # TODO: Figure out what do to with this
     maxLag = maxLag
   )

@@ -61,11 +61,22 @@ clockworks <- function(
   # === Ensure required experiment info is present ===
   validate_exp_info(cd)
 
+  # === Ensure a period is defined for methods that need one ===
+  if (is_no_period(cd$period) && method != "GeneCycle") {
+    stop(
+      "The method '", method, "' requires a period, but no period is defined ",
+      "(`period = NA`). Please set a single period or a range of periods ",
+      "(e.g. with `add_experiment_info()`), or use a method that does not need ",
+      "a period (GeneCycle).",
+      call. = FALSE
+    )
+  }
+
   # === Add wave parameters if not already present ===
   # TODO: Can probably remove this since `esimtate_wave_params()` is ran
   # whenever a new CD object is created now.
   w_params <- get_wave_params(cd)
-  if (length(w_params) == 0) {
+  if (length(w_params) == 0 && !is_no_period(cd$period)) {
     wave_params(cd) <- estimate_wave_params(cd)
   }
 

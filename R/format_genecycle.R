@@ -32,16 +32,18 @@ format_genecycle <- function(ls_res_groups, w_params, added_group) {
   )
 
   # Add wave parameters
-  merge_cols <- intersect(c("feature", "group"), colnames(w_params))
-  colnames(w_params) <- paste0("hr_", colnames(w_params))
-  res_formatted <- merge(
-    x = res_formatted,
-    y = w_params,
-    by.x = merge_cols,
-    by.y = paste0("hr_", merge_cols),
-    all.x = TRUE, # should not make a difference but just to be safe
-    sort = FALSE
-  )
+  # Note: No longer added because the wave parameters are stored in the
+  # `wave_params` slot of the CircadianData object (see `get_wave_params()`)
+  # merge_cols <- intersect(c("feature", "group"), colnames(w_params))
+  # colnames(w_params) <- paste0("hr_", colnames(w_params))
+  # res_formatted <- merge(
+  #   x = res_formatted,
+  #   y = w_params,
+  #   by.x = merge_cols,
+  #   by.y = paste0("hr_", merge_cols),
+  #   all.x = TRUE, # should not make a difference but just to be safe
+  #   sort = FALSE
+  # )
 
   # Remove group column if added temporarily by check function at the start
   if (added_group == TRUE) {

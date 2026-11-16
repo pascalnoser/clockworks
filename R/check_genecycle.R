@@ -6,11 +6,29 @@
 #' @param cd A `CircadianData` object
 #' @param remove_batch_effects Logical. If `TRUE` and the data contain repeated
 #'   measures, subject batch effects are removed before the analysis.
+#' @param method_args The `method_args` passed to `clockworks()`. Used to check
+#'   if GeneCycle is run without a period (no warning about a period range).
 #'
 #' @returns A `CircadianData` object
-check_genecycle <- function(cd, remove_batch_effects = TRUE) {
+check_genecycle <- function(
+  cd,
+  remove_batch_effects = TRUE,
+  method_args = list()
+) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
+
+  # GeneCycle tests a single period, unless the user runs it without a period
+  # ('index = NA' for the rank-based or 'periodicity.time = FALSE' for the
+  # regression-based algorithm). Use the mean (with a warning) if a range is
+  # given, unless the period is not used anyway.
+  period_free <- (
+    "index" %in% names(method_args) && isTRUE(is.na(method_args$index))
+  ) ||
+    isFALSE(method_args$periodicity.time)
+  if (!period_free) {
+    cd_local <- use_mean_period(cd_local, "GeneCycle")
+  }
 
   # Turn to logCPM values if we have count data
   if (cd_local$data_type == "count") {

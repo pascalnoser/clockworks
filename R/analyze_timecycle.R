@@ -9,8 +9,14 @@
 #'
 #' @returns A list with the original and formatted results of the TimeCycle
 #'   analysis.
-analyze_timecycle <- function(cd, method_args = list(),
-                              remove_batch_effects = TRUE) {
+analyze_timecycle <- function(
+  cd,
+  method_args = list(),
+  remove_batch_effects = TRUE
+) {
+  # TODO: Mention somehwere in documentation that TimeCycle seems to test periods
+  # other than the one defined by `period`.
+
   # Check if cd object contains necessary columns and add them if not
   cd_local <- check_timecycle(cd, remove_batch_effects)
 
@@ -34,7 +40,11 @@ analyze_timecycle <- function(cd, method_args = list(),
   }
 
   # Pass number of resamplings to formatting function to correct p-values (10000 is default)
-  resamplings <- ifelse("resamplings" %in% names(method_args), method_args[["resamplings"]], 10000)
+  resamplings <- ifelse(
+    "resamplings" %in% names(method_args),
+    method_args[["resamplings"]],
+    10000
+  )
 
   # Postprocessing
   ls_res <- format_timecycle(

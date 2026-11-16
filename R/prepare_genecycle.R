@@ -44,7 +44,8 @@ prepare_genecycle <- function(cd, grp) {
       algorithm = "rank",
       t = timepoints, # Only relevant for "regression" but doesn't change anything for "rank"
       # noOfPermutations = 300,
-      periodicity.time = mean(cd_filt$period)
+      # FALSE runs the regression-based algorithm without a period
+      periodicity.time = if (is_no_period(cd_filt$period)) FALSE else cd_filt$period
     ),
     gtest = list(
       y = NULL, # Will be output of `robust.spectrum()`

@@ -8,10 +8,13 @@
 #'   measures, subject batch effects are removed before the analysis.
 #'
 #' @returns A list with the original and formatted results of the GeneCycle analysis.
-analyze_genecycle <- function(cd, method_args = list(),
-                              remove_batch_effects = TRUE) {
+analyze_genecycle <- function(
+  cd,
+  method_args = list(),
+  remove_batch_effects = TRUE
+) {
   # Check if cd object contains necessary columns and add them if not
-  cd_local <- check_genecycle(cd, remove_batch_effects)
+  cd_local <- check_genecycle(cd, remove_batch_effects, method_args)
 
   # Remove group column later if added temporarily by check
   added_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)

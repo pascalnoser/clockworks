@@ -28,16 +28,18 @@ format_meta3d <- function(ls_res, w_params, meta3d_method) {
   )
 
   # Add wave parameters
-  merge_cols <- intersect(c("feature", "group"), colnames(w_params))
-  colnames(w_params) <- paste0("hr_", colnames(w_params))
-  res_formatted <- merge(
-    x = res_formatted,
-    y = w_params,
-    by.x = merge_cols,
-    by.y = paste0("hr_", merge_cols),
-    all.x = TRUE, # should not make a difference but just to be safe
-    sort = FALSE
-  )
+  # Note: No longer added because the wave parameters are stored in the
+  # `wave_params` slot of the CircadianData object (see `get_wave_params()`)
+  # merge_cols <- intersect(c("feature", "group"), colnames(w_params))
+  # colnames(w_params) <- paste0("hr_", colnames(w_params))
+  # res_formatted <- merge(
+  #   x = res_formatted,
+  #   y = w_params,
+  #   by.x = merge_cols,
+  #   by.y = paste0("hr_", merge_cols),
+  #   all.x = TRUE, # should not make a difference but just to be safe
+  #   sort = FALSE
+  # )
 
   # Remove group column if there were no groups
   if (length(ls_res) == 1 && all(ls_res[[1]]$group == "AllSubjects")) {

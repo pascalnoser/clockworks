@@ -10,13 +10,16 @@ check_limorhyde <- function(cd) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
+  # LimoRhyde can only test a single period, so use the mean if a range is given
+  cd_local <- use_mean_period(cd_local, "LimoRhyde")
+
   # Get sine and cosine component
   df_meta_temp <- get_metadata(cd_local)
   df_meta_temp$time_sin <- sin(
-    2 * pi / mean(cd_local$period) * df_meta_temp$time
+    2 * pi / cd_local$period * df_meta_temp$time
   )
   df_meta_temp$time_cos <- cos(
-    2 * pi / mean(cd_local$period) * df_meta_temp$time
+    2 * pi / cd_local$period * df_meta_temp$time
   )
 
   # Add to meta data

@@ -6,7 +6,6 @@
 #'   analysis.
 #' @param t_min The minimum time point in the input data.
 #' @param detlat The time interval between consecutive time points in the input data.
-#' @param period The period used for the RAIN analysis.
 #' @param added_group If TRUE the "group" column will be removed.
 #'
 #' @returns A list of data frames containing the original and formatted results
@@ -15,7 +14,6 @@ format_rain <- function(
   w_params,
   t_min,
   deltat,
-  period,
   added_group
 ) {
   # Turn into one data frame
@@ -37,7 +35,7 @@ format_rain <- function(
   # point to get the correct phase estimates. This way, the phase estimates
   # are equal to the peak times (bounded between 0 and the period).
   phase_original <- res_original$phase
-  phase_estimate <- (phase_original - deltat + t_min) %% period
+  phase_estimate <- (phase_original - deltat + t_min) %% res_original$period
 
   # Create formatted results data frame
   res_formatted <- data.frame(
@@ -51,16 +49,18 @@ format_rain <- function(
   )
 
   # Add wave parameters
-  merge_cols <- intersect(c("feature", "group"), colnames(w_params))
-  colnames(w_params) <- paste0("hr_", colnames(w_params))
-  res_formatted <- merge(
-    x = res_formatted,
-    y = w_params,
-    by.x = merge_cols,
-    by.y = paste0("hr_", merge_cols),
-    all.x = TRUE, # should not make a difference but just to be safe
-    sort = FALSE
-  )
+  # Note: No longer added because the wave parameters are stored in the
+  # `wave_params` slot of the CircadianData object (see `get_wave_params()`)
+  # merge_cols <- intersect(c("feature", "group"), colnames(w_params))
+  # colnames(w_params) <- paste0("hr_", colnames(w_params))
+  # res_formatted <- merge(
+  #   x = res_formatted,
+  #   y = w_params,
+  #   by.x = merge_cols,
+  #   by.y = paste0("hr_", merge_cols),
+  #   all.x = TRUE, # should not make a difference but just to be safe
+  #   sort = FALSE
+  # )
 
   # Remove group column if added temporarily by check function at the start
   if (added_group == TRUE) {

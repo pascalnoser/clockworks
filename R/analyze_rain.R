@@ -8,8 +8,11 @@
 #'   measures, subject batch effects are removed before the analysis.
 #'
 #' @returns A list with the original and formatted results of the RAIN analysis.
-analyze_rain <- function(cd, method_args = list(),
-                         remove_batch_effects = TRUE) {
+analyze_rain <- function(
+  cd,
+  method_args = list(),
+  remove_batch_effects = TRUE
+) {
   # Check if cd object contains necessary columns and add them if not
   cd_local <- check_rain(cd, remove_batch_effects)
 
@@ -38,7 +41,6 @@ analyze_rain <- function(cd, method_args = list(),
     w_params = get_wave_params(cd_local),
     t_min = min(get_metadata(cd_local)[["time"]]),
     deltat = cd_local$delta_t,
-    period = cd_local$period,
     added_group = added_group
   )
 

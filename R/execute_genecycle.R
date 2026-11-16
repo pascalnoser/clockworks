@@ -63,8 +63,9 @@ execute_genecycle <- function(
   gtest_inputs <- utils::modifyList(inputs$gtest, gtest_user_args)
 
   # If user set 'index = NA' remove it (NA or NULL do not work, index just needs
-  # to be missing for expected behaviour)
-  if (is.na(gtest_inputs$index)) {
+  # to be missing for expected behaviour). It is also not set at all if no
+  # period is defined or the number of cycles is unknown.
+  if (isTRUE(is.na(gtest_inputs$index))) {
     gtest_inputs$index <- NULL
   }
 

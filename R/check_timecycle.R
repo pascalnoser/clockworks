@@ -12,6 +12,9 @@ check_timecycle <- function(cd, remove_batch_effects = TRUE) {
   # Create local copy of cd to prevent accidental changes to main object
   cd_local <- cd
 
+  # TimeCycle can only test a single period, so use the mean if a range is given
+  cd_local <- use_mean_period(cd_local, "TimeCycle")
+
   # Turn to logCPM values if we have count data
   if (cd_local$data_type == "count") {
     cd_local <- convert_to_cpm(cd_local, log = TRUE)

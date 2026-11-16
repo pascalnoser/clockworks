@@ -98,6 +98,7 @@ remove_batch_effects <- function(cd, verbose = TRUE) {
 #' @param group Vector of sample groups
 #' @param subject Vector of subject IDs
 #' @param period Period used for the fallback harmonic regression design
+#'   (`NA` if no period is defined, then this fallback is skipped)
 #'
 #' @returns A design matrix
 batch_effect_design <- function(time, group, subject, period) {
@@ -121,15 +122,18 @@ batch_effect_design <- function(time, group, subject, period) {
     return(design)
   }
 
-  # Fallback: harmonic regression (per group if there are several groups)
-  cos_t <- cos(2 * pi * time / period)
-  sin_t <- sin(2 * pi * time / period)
-  if (length(unique(group)) > 1) {
-    design <- stats::model.matrix(~ factor(group) * (cos_t + sin_t))
-  } else {
-    design <- stats::model.matrix(~ cos_t + sin_t)
+  # Fallback: harmonic regression (per group if there are several groups).
+  # Not possible without a period.
+  if (!is_no_period(period)) {
+    cos_t <- cos(2 * pi * time / period)
+    sin_t <- sin(2 * pi * time / period)
+    if (length(unique(group)) > 1) {
+      design <- stats::model.matrix(~ factor(group) * (cos_t + sin_t))
+    } else {
+      design <- stats::model.matrix(~ cos_t + sin_t)
+    }
   }
-  if (!is_estimable(design)) {
+  if (is_no_period(period) || !is_estimable(design)) {
     warning(
       "Subject effects are confounded with time and cannot be separated ",
       "from the rhythm. They are removed without accounting for time.",

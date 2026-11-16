@@ -61,6 +61,7 @@ prepare_meta3d <- function(cd, cycMethodOne = "JTK") {
     outdir = temp_dir_out,
     minper = min(cd$period), # 20 is default
     maxper = max(cd$period), # 28 is default
+    ARSdefaultPer = mean(cd$period), # Must be minper <= ARSdefaultPer <= maxper
     design_libColm = 1,
     design_hrColm = 2,
     design_subjectColm = 3,

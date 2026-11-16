@@ -22,7 +22,7 @@ analyze_limorhyde <- function(cd, method_args = list()) {
   ls_res <- format_limorhyde(
     res_original = df_res,
     w_params = get_wave_params(cd_local),
-    period = mean(cd_local$period)
+    period = cd_local$period
   )
 
   return(ls_res)
