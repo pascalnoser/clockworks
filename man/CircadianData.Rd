@@ -29,8 +29,8 @@ to the standard names \code{time}, \code{group} and \code{subject_ID}, and the s
 tissue) are kept unchanged after the standard columns and can be used in
 \code{filter_samples()}. These additional columns must not use a name that
 clockworks uses internally: \code{time}, \code{group}, \code{subject_ID}, \code{norm_factors},
-\code{.internal_sample_id}, \code{ind}, \code{sample}, \code{replicate}, \code{time_replicate},
-\code{time_sin}, \code{time_cos} or \code{SampleID}. Otherwise an error is thrown and the
+\code{.internal_sample_id}, \code{replicate}, \code{time_replicate}, \code{time_sin},
+\code{time_cos} or \code{SampleID}. Otherwise an error is thrown and the
 column has to be renamed (or mapped via the matching \verb{colname_*} argument).}
 
 \item{colname_sample}{A character string specifying the name of the column in

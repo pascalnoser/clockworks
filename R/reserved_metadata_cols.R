@@ -10,8 +10,6 @@
 #' * `norm_factors`: edgeR normalisation factors of count data
 #'   (`preprocess_counts()`, `convert_to_cpm()`).
 #' * `.internal_sample_id`: sample IDs if `colname_sample = "rownames"`.
-#' * `ind`, `sample`: subject and sample IDs required by CircaN
-#'   (`check_circan()`).
 #' * `replicate`, `time_replicate`: replicate numbers for diffCircadian
 #'   (`check_diffcircadian()`, `prepare_diffcircadian()`).
 #' * `time_sin`, `time_cos`: harmonic terms for LimoRhyde
@@ -27,8 +25,6 @@ reserved_metadata_cols <- function() {
     "subject_ID",
     "norm_factors",
     ".internal_sample_id",
-    "ind",
-    "sample",
     "replicate",
     "time_replicate",
     "time_sin",

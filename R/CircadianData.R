@@ -179,8 +179,8 @@ setValidity("CircadianData", function(object) {
 #'   tissue) are kept unchanged after the standard columns and can be used in
 #'   `filter_samples()`. These additional columns must not use a name that
 #'   clockworks uses internally: `time`, `group`, `subject_ID`, `norm_factors`,
-#'   `.internal_sample_id`, `ind`, `sample`, `replicate`, `time_replicate`,
-#'   `time_sin`, `time_cos` or `SampleID`. Otherwise an error is thrown and the
+#'   `.internal_sample_id`, `replicate`, `time_replicate`, `time_sin`,
+#'   `time_cos` or `SampleID`. Otherwise an error is thrown and the
 #'   column has to be renamed (or mapped via the matching `colname_*` argument).
 #' @param colname_time A character string specifying the name of the column in
 #'   `metadata` that contains the time information (e.g., collection time). This
