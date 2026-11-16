@@ -24,14 +24,6 @@ analyze_repeatedcircadian <- function(cd, method_args = list()) {
   # Remove group column later if added temporarily by check
   added_group <- ifelse(is.na(cd_local$n_groups), TRUE, FALSE)
 
-  ### ----- ###
-  # # Prepare data
-  # df_prep <- prepare_repeatedcircadian_long(cd_local)
-  # df_prep[1:8, 1:8]
-  #
-  # # Now what?
-  ### ----- ###
-
   # Create empty list for results
   ls_res_groups <- list()
 
