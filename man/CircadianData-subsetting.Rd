@@ -5,7 +5,7 @@
 \alias{[,CircadianData,ANY,ANY,ANY-method}
 \title{Subset a CircadianData Object}
 \usage{
-\S4method{[}{CircadianData,ANY,ANY,ANY}(x, i, j, ..., drop = FALSE)
+\S4method{[}{CircadianData,ANY,ANY,ANY}(x, i, j, ..., recalc_wave_params = TRUE, drop = FALSE)
 }
 \arguments{
 \item{x}{A \code{CircadianData} object.}
@@ -15,6 +15,9 @@
 \item{j}{Column indices or names (samples).}
 
 \item{...}{Additional arguments (not used).}
+
+\item{recalc_wave_params}{Logical, for internal use. If \code{FALSE}, the wave
+parameters are only subset and never re-estimated. Defaults to \code{TRUE}.}
 
 \item{drop}{Logical, currently ignored (always FALSE for dataset/metadata).}
 }

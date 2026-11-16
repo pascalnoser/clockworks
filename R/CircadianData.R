@@ -627,24 +627,7 @@ CircadianData <- function(
     return(cd_obj)
   }
 
-  # Estimate wave parameters on original data
-  df_wave_params_orig <- estimate_wave_params(cd_obj)
-
-  # If we have repeated measures, also estimate wave parameters after removing batch effect
-  if (cd_obj$repeated_measures == TRUE) {
-    df_wave_params_corrected <- estimate_wave_params(
-      cd_obj,
-      batch_correction = TRUE
-    )
-    wave_params(cd_obj) <- list(
-      original = df_wave_params_orig,
-      batch_corrected = df_wave_params_corrected
-    )
-  } else {
-    wave_params(cd_obj) <- list(
-      original = df_wave_params_orig
-    )
-  }
+  cd_obj <- compute_wave_params(cd_obj)
 
   return(cd_obj)
 }
@@ -1124,6 +1107,8 @@ setReplaceMethod("colnames", "CircadianData", function(x, value) {
 #' @param i Row indices or names (features).
 #' @param j Column indices or names (samples).
 #' @param ... Additional arguments (not used).
+#' @param recalc_wave_params Logical, for internal use. If `FALSE`, the wave
+#'   parameters are only subset and never re-estimated. Defaults to `TRUE`.
 #' @param drop Logical, currently ignored (always FALSE for dataset/metadata).
 #'
 #' @return A new, subsetted \code{CircadianData} object.
@@ -1167,7 +1152,11 @@ setReplaceMethod("colnames", "CircadianData", function(x, value) {
 setMethod(
   "[",
   c("CircadianData", "ANY", "ANY", "ANY"),
-  function(x, i, j, ..., drop = FALSE) {
+  function(x, i, j, ..., recalc_wave_params = TRUE, drop = FALSE) {
+    # Note: `recalc_wave_params = FALSE` is for internal use by
+    # `filter_samples()`, which re-estimates the wave parameters itself after
+    # renormalising count data. The wave parameters are then only subset.
+
     # Throw error if results slot is not empty
     if (length(x@results) > 0) {
       stop(
@@ -1262,13 +1251,9 @@ setMethod(
 
     # Update wave parameters if samples were changed and either there are no
     # groups or some remaining groups had samples removed
-    update_wave_params <- update_samples && (!has_group || !groups_unchanged)
-
-    # if (update_wave_params) {
-    #   message(
-    #     "Recalculating wave parameters for the subsetted data because samples were changed."
-    #   )
-    # }
+    update_wave_params <- recalc_wave_params &&
+      update_samples &&
+      (!has_group || !groups_unchanged)
 
     ### -- Subset groups if necessary --
     new_wave_params <- wave_params(x)
@@ -1298,41 +1283,6 @@ setMethod(
       })
     }
 
-    # ## -- Results Subsetting --
-    # # Only keep results of selected features
-    # new_results <- x@results
-    # if (update_features && length(new_results) > 0) {
-    #   # Warn user that only formatted results will be subsetted and that p-values are no longer valid
-    #   warning(
-    #     "Subsetting formatted results to selected features. Original method outputs will not be modified.",
-    #     "\n",
-    #     "Adjusted p-values will not be recalculated after subsetting and may no longer be valid. ",
-    #     "Consider re-running rhythm detection methods on the subsetted data.",
-    #     call. = FALSE
-    #   )
-
-    #   features_to_keep <- rownames(x)[i]
-    #   for (method in names(new_results)) {
-    #     res_formatted <- new_results[[method]]$res_formatted
-    #     if (nrow(res_formatted) > 0) {
-    #       new_results[[method]]$res_formatted <- res_formatted[
-    #         res_formatted$feature %in% features_to_keep,
-    #         ,
-    #         drop = FALSE
-    #       ]
-    #     }
-    #   }
-    # }
-
-    # # If samples are changed, warn the user that the results will no longer be valid and need to be re-run on the subsetted data
-    # if (update_samples && length(x@results) > 0) {
-    #   warning(
-    #     "Stored results are likely no longer valid because samples have been changed. ",
-    #     "Consider re-running rhythm detection methods on the subsetted data.",
-    #     call. = FALSE
-    #   )
-    # }
-
     ## -- Create New Object and Update Experiment Info --
     # Create the new object
     exp_info_old <- x@experiment_info
@@ -1356,26 +1306,8 @@ setMethod(
     )
 
     ## -- Recalculate wave parameters if needed --
-    # Note: Not possible without a period
-    if (update_wave_params && !is_no_period(x_new$period)) {
-      # Estimate wave parameters on the original data
-      df_wave_params_orig <- estimate_wave_params(x_new)
-
-      # If we have repeated measures, also estimate wave parameters after removing batch effect
-      if (x_new$repeated_measures == TRUE) {
-        df_wave_params_corrected <- estimate_wave_params(
-          x_new,
-          batch_correction = TRUE
-        )
-        wave_params(x_new) <- list(
-          original = df_wave_params_orig,
-          batch_corrected = df_wave_params_corrected
-        )
-      } else {
-        wave_params(x_new) <- list(
-          original = df_wave_params_orig
-        )
-      }
+    if (update_wave_params) {
+      x_new <- compute_wave_params(x_new)
     }
 
     return(x_new)
@@ -1664,6 +1596,30 @@ setMethod("$<-", "CircadianData", function(x, name, value) {
 
 
 # ---- Estimating Wave Parameters ----
+
+# Estimate the wave parameters of a CircadianData object and store them in the
+# `wave_params` slot: always on the original data and, with repeated measures,
+# also after removing the subject batch effects. Skipped without a period.
+# Returns the updated object.
+compute_wave_params <- function(cd_obj) {
+  # The harmonic regression needs a period
+  if (is_no_period(cd_obj$period)) {
+    return(cd_obj)
+  }
+
+  ls_wave_params <- list(original = estimate_wave_params(cd_obj))
+
+  if (isTRUE(cd_obj$repeated_measures)) {
+    ls_wave_params$batch_corrected <- estimate_wave_params(
+      cd_obj,
+      batch_correction = TRUE
+    )
+  }
+
+  wave_params(cd_obj) <- ls_wave_params
+
+  return(cd_obj)
+}
 
 # TODO: Explain stuff about relative amplitude in documentation
 
@@ -1961,194 +1917,6 @@ estimate_wave_params <- function(
   return(df_params)
 }
 
-# Old version using `HarmonicRegression` package. We keep it for now in case we want
-# to switch back to it, but the new version is faster because it skips all the
-# statistical tests and just gives the parameter estimates. It also means one less
-# dependency, especially since `HarmonicRegression` is not on CRAN.
-estimate_wave_params_HarmonicRegression <- function(
-  cd_obj,
-  batch_correction = FALSE,
-  logCPM = "auto"
-) {
-  logCPM <- match.arg(logCPM, c(TRUE, FALSE, "auto"))
-
-  if (!inherits(cd_obj, "CircadianData")) {
-    stop("Input must be a CircadianData object.")
-  }
-
-  # If auto, log-transform if data type is count
-  if (logCPM == "auto") {
-    if (cd_obj$data_type == "count") {
-      logCPM <- TRUE
-    } else {
-      logCPM <- FALSE
-    }
-  }
-
-  # If logCPM is TRUE, convert to logCPM values first
-  if (isTRUE(logCPM)) {
-    cd_obj <- convert_to_cpm(cd_obj)
-  }
-
-  # If requested, remove batch effects first
-  if (isTRUE(batch_correction)) {
-    cd_obj <- remove_batch_effects(cd_obj, verbose = FALSE)
-  }
-
-  # Get original meta data
-  mdata_orig <- get_metadata(cd_obj)
-
-  # Get minimum value for time
-  t_min <- min(mdata_orig$time)
-
-  # Get period
-  if (is_no_period(cd_obj$period)) {
-    stop(
-      "The wave parameters cannot be estimated without a period. Please set ",
-      "a `period` (e.g. with `add_experiment_info()`).",
-      call. = FALSE
-    )
-  }
-  per <- mean(cd_obj$period)
-
-  # Add temporary group if there is no group column
-  if (is.na(cd_obj$n_groups)) {
-    mdata_tmp <- mdata_orig
-    mdata_tmp[["group"]] <- "tmp"
-    cd_obj@metadata <- mdata_tmp
-    add_groups <- FALSE
-  } else {
-    add_groups <- TRUE
-  }
-
-  # Get groups
-  groups <- unique(get_metadata(cd_obj)$group)
-
-  # Run harmonic regression for each group separately
-  ls_params <- lapply(groups, function(grp) {
-    # Filter cd object
-
-    # Note: Don't use `filter_samples()` or subsetting function here because
-    # they call `estimate_wave_params()` which would create an endless loop.
-    mdata <- get_metadata(cd_obj)
-    sample_filt <- rownames(mdata[mdata$group == grp, ])
-    cd_filt <- cd_obj
-    cd_filt@dataset <- cd_obj@dataset[, sample_filt, drop = FALSE]
-    cd_filt@metadata <- cd_obj@metadata[sample_filt, , drop = FALSE]
-
-    # Run harmonic regression
-    res_harm <- HarmonicRegression::harmonic.regression(
-      inputts = t(get_dataset(cd_filt)),
-      inputtime = get_metadata(cd_filt)[["time"]],
-      Tau = per,
-      normalize = FALSE,
-      trend.eliminate = FALSE,
-      trend.degree = 1 # TODO: make this a variable
-    )
-
-    # Get phase estimate in hours.`harmonic.regression()` uses a cosine, but the
-    # phase estimate can easily be converted to that of a sine function.
-    # Amplitude and mesor stay the same, but the phase is shifted by -pi/2 in
-    # radians, so by -period/4 in hours. Using the modulo operator negative
-    # phase values "wrap" around and become positive. Note that the resulting
-    # phase estimates in hours result in identical curves for the two following
-    # models (note the difference in - and +)
-    # y = M + A * cos(2 * pi / T * (t - phi))
-    # y = M + A * sin(2 * pi / T * (t + phi))
-    phase_estimate_rad <- res_harm$pars$phi
-    phase_estimate_h_cos <- phase_estimate_rad * per / (2 * pi)
-    # phase_estimate_h_sin <- (-1 * (phase_estimate_h_cos - per / 4)) %% per
-
-    # Create data frame
-    df_res <- data.frame(
-      feature = row.names(res_harm$pars),
-      period = per,
-      phase_estimate = phase_estimate_h_cos
-    )
-
-    # Add mesor and amplitude estimates
-    if (cd_obj$log_transformed == TRUE) {
-      # Get logarithmic base
-      b <- cd_obj$log_base
-
-      # Get estimates for mesor and amplitude in log scale
-      log_mesors <- res_harm$means
-      log_amps <- res_harm$pars$amp
-
-      # Get values for peak and trough
-      log_peaks <- b^(log_mesors + log_amps)
-      log_troughs <- b^(log_mesors - log_amps)
-
-      # Get mesor and amplitude in linear scale
-      lin_mesors <- (log_peaks + log_troughs) / 2
-      lin_amplitudes <- (log_peaks - log_troughs) / 2
-
-      # Get relative amplitude
-      lin_relative_amplitudes <- lin_amplitudes / lin_mesors
-      # lin_relative_amplitudes <- compute_relative_amplitude(log_amps, b)
-
-      # Add to data frame
-      # TODO: Be clear in documentation that in this case (i.e. with
-      # log-transformed data) the values you get for `mesor_estimate` and
-      # `amplitude_estimate` are in the log-scale, i.e. in the scale of the data
-      # the user provided, but the `relative_amplitude_estimate` is in the
-      # linear scale. We decided to do it this way because it seems appropriate
-      # to give the mesor and amplitude for the actual data the user provides.
-      # On the other hand, getting the relative amplitude in the linear scale is
-      # not a super trivial task (but it might still be of interest), so we
-      # provide that. The relative amplitude in the log-scale is easy to get by
-      # simply dividing the amplitude estimate by the mesor estimate.
-      df_res$mesor_estimate <- log_mesors
-      df_res$amplitude_estimate <- log_amps
-      df_res$relative_amplitude_estimate <- lin_relative_amplitudes
-    } else {
-      df_res$mesor_estimate <- res_harm$means
-      df_res$amplitude_estimate <- res_harm$pars$amp
-      df_res$relative_amplitude_estimate <- df_res$amplitude_estimate /
-        df_res$mesor_estimate
-    }
-
-    # Add group if original object had groups
-    if (add_groups == TRUE) {
-      df_res$group <- grp
-    }
-
-    return(df_res)
-  })
-
-  # Bind into data frame and return
-  df_params <- do.call(rbind, ls_params)
-
-  ## -- Add peak time
-  # Take phase estimates and shift them upward by repeated additions of the
-  # period until the values are greater than t_min. For example, if t_min is 18
-  # and one gene has a phase of 21 this remains unchanged, because the peak in
-  # the real data is at 21. If it has a phase of 5, the real peak is not at 5
-  # but at 29.
-  df_params$peak_time_estimate <- df_params$phase_estimate +
-    pmax(0, ceiling((t_min - df_params$phase_estimate) / per)) * per
-
-  # Rearrange columns
-  cols <- intersect(
-    c(
-      "feature",
-      "group",
-      "period",
-      "phase_estimate",
-      "peak_time_estimate",
-      "mesor_estimate",
-      "amplitude_estimate",
-      "relative_amplitude_estimate"
-    ),
-    colnames(df_params)
-  )
-
-  df_params <- df_params[, cols]
-
-  return(df_params)
-}
-
-
 # ---- Sorting ----
 
 #' Order Samples in a CircadianData Object
@@ -2410,22 +2178,35 @@ filter_samples <- function(
   # Store old experiment info
   exp_info_old <- experiment_info(cd_obj)
 
+  # Count data is renormalised after filtering, so the wave parameters have to
+  # be estimated afterwards with the new normalisation factors (step 5)
+  renormalise <- exp_info_old$data_type == "count" && isTRUE(renormalise)
+  recalc_after <- renormalise && !all(logical_vector)
+
   # Use the existing S4 subsetting method `[`
-  # Note: This updates the wave parameters and experiment info, including delta t
-  filtered_obj <- cd_obj[, logical_vector, drop = FALSE]
+  # Note: This updates the experiment info, including delta t, and the wave
+  # parameters (unless they are recalculated in step 5)
+  filtered_obj <- cd_obj[,
+    logical_vector,
+    drop = FALSE,
+    recalc_wave_params = !recalc_after
+  ]
 
   # Optionally restore original delta t
   if (!recalc_delta_t) {
     experiment_info(filtered_obj)$delta_t <- exp_info_old$delta_t
   }
 
-  # --- 5. Renormalise library sizes if needed ---
-  if (experiment_info(filtered_obj)$data_type == "count" && renormalise) {
+  # --- 5. Renormalise library sizes and update wave parameters if needed ---
+  if (renormalise) {
     filtered_obj <- preprocess_counts(
       filtered_obj,
       filter_counts = FALSE,
       verbose = FALSE
     )
+  }
+  if (recalc_after) {
+    filtered_obj <- compute_wave_params(filtered_obj)
   }
 
   return(filtered_obj)
@@ -3849,299 +3630,4 @@ plot_upset <- function(
   } else {
     return(ls_plt_upset)
   }
-}
-
-
-# TODO: Remove this base R plotting function at some point
-#' Plot Feature Values Over Time
-#'
-#' Creates a scatterplot of the values for a specific feature against time. If a
-#' 'group' column exists in the metadata, points are colored by group, and the
-#' plot can be optionally filtered to a single group.
-#'
-#' @param x A \code{CircadianData} object.
-#' @param feature A single character string specifying the name or a single
-#'   numeric value specifying the row number of the feature (from
-#'   `rownames(x)`) to plot.
-#' @param group An optional single character string specifying a group to filter
-#'   by. This is only applicable if a 'group' column exists in the metadata. If
-#'   `NULL` (the default) and a 'group' column exists, data from all groups are
-#'   plotted with different colors.
-#' @param add_wave An optional logical value (TRUE/FALSE) specifying whether a
-#'   sine wave fitted by harmonic regression should be plotted on top of the
-#'   data. Only applies when `wave_params` has been filled by running
-#'   `estimate_wave_params()` or `clockworks()` on `x`.
-#' @param ... Additional arguments passed to the base `plot()` function.
-#'
-#'
-#' @rdname plot_feature_base
-#' @examples
-#' # --- With a 'group' column in metadata ---
-#' set.seed(123)
-#' counts <- matrix(rpois(80, lambda = 50), nrow = 10, ncol = 8,
-#'                  dimnames = list(paste0("Feature", 1:10), paste0("Sample", 1:8)))
-#' meta <- data.frame(
-#'   row.names = paste0("Sample", 1:8),
-#'   time = rep(c(0, 6, 12, 18), each = 2),
-#'   group = factor(rep(c("Control", "Treated"), 4))
-#' )
-#' cd_obj_grouped <- CircadianData(
-#'   dataset = counts,
-#'   metadata = meta,
-#'   colname_sample = "rownames",
-#'   colname_time = "time",
-#'   colname_group = "group"
-#' )
-#' cd_obj_grouped <- add_experiment_info(cd_obj_grouped)
-#'
-#' # Plot a feature for all groups (colored by group)
-#' plot_feature_base(cd_obj_grouped, feature = "Feature3")
-#'
-#' # Plot a feature for only the "Treated" group
-#' plot_feature_base(cd_obj_grouped, feature = "Feature3", group = "Treated")
-#'
-#' # --- Without a 'group' column in metadata ---
-#' cd_obj_no_group <- CircadianData(
-#'   dataset = counts,
-#'   metadata = meta,
-#'   colname_sample = "rownames",
-#'   colname_time = "time"
-#' )
-#' cd_obj_no_group <- add_experiment_info(cd_obj_no_group)
-#'
-#' # Plot a feature (all points will have the same color)
-#' plot_feature_base(cd_obj_no_group,
-#'              feature = "Feature5",
-#'              main = "Feature 5 (No Groups Defined)")
-#'
-setGeneric(
-  "plot_feature_base",
-  function(x, feature, group = NULL, add_wave = TRUE, ...) {
-    standardGeneric("plot_feature_base")
-  }
-)
-
-#' @rdname plot_feature_base
-setMethod(
-  "plot_feature_base",
-  "CircadianData",
-  function(x, feature, group = NULL, add_wave = TRUE, ...) {
-    # --- 1. Input Validation ---
-    mdata <- get_metadata(x)
-    if (!("time" %in% colnames(mdata))) {
-      stop("Metadata must contain a 'time' column for plotting.")
-    }
-    if (
-      !(is.character(feature) || is.numeric(feature)) || length(feature) != 1
-    ) {
-      stop(
-        "'feature' must be a single character string or a single numeric value."
-      )
-    }
-
-    if (is.character(feature)) {
-      if (!(feature %in% rownames(x))) {
-        stop("Feature '", feature, "' not found in the dataset.")
-      }
-    } else if (is.numeric(feature)) {
-      if (feature > nrow(x)) {
-        stop("Feature position (", feature, ") out of bounds.")
-      }
-      # Get feature name so logic downstream is the same
-      feature <- rownames(x)[feature]
-    }
-
-    # Check for group column existence
-    has_group_col <- "group" %in% colnames(mdata)
-
-    # Validate the 'group' argument if the column exists
-    if (!is.null(group)) {
-      if (!has_group_col) {
-        stop(
-          "'group' argument was provided, but no 'group' column exists in metadata."
-        )
-      }
-      if (!is.character(group) || length(group) != 1) {
-        stop("'group' argument must be NULL or a single character string.")
-      }
-      if (!(group %in% mdata$group)) {
-        stop("Group '", group, "' not found in the 'group' column of metadata.")
-      }
-    }
-
-    # --- 2. Prepare Data for Plotting ---
-    feature_values <- get_dataset(x)[feature, , drop = TRUE]
-    plot_df <- data.frame(
-      time = mdata$time,
-      value = feature_values
-    )
-
-    # Add group information conditionally
-    if (has_group_col) {
-      plot_df$group <- mdata$group
-    } else {
-      # Assign a dummy group if none exists
-      plot_df$group <- factor("all_samples")
-    }
-
-    # Apply filtering if a specific group is requested
-    if (!is.null(group)) {
-      plot_df <- plot_df[plot_df$group == group, , drop = FALSE]
-      if (nrow(plot_df) == 0) {
-        stop(
-          "No data available for feature '",
-          feature,
-          "' in group '",
-          group,
-          "'."
-        )
-      }
-    }
-
-    # --- 3. Set Up Plotting Parameters ---
-    user_args <- list(...)
-    plot_args <- list()
-
-    # Set default shape
-    plot_args$pch <- 21
-
-    # Set default labels and title
-    plot_args$xlab <- "Time"
-    plot_args$ylab <- "Value"
-    default_main <- if (is.null(group)) {
-      paste("Expression of", feature)
-    } else {
-      paste("Expression of", feature, "in group", group)
-    }
-    plot_args$main <- default_main
-
-    # Determine colors and if a legend is needed
-    unique_groups <- unique(as.character(plot_df$group))
-    n_groups <- length(unique_groups)
-    show_legend <- has_group_col && n_groups > 1
-
-    if (show_legend == TRUE) {
-      # Background colour ---
-      if ("bg" %in% names(user_args)) {
-        if (length(user_args$bg) < n_groups) {
-          stop(
-            "Number of background colours (`bg`) must not be smaller than number of groups"
-          )
-        }
-        bgs <- user_args$bg[1:n_groups]
-        user_args$bg <- NULL
-      } else {
-        bgs <- grDevices::palette.colors(n = n_groups, palette = "Okabe-Ito")
-      }
-      names(bgs) <- unique_groups
-      plot_args$bg <- bgs[as.character(plot_df$group)]
-
-      # Colour ---
-      if ("col" %in% names(user_args)) {
-        if (length(user_args$col) < n_groups) {
-          stop(
-            "Number of colours (`col`) must not be smaller than number of groups"
-          )
-        }
-        cols <- user_args$col[1:n_groups]
-        user_args$col <- NULL
-      } else {
-        cols <- rep("black", n_groups)
-      }
-      names(cols) <- unique_groups
-      plot_args$col <- cols[as.character(plot_df$group)]
-    } else {
-      plot_args$bg <- "lightgrey"
-      plot_args$col <- "black"
-    }
-
-    # Merge and potentially overwrite with user arguments
-    final_args <- utils::modifyList(plot_args, user_args)
-
-    # Enforce x and y parameters
-    final_args$x <- plot_df$time
-    final_args$y <- plot_df$value
-
-    # --- 4. Create Plot ---
-    do.call("plot", final_args)
-
-    # --- 5. Add Fitted Wave ---
-    w_params <- get_wave_params(x)
-
-    if (add_wave == TRUE && ncol(w_params) > 0) {
-      # Get wave parameters just for this feature
-      w_params <- w_params[w_params$feature == feature, ]
-
-      if (!is.null(group)) {
-        w_params <- w_params[w_params$group == group, ]
-      }
-
-      # `show_legend` tells us whether we have multiple groups to plot
-      if (show_legend == TRUE) {
-        # One wave per group
-        for (grp in unique_groups) {
-          plot_df_grp <- plot_df[plot_df$group == grp, ]
-          w_params_grp <- w_params[w_params$group == grp, ]
-
-          # Generate points
-          wave_time <- seq(
-            min(plot_df_grp$time),
-            max(plot_df_grp$time),
-            length.out = 100
-          )
-
-          # Reconstruct sine wave from harmonic regression results
-          per <- w_params_grp$period
-          phase <- w_params_grp$phase_estimate
-          mesor <- w_params_grp$mesor_estimate
-          amp <- w_params_grp$amplitude_estimate
-
-          wave_vals <- mesor + amp * cos((2 * pi / per) * (wave_time - phase))
-
-          # Add the line to the plot
-          graphics::lines(wave_time, wave_vals, col = bgs[[grp]])
-        }
-      } else {
-        # One wave
-        # Generate points
-        wave_time <- seq(min(plot_df$time), max(plot_df$time), length.out = 100)
-
-        # Reconstruct sine wave from harmonic regression results
-        per <- w_params$period
-        phase <- w_params$phase_estimate
-        mesor <- w_params$mesor_estimate
-        amp <- w_params$amplitude_estimate
-
-        wave_vals <- mesor + amp * cos((2 * pi / per) * (wave_time - phase))
-
-        # Add the line to the plot
-        graphics::lines(wave_time, wave_vals, col = final_args$bg)
-      }
-
-      # Plot points again so they are on top of the lines
-      par(new = TRUE)
-      do.call("plot", final_args)
-    }
-
-    # --- 6. Add a Legend (if needed) ---
-    if (show_legend) {
-      legend(
-        "topright",
-        legend = names(bgs),
-        pt.bg = bgs,
-        col = final_args$col,
-        pch = 21,
-        bty = "n"
-      )
-    }
-
-    invisible(NULL)
-  }
-)
-
-
-# --- Example Usage ---
-if (FALSE) {
-  # Don't run automatically
-  #
 }
