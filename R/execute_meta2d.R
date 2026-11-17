@@ -35,6 +35,30 @@ execute_meta2d <- function(inputs, grp, method_args = list()) {
     inputs$inDF <- inputs$inDF[!rownames(inputs$inDF) %in% invalid_features, ]
   }
 
+  # The JTK part of meta2d tests periods in whole numbers of sampling
+  # intervals. JTK is only run if it is selected in 'cycMethod' and, with
+  # 'analysisStrategy = "auto"', if the time points are evenly spaced with an
+  # integer interval (see `MetaCycle::meta2d()`).
+  cyc_method <- inputs$cycMethod %||% c("ARS", "JTK", "LS")
+  strategy <- inputs$analysisStrategy %||% "auto"
+  time_diffs <- diff(sort(unique(inputs$timepoints)))
+  jtk_runs <- "JTK" %in% cyc_method &&
+    (strategy == "selfUSE" ||
+      (all(round(time_diffs) == time_diffs) &&
+        length(unique(time_diffs)) <= 1))
+  if (jtk_runs) {
+    warn_jtk_periods(
+      "meta2d (JTK)",
+      inputs$timepoints,
+      inputs$minper,
+      inputs$maxper,
+      note = paste0(
+        "This affects the JTK p-values and period estimates, which meta2d ",
+        "integrates with those of the other methods."
+      )
+    )
+  }
+
   # Run rhythmicity analysis
   ls_res <- do.call(MetaCycle::meta2d, inputs)
 

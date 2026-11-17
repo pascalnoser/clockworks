@@ -147,11 +147,66 @@ execute_genecycle <- function(
     pvals <- do.call(GeneCycle::robust.spectrum, spectrum_inputs)
   }
 
+  # Period estimates ----
+  n_rows <- nrow(spectrum_inputs$x)
+  delta_t <- inputs$delta_t
+  if (is.null(delta_t)) delta_t <- NA
+  if (algorithm == "regression" && known_period == TRUE) {
+    # The given period is fitted exactly
+    period_est <- rep(spectrum_inputs$periodicity.time, ncol(spectrum_inputs$x))
+  } else if (algorithm == "rank" && known_period == TRUE) {
+    # Only the period of the selected index is tested
+    period_tested <- genecycle_index_period(
+      gtest_inputs$index,
+      n_rows,
+      delta_t,
+      algorithm
+    )
+    period_est <- rep(period_tested, ncol(spectrum_inputs$x))
+    requested <- inputs$spectrum$periodicity.time
+    if (!isFALSE(requested)) {
+      warn_tested_periods(
+        "GeneCycle (rank-based algorithm)",
+        requested = requested,
+        tested = period_tested,
+        rule = paste0(
+          "2 * duration / k, with duration = number of time points * ",
+          "delta_t (here ", n_rows * delta_t, ") and k a whole number"
+        ),
+        note = paste0(
+          "The tested period (index = ", gtest_inputs$index, ") is reported ",
+          "as 'period_estimate'."
+        )
+      )
+    }
+  } else {
+    # No period given: the period of the highest peak of the spectrum, which
+    # is the peak used by the g-statistic
+    rows <- if (algorithm == "regression" && n_rows %% 2 == 0) {
+      seq(2, nrow(y) - 1)
+    } else {
+      seq(2, nrow(y))
+    }
+    peak_idx <- apply(y[rows, , drop = FALSE], 2, function(v) {
+      if (all(is.na(v)) || max(v, na.rm = TRUE) <= 0) {
+        return(NA_integer_)
+      }
+      which.max(v)
+    })
+    period_est <- genecycle_index_period(
+      rows[peak_idx],
+      n_rows,
+      delta_t,
+      algorithm
+    )
+  }
+
   # Add feature IDs and group to results df (if not there already)
   df_res <- data.frame(
     feature = colnames(spectrum_inputs$x),
     group = grp,
-    pval = pvals
+    period_estimate = as.numeric(period_est),
+    pval = as.numeric(pvals)
   )
 
   # Add exluded features back to results with NA values
@@ -159,6 +214,7 @@ execute_genecycle <- function(
     missing_rows <- data.frame(
       feature = invalid_features,
       group = grp,
+      period_estimate = NA,
       pval = NA
     )
     df_res <- rbind(df_res, missing_rows)
@@ -171,6 +227,7 @@ execute_genecycle <- function(
     missing_rows <- data.frame(
       feature = constant_features,
       group = grp,
+      period_estimate = NA,
       pval = NA
     )
     df_res <- rbind(df_res, missing_rows)
@@ -180,4 +237,30 @@ execute_genecycle <- function(
 
   # Return results
   return(df_res)
+}
+
+#' Period of a GeneCycle spectrum index
+#'
+#' The rank-based spectrum of `GeneCycle::robust.spectrum()` is computed from
+#' an autocorrelation zero-padded to twice the length of the time series, so
+#' index k corresponds to `2 * n * delta_t / (k - 1)`. The regression-based
+#' spectrum uses the standard Fourier frequencies, so index k corresponds to
+#' `n * delta_t / (k - 1)`.
+#'
+#' @param index Integer vector of (1-based) spectrum indices.
+#' @param n_rows Number of time points in the time series.
+#' @param delta_t Sampling interval.
+#' @param algorithm `"rank"` or `"regression"`.
+#'
+#' @returns A numeric vector of periods (`NA` for index 1, which is the mean,
+#'   or if `delta_t` is unknown).
+genecycle_index_period <- function(index, n_rows, delta_t, algorithm) {
+  if (is.null(index) || length(index) == 0) {
+    return(NA_real_)
+  }
+  index <- as.numeric(index)
+  pad <- if (algorithm == "rank") 2 else 1
+  period <- pad * n_rows * delta_t / (index - 1)
+  period[!is.finite(period) | index <= 1] <- NA_real_
+  period
 }

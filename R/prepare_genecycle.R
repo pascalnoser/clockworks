@@ -56,9 +56,33 @@ prepare_genecycle <- function(cd, grp) {
     )
   )
 
+  # Sampling interval, used by execute_genecycle() to convert spectrum indices
+  # into periods
+  delta_t <- cd_filt$delta_t
+  inputs$delta_t <- if (is.null(delta_t)) NA else delta_t
+
+  # GeneCycle treats the rows as equally spaced, so time points that are
+  # missing entirely shift the frequencies of the spectrum
+  if (
+    !is.na(inputs$delta_t) &&
+      any(abs(diff(sort(unique(timepoints))) - inputs$delta_t) > 1e-6)
+  ) {
+    warning(
+      "GeneCycle assumes equally spaced time points, but some time points ",
+      "are missing entirely. The p-values and period estimates of GeneCycle ",
+      "may be unreliable.",
+      call. = FALSE
+    )
+  }
+
   # If possible, add index value
-  n_cycles <- unlist(cd_filt$n_cycles)
-  if (!is.na(n_cycles)) {
+  # Note: robust.spectrum() zero-pads the autocorrelation to twice the length of
+  # the time series, so index k corresponds to the period
+  # 2 * n * delta_t / (k - 1), with n the number of (equally spaced) rows that
+  # GeneCycle sees. The number of rows is used instead of the time range in
+  # `n_cycles`, because GeneCycle assumes each row is one sampling step.
+  if (!is_no_period(cd_filt$period) && !is.na(inputs$delta_t)) {
+    n_cycles <- nrow(df_dat) * inputs$delta_t / cd_filt$period
     # Note: Round because otherwise e.g. 1.9 will result in
     # GeneCycle::g.statistic() (which is called by GeneCycle::robust.g.test())
     # extracting index 1 on line 19, although index 2 would be much closer to

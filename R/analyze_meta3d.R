@@ -16,6 +16,23 @@ analyze_meta3d <- function(cd, method_args = list()) {
     cycMethodOne = method_args$cycMethodOne %||% "JTK"
   )
 
+  # JTK tests periods in whole numbers of sampling intervals. meta3d runs it
+  # on the time series of each subject separately.
+  if (inputs$cycMethodOne == "JTK" && "subject_ID" %in% colnames(get_metadata(cd_local))) {
+    meta <- get_metadata(cd_local)
+    subject_times <- split(meta$time, meta$subject_ID)
+    warn_once(
+      for (times in subject_times) {
+        warn_jtk_periods(
+          "meta3d (JTK)",
+          times,
+          method_args$minper %||% inputs$minper,
+          method_args$maxper %||% inputs$maxper
+        )
+      }
+    )
+  }
+
   # Run rhythmicity analysis
   ls_res <- execute_meta3d(inputs, method_args)
 

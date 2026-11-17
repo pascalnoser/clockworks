@@ -26,6 +26,7 @@ format_genecycle <- function(ls_res_groups, w_params, added_group) {
   res_formatted <- data.frame(
     feature = res_original$feature,
     group = res_original$group,
+    period_estimate = res_original$period_estimate,
     pval = res_original$pval,
     pval_adj = p_adj,
     method = "GeneCycle"

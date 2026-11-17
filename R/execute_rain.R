@@ -21,6 +21,25 @@ execute_rain <- function(inputs, grp, method_args = list()) {
     )
   }
 
+  # RAIN tests periods in whole numbers of sampling intervals, rounding the
+  # lower end of the range down and the upper end up (see `prain::rain()`)
+  per_lo <- inputs$period - inputs$period.delta
+  per_hi <- inputs$period + inputs$period.delta
+  tested <- if (isTRUE(inputs$deltat > 0)) {
+    seq(
+      floor(per_lo / inputs$deltat),
+      ceiling(per_hi / inputs$deltat)
+    ) * inputs$deltat
+  }
+  warn_tested_periods(
+    "RAIN",
+    requested = c(per_lo, per_hi),
+    tested = tested,
+    rule = paste0(
+      "whole multiples of the sampling interval (here ", inputs$deltat, ")"
+    )
+  )
+
   # Run rhythmicity analysis
   df_res <- do.call(prain::rain, inputs)
 

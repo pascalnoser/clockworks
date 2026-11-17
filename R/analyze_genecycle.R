@@ -24,21 +24,25 @@ analyze_genecycle <- function(
 
   # Run rhythmicity detection for each group separately
   groups <- unique(get_metadata(cd_local)[["group"]])
-  for (grp in groups) {
-    # Prepare inputs
-    inputs <- prepare_genecycle(cd_local, grp)
+  # Note: warn_once() shows each warning only once, because groups with the
+  # same design would otherwise repeat them (e.g. about the tested period)
+  warn_once(
+    for (grp in groups) {
+      # Prepare inputs
+      inputs <- prepare_genecycle(cd_local, grp)
 
-    # Run rhythmicity analysis
-    df_res_grp <- execute_genecycle(
-      inputs,
-      grp,
-      method_args,
-      get_experiment_info(cd_local)$missing_data_fraction
-    )
+      # Run rhythmicity analysis
+      df_res_grp <- execute_genecycle(
+        inputs,
+        grp,
+        method_args,
+        get_experiment_info(cd_local)$missing_data_fraction
+      )
 
-    # Add to list
-    ls_res_groups[[grp]] <- df_res_grp
-  }
+      # Add to list
+      ls_res_groups[[grp]] <- df_res_grp
+    }
+  )
 
   # Postprocessing
   ls_res <- format_genecycle(

@@ -33,6 +33,15 @@ execute_jtkcycle <- function(inputs, grp, method_args = list()) {
     inputs$inDF <- inputs$inDF[!rownames(inputs$inDF) %in% invalid_features, ]
   }
 
+  # JTK_CYCLE tests periods in whole numbers of sampling intervals, rounding
+  # 'minper' and 'maxper' (see `MetaCycle:::runJTK()`)
+  warn_jtk_periods(
+    "JTK_CYCLE",
+    inputs$timepoints,
+    inputs$minper,
+    inputs$maxper
+  )
+
   # Run rhythmicity analysis
   ls_res <- do.call(MetaCycle::meta2d, inputs)
 

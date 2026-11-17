@@ -10,11 +10,13 @@
 #'   is `TRUE`.
 #'
 #' @returns A list of data frames containing the original and formatted results
-format_meta2d <- function(ls_res_groups,
-                          w_params,
-                          added_group,
-                          log_transformed = FALSE,
-                          log_base = 2) {
+format_meta2d <- function(
+  ls_res_groups,
+  w_params,
+  added_group,
+  log_transformed = FALSE,
+  log_base = 2
+) {
   # TODO: Probably remove `log_transformed` and `log_base` parameters since we
   # will likely only report the relative amplitude from the harmonic regression.
   # Alternatively, uncomment the relative amplitude calculation below.
@@ -24,7 +26,7 @@ format_meta2d <- function(ls_res_groups,
   res_original <- lapply(method_names, function(x) {
     dfs <- lapply(ls_res_groups, `[[`, x)
     df_combined <- do.call(rbind, dfs)
-    rownames(df_combined) = NULL
+    rownames(df_combined) <- NULL
     return(df_combined)
   })
   names(res_original) <- method_names
@@ -42,17 +44,45 @@ format_meta2d <- function(ls_res_groups,
   #   rel_amp <- compute_relative_amplitude(log_amp, log_base)
   # }
 
+  # MetaCycle only integrates the results if more than one method was run.
+  # Otherwise the period, phase and p-value columns of the meta results are
+  # named after that one method (e.g. "LS_period" instead of "meta2d_period").
+  # This also happens if several methods were selected but MetaCycle skipped
+  # some of them because they are not suitable for the data.
+  if ("meta2d_pvalue" %in% colnames(df_meta)) {
+    prefix <- "meta2d"
+    phase_col <- "meta2d_phase"
+  } else {
+    pval_col <- grep("_pvalue$", colnames(df_meta), value = TRUE)
+    if (length(pval_col) != 1) {
+      stop(
+        "Unexpected output of MetaCycle::meta2d(). Could not find the ",
+        "p-values in the meta results.",
+        call. = FALSE
+      )
+    }
+    prefix <- sub("_pvalue$", "", pval_col)
+    phase_col <- paste0(prefix, "_adjphase")
+    warning(
+      "meta2d only ran ", prefix, " (the other methods were not selected in ",
+      "'cycMethod' or are not suitable for this data), so the reported ",
+      "period, phase and p-values are those of ", prefix, " without ",
+      "integration.",
+      call. = FALSE
+    )
+  }
+
   # Create formatted results data frame
   res_formatted <- data.frame(
     feature = df_meta$CycID,
     group = df_meta$group,
-    period_estimate = df_meta$meta2d_period,
-    phase_estimate = df_meta$meta2d_phase,
+    period_estimate = df_meta[[paste0(prefix, "_period")]],
+    phase_estimate = df_meta[[phase_col]],
     mesor_estimate = df_meta$meta2d_Base,
     amplitude_estimate = df_meta$meta2d_AMP,
     relative_amplitude_estimate = df_meta$meta2d_rAMP,
-    pval = df_meta$meta2d_pvalue,
-    pval_adj = df_meta$meta2d_BH.Q,
+    pval = df_meta[[paste0(prefix, "_pvalue")]],
+    pval_adj = df_meta[[paste0(prefix, "_BH.Q")]],
     method = "meta2d"
   )
 
@@ -73,7 +103,7 @@ format_meta2d <- function(ls_res_groups,
   # Remove group column if added temporarily by check function at the start
   if (added_group == TRUE) {
     res_formatted$group <- NULL
-    res_original <- lapply(res_original, function(df){
+    res_original <- lapply(res_original, function(df) {
       df$group <- NULL
       return(df)
     })
