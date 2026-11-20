@@ -6,19 +6,11 @@
 #' @param method_args Additional parameters passed to `dryR::f_24()` or
 #'   `dryR::dryseq_single()`
 #' @param batch_correction Logical. If `TRUE` and the data contain repeated
-#'   measures, subject batch effects are removed before the analysis.
+#'   measures, subject batch effects are removed before the analysis. Skipped
+#'   with a warning for count data, where removal can produce negative counts.
 #'
 #' @returns A list with the original and formatted results of the dryR analysis.
-analyze_dryr <- function(cd, method_args = list(),
-                         batch_correction = TRUE) {
-  # TODO: Count data with repeated measures fails (`DESeqDataSet()`: "some
-  # values in assay are negative") because subject effects are removed on the
-  # raw counts in `check_dryr()`. Options: (1) convert to log-CPM, remove
-  # subject effects and use `f_24()` like the other methods, (2) skip batch
-  # correction for counts with a warning, (3) remove subject effects on log-CPM
-  # and back-transform to pseudo-counts for `dryseq_single()`. Discuss with
-  # supervisor. Works with `clockworks(..., batch_correction = FALSE)`.
-
+analyze_dryr <- function(cd, method_args = list(), batch_correction = TRUE) {
   # Check if cd object contains necessary columns and add them if not
   cd_local <- check_dryr(cd, batch_correction)
 

@@ -229,7 +229,9 @@ Benchmark results for these come from ClockWorksBenchmark (`paper_Norm_rep`); se
 - **Subject batch removal on or off by default.** `clockworks(batch_correction = TRUE)` is the current
   default. After removal, methods test as if samples were independent and do not lose the
   n_subjects - 1 degrees of freedom used for the subject means, so parametric methods (diffCircadian,
-  dryR) are slightly anti-conservative. Decide from the benchmark.
+  dryR) are slightly anti-conservative. Decide from the benchmark. For dryR with count data, the
+  removal is always skipped (with a warning) because it can create negative counts, so dryR treats
+  repeated samples as independent and is probably anti-conservative there too.
 - **RepeatedCircadian `method = "LR"` vs `"F"`.** The default ML likelihood-ratio test is anti-conservative
   with few subjects/time points; `"F"` (Kenward-Roger) is calibrated and about 2x slower. If the
   benchmark confirms this, make `"F"` the default in `prepare_repeatedcircadian()`.

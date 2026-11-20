@@ -17,7 +17,9 @@
 #'   repeated measures (`colname_subject`), subject effects are removed with
 #'   `limma::removeBatchEffect()` before running methods that cannot model
 #'   subjects themselves. Ignored by methods that model subjects (LimoRhyde,
-#'   RepeatedCircadian, MetaCycle/meta3d).
+#'   RepeatedCircadian, MetaCycle/meta3d). For dryR with count data, the
+#'   correction is skipped with a warning because it can produce negative
+#'   counts.
 #'
 #' @details Additional details coming soon...
 #'

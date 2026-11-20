@@ -13,7 +13,8 @@ analyze_dryr(cd, method_args = list(), batch_correction = TRUE)
 \code{dryR::dryseq_single()}}
 
 \item{batch_correction}{Logical. If \code{TRUE} and the data contain repeated
-measures, subject batch effects are removed before the analysis.}
+measures, subject batch effects are removed before the analysis. Skipped
+with a warning for count data, where removal can produce negative counts.}
 }
 \value{
 A list with the original and formatted results of the dryR analysis.

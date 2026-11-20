@@ -10,7 +10,8 @@ check_dryr(cd, batch_correction = TRUE)
 \item{cd}{A \code{CircadianData} object}
 
 \item{batch_correction}{Logical. If \code{TRUE} and the data contain repeated
-measures, subject batch effects are removed before the analysis.}
+measures, subject batch effects are removed before the analysis. Skipped
+with a warning for count data, where removal can produce negative counts.}
 }
 \value{
 A \code{CircadianData} object
